@@ -1,0 +1,80 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+**/__pycache
+.conda
+
+# Virtual Environment
+.venv/
+venv/
+env/
+ENV/
+.env
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+
+# Project specific
+config/*.yaml
+!config/default.yaml
+config/alerting_configs/*.yaml
+!config/alerting_configs/reference_alerting_config.yaml
+logs/
+*.log
+.coverage
+htmlcov/
+.pytest_cache/
+.cursorrules
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Local development
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
+
+# API keys and secrets
+.env.local
+.env.*.local
