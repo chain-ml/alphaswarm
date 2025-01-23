@@ -24,13 +24,6 @@ runs:
         POETRY_VERSION: ${{ inputs.poetry-version }}
       run: pipx install "poetry==$POETRY_VERSION" --python "$PYTHON_VERSION"
 
-#    - uses: actions/cache@v4
-#      with:
-#        path: ~/.cache/pypoetry
-#        key: ${{ runner.os }}-poetry-${{ hashFiles('poetry.lock') }}
-#        restore-keys: |
-#          ${{ runner.os }}
-#
     - name: Install dependencies
       shell: bash
       run: |
