@@ -1,0 +1,25 @@
+name: Setup Python
+description: Checkout the repository, setup python, and install dependencies
+inputs:
+  python-version:
+    description: Python version to use
+    required: true
+runs:
+  using: composite
+  steps:
+    - name: Setup python ${{ inputs.python-version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - uses: actions/cache@v4
+      with:
+        path: ~/.cache/pypoetry
+        key: ${{ runner.os }}-pip-${{ hashFiles('poetry.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-
+
+    - name: Install dependencies
+      shell: bash
+      run: |
+        poetry install --extras dev
