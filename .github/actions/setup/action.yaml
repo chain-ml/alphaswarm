@@ -4,16 +4,24 @@ inputs:
   python-version:
     description: Python version to use
     required: true
+  poetry-version:
+    description: Poertry version to use
+    required: false
+    default: "2.0.1"
 runs:
   using: composite
   steps:
     - name: Setup python ${{ inputs.python-version }}
       uses: actions/setup-python@v4
       with:
-        python-version: ${{ matrix.python-version }}
+        python-version: ${{ inputs.python-version }}
 
     - name: Install Poetry
-      run: pipx install poetry
+      shell: bash
+      env:
+        PYTHON_VERSION: ${{ inputs.python-version }}
+        POETRY_VERISON: ${{ inputs.poetry-version }}
+      run: pipx install "poetry==$POETRY_VERSION" --python "$PYTHON_VERSION"
 
     - uses: actions/cache@v4
       with:
