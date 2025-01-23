@@ -20,7 +20,7 @@ runs:
       shell: bash
       env:
         PYTHON_VERSION: ${{ inputs.python-version }}
-        POETRY_VERISON: ${{ inputs.poetry-version }}
+        POETRY_VERSION: ${{ inputs.poetry-version }}
       run: pipx install "poetry==$POETRY_VERSION" --python "$PYTHON_VERSION"
 
     - uses: actions/cache@v4

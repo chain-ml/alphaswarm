@@ -15,7 +15,7 @@ jobs:
 
       - uses: ./.github/actions/setup
         with:
-          python-version: ${{ matrix.python-version }}
+          python-version: "3.11"
 
       - name: poetry path
         run: which poetry
