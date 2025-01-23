@@ -11,18 +11,18 @@ inputs:
 runs:
   using: composite
   steps:
-    - name: Setup python ${{ inputs.python-version }}
-      uses: actions/setup-python@v5
-      with:
-        python-version: ${{ inputs.python-version }}
-        cache: 'poetry'
-
     - name: Install Poetry
       shell: bash
       env:
         PYTHON_VERSION: ${{ inputs.python-version }}
         POETRY_VERSION: ${{ inputs.poetry-version }}
       run: pipx install "poetry==$POETRY_VERSION" --python "$PYTHON_VERSION"
+
+    - name: Setup python ${{ inputs.python-version }}
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ inputs.python-version }}
+        cache: 'poetry'
 
     - name: Install dependencies
       shell: bash
