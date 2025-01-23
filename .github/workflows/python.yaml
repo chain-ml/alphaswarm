@@ -7,7 +7,7 @@ on:
   pull_request:
 
 jobs:
-  poetry-test:
+    poetry-test:
       - name: Checkout repository
         uses: actions/checkout@v4
 
@@ -17,7 +17,6 @@ jobs:
 
       - name: poetry test
         run: poetry config --list
-
 
 #  lint:
 #    runs-on: ubuntu-latest
