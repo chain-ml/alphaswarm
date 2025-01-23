@@ -24,7 +24,6 @@ runs:
         cache: 'poetry'
 
     - name: Install dependencies
-      shell: bash
       run: |
         poetry config virtualenvs.create false &&
         poetry install --extras dev
