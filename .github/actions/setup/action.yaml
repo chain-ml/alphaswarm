@@ -24,4 +24,5 @@ runs:
         cache: 'poetry'
 
     - name: Install dependencies
+      shell: bash
       run: poetry install --extras dev
