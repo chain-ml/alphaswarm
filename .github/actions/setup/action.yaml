@@ -12,6 +12,7 @@ runs:
   using: composite
   steps:
     - name: Install Poetry
+      shell: bash
       env:
         POETRY_VERSION: ${{ inputs.poetry-version }}
       run: pipx install "poetry==$POETRY_VERSION"
@@ -26,4 +27,5 @@ runs:
       shell: bash
       run: |
         poetry config virtualenvs.create false &&
-        poetry install --extras dev
+        poetry install --extras dev &&
+        poetry config --list
