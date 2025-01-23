@@ -17,6 +17,9 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
+      - name: poetry path
+        run: which poetry
+
       - name: poetry test
         run: poetry config --list
 

@@ -12,6 +12,9 @@ runs:
       with:
         python-version: ${{ matrix.python-version }}
 
+    - name: Install Poetry
+      run: pipx install poetry
+
     - uses: actions/cache@v4
       with:
         path: ~/.cache/pypoetry
