@@ -15,8 +15,6 @@ NATIVE_TOKENS = {"ethereum": ["ETH"], "ethereum_sepolia": ["ETH"], "base": ["ETH
 
 BASE_PATH = Path(__file__).parent.parent
 CONFIG_PATH = BASE_PATH / "config"
-ALERTING_CONFIGS_PATH = CONFIG_PATH / "alerting_configs"
-DEFAULT_ALERTING_CONFIG_PATH = ALERTING_CONFIGS_PATH / "alerting_config.yaml"
 
 
 @dataclass
