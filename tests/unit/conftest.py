@@ -12,9 +12,9 @@ def default_config() -> Config:
     env_file = os.path.join(base_path, ".env")
     if os.path.isfile(env_file):
         dotenv.load_dotenv(env_file)
-
-    env_example = os.path.join(base_path, ".env.example")
-    assert os.path.isfile(env_example)
-    dotenv.load_dotenv(env_example)
+    else:
+        env_example = os.path.join(base_path, ".env.example")
+        assert os.path.isfile(env_example)
+        dotenv.load_dotenv(env_example)
 
     return Config(network_env="all")
