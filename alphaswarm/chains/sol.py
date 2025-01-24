@@ -129,10 +129,10 @@ class SolanaClient(Web3Client):
                 # Convert to human-readable format
                 return float(balance) / (10**decimals)
 
-            except Exception as e:
-                logger.error(f"Error getting SPL token balance: {str(e)}")
+            except Exception:
+                logger.exception(f"Error getting SPL token balance")
                 return None
 
-        except Exception as e:
-            logger.error(f"Error in get_token_balance: {str(e)}")
+        except Exception:
+            logger.exception("Error in get_token_balance")
             return None
