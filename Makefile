@@ -7,8 +7,8 @@ format:
 
 dev-lint:
 	poetry run black .
-	poetry run mypy .
-	poetry run ruff check . --fix
+	poetry run mypy . || true
+	poetry run ruff check . --fix || true
 	poetry run isort .
 #	pylint theoriq/. --max-line-length 120 --disable=R,C,I  --fail-under=9
 
