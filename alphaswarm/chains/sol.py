@@ -130,7 +130,7 @@ class SolanaClient(Web3Client):
                 return float(balance) / (10**decimals)
 
             except Exception:
-                logger.exception(f"Error getting SPL token balance")
+                logger.exception("Error getting SPL token balance")
                 return None
 
         except Exception:
