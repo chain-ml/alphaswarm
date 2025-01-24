@@ -13,33 +13,43 @@ authors = [
 readme = "README.md"
 requires-python = ">=3.11,<4.0"
 dependencies = [
+    "requests (>=2.32.3,<3.0.0)",
+    "pyyaml (>=6.0.2,<7.0.0)",
+    "pydantic (>=2.10.6,<3.0.0)"
 ]
 
-[project.optional-dependencies]
-dev = [
-    "ruff",
-    "mypy",
-    "black",
-    "isort",
-    "pytest"
-]
+[tool.poetry.group.web3.dependencies]
+web3 = "6.14.0"
+solana = "0.36.0"
+web3-ethereum-defi = "0.27"
+
+[tool.poetry.group.dev]
+optional = true
+
+[tool.poetry.group.dev.dependencies]
+types-pyyaml = "^6.0.12.20241230"
+ruff = "^0.9.3"
+mypy = "^1.14.1"
+black = "^24.10.0"
+isort = "^5.13.2"
+pytest = "^8.3.4"
+types-requests = ">=2.31.0.6"
+python-dotenv = "^1.0.1"
+eth-typing = "3.5.2"
 
 
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]
 build-backend = "poetry.core.masonry.api"
 
-[tool.pytest]
-pythonpath = "."
+#[tool.pytest]
+#pythonpath = "."
 
 [tool.pytest.ini_options]
 log_cli = "True"
 log_cli_level = "DEBUG"
 log_cli_format = "[%(asctime)s %(levelname)s %(threadName)s %(name)s:%(funcName)s:%(lineno)s] %(message)s"
 log_cli_date_format = "%Y-%m-%d %H:%M:%S%z"
-env = [
-]
-
 
 [tool.black]
 line-length = 120
