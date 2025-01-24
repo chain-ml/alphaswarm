@@ -3,7 +3,12 @@ name = "alphaswarm"
 version = "0.1.0"
 description = ""
 authors = [
-    {name = "Guillaume Koch",email = "guillaumekoch@chainml.net"}
+    {name = "Alex Mark", email = "alexandermarx@chainml.net"},
+    {name = "Arnaud Flament", email = "arnaudflament@chainml.net"},
+    {name = "David Mueller", email = "davidmueller@chainml.net"},
+    {name = "Dmytro Nikolaiev", email = "dmytronikolaiev@chainml.net"},
+    {name = "Ethan Jackson", email = "ethanjackson@chainml.net"},
+    {name = "Guillaume Koch", email = "guillaumekoch@chainml.net"}
 ]
 readme = "README.md"
 requires-python = ">=3.11,<4.0"
