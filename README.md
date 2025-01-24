@@ -1,6 +1,6 @@
 # Alphaswarm
 
-TO DO description
+The alphaswarm framework is a framework designed to give AI agents advanced research and trading capabilities for crypto.
 
 ## Dev
 
