@@ -1,0 +1,28 @@
+name: Setup Python
+description: Checkout the repository, setup python, and install dependencies
+inputs:
+  python-version:
+    description: Python version to use
+    required: true
+  poetry-version:
+    description: Poertry version to use
+    required: false
+    default: "2.0.1"
+runs:
+  using: composite
+  steps:
+    - name: Install Poetry
+      shell: bash
+      env:
+        POETRY_VERSION: ${{ inputs.poetry-version }}
+      run: pipx install "poetry==$POETRY_VERSION"
+
+    - name: Setup python ${{ inputs.python-version }}
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ inputs.python-version }}
+        cache: 'poetry'
+
+    - name: Install dependencies
+      shell: bash
+      run: poetry install --extras dev

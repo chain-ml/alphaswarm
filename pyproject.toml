@@ -1,0 +1,69 @@
+[project]
+name = "alphaswarm"
+version = "0.1.0"
+description = ""
+authors = [
+    {name = "Alex Mark", email = "alexandermarx@chainml.net"},
+    {name = "Arnaud Flament", email = "arnaudflament@chainml.net"},
+    {name = "David Mueller", email = "davidmueller@chainml.net"},
+    {name = "Dmytro Nikolaiev", email = "dmytronikolaiev@chainml.net"},
+    {name = "Ethan Jackson", email = "ethanjackson@chainml.net"},
+    {name = "Guillaume Koch", email = "guillaumekoch@chainml.net"}
+]
+readme = "README.md"
+requires-python = ">=3.11,<4.0"
+dependencies = [
+]
+
+[project.optional-dependencies]
+dev = [
+    "ruff",
+    "mypy",
+    "black",
+    "isort",
+    "pytest"
+]
+
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.pytest]
+pythonpath = "."
+
+[tool.pytest.ini_options]
+log_cli = "True"
+log_cli_level = "DEBUG"
+log_cli_format = "[%(asctime)s %(levelname)s %(threadName)s %(name)s:%(funcName)s:%(lineno)s] %(message)s"
+log_cli_date_format = "%Y-%m-%d %H:%M:%S%z"
+env = [
+]
+
+
+[tool.black]
+line-length = 120
+
+[tool.mypy]
+exclude = "(?x)(venv|docs|tmp|examples)"
+mypy_path = "./stubs:src"
+
+explicit_package_bases = "true"
+no_implicit_optional = true
+
+[[tool.mypy.overrides]]
+module = ["smolagents.*", "theoriq.*", "eth_defi.*"]
+ignore_missing_imports = true
+
+[tool.ruff]
+target-version = "py311"
+exclude = ["__init__.py", "docs", "tmp", "venv"]
+line-length = 120
+
+[tool.isort]
+profile = "black"
+line_length = 120
+py_version = 311
+src_paths = ["src"]
+skip = ["__init__.py"]
+skip_glob = ["**/.venv/*", "**/venv/*", "**/docs/*", "**/stubs/*", "**/tests/*"]
