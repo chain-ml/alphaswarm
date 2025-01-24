@@ -9,15 +9,15 @@ dev-lint:
 	poetry run black .
 	poetry run mypy .
 	poetry run ruff check . --fix
-#	isort .
+	poetry run isort .
 #	pylint theoriq/. --max-line-length 120 --disable=R,C,I  --fail-under=9
 
 lint:
 	poetry run black . --check
 	poetry run mypy .
 	poetry run ruff check .
+	poetry run isort . --check-only
 #	pylint theoriq/. --max-line-length 120 --disable=R,C,I,E0401,W1203,W0107 --fail-under=9
-#	isort . --check-only
 
 test: 
 	poetry run pytest tests/agents/test_agent.py
