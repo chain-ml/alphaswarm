@@ -1,0 +1,233 @@
+# LLM Configuration
+llm:
+  kind: LLMConfig
+  version: 0.1
+  metadata:
+    name: default-llm
+    labels:
+      provider: Anthropic
+  spec:
+    description: "Default model for strategy analysis"
+    provider:
+      name: Anthropic
+      anthropicSpec:
+        model: claude-3-5-sonnet-latest
+        timeout: 60
+        maxTokens: 1000
+        apiKey:
+          fromEnvVar: ANTHROPIC_API_KEY
+    parameters:
+      temperature: 0.7
+
+# Telegram Configuration
+telegram:
+  bot_token:
+    fromEnvVar: TELEGRAM_BOT_TOKEN
+
+# Network Environment Configuration
+network_environments:
+  production:
+    - "ethereum"
+    - "base"
+    - "solana"
+  test:
+    - "ethereum_sepolia"
+
+# Trading Venues Configuration
+trading_venues:
+  uniswap_v2:
+    ethereum:
+      supported_pairs: ["WETH_USDC", "WETH_USDT", "WETH_DAI"]
+    base:
+      supported_pairs: ["VIRTUAL_WAI", "VIRTUAL_VADER", "VIRTUAL_AIXBT", "VIRTUAL_TRUST", "VIRTUAL_SEKOIA"]
+
+  uniswap_v3:
+    ethereum:
+      supported_pairs: ["WETH_USDC", "WETH_USDT", "WETH_DAI"]
+    ethereum_sepolia:
+      supported_pairs: ["WETH_USDC"]
+    base:
+      supported_pairs: ["CLANKER_WETH", "WETH_WAI", "WETH_VADER", "SEKOIA_WETH", "SEKOIA_USDC", "WETH_TRUST", "AIXBT_USDC", "VIRTUAL_WETH", "HENLO_WETH", "VIRTUAL_COOKIE"]
+    settings:
+      fee_tiers: [100, 500, 3000, 10000]  # Available fee tiers in basis points, can be used to exclude fee tiers from swaps
+
+  jupiter:
+    solana:
+      quote_api_url: "https://quote-api.jup.ag/v6/quote"
+      swap_api_url: "https://quote-api.jup.ag/v6/swap"
+      supported_pairs: ["GIGA_SOL", "FARTCOIN_SOL", "AI16Z_SOL", "GRIFFAIN_SOL", "ALCH_SOL", "ZEREBRO_SOL", "AVA_SOL", "SNAI_SOL", "ARC_SOL", "ANON_SOL", "SWARMS_SOL", "HYPER_SOL", "PIPPIN_SOL", "GOAT_SOL", "AIMONICA_SOL", "MAX_SOL", "BUZZ_SOL", "NEUR_SOL", "BULLY_SOL", "GNON_SOL"]
+    settings:
+      slippage_bps: 100  # 1%, swaps currently not supported for Jupiter
+
+# Chain Configuration
+# WARNING: These configurations will need to be checked for accuracy
+chain_config:
+  ethereum:
+    wallet_address:
+      fromEnvVar: ETH_WALLET_ADDRESS
+    private_key:
+      fromEnvVar: ETH_PRIVATE_KEY
+    gas_settings:
+      max_priority_fee: 2000000000  # 2 gwei, currently not used
+      gas_limit: 200000
+    rpc_url:
+      fromEnvVar: ETH_RPC_URL
+    tokens:
+      ETH: # Used to correctly map price requests
+        address: "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"
+        decimals: 18
+        is_native: true
+      WETH:
+        address: "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"
+        decimals: 18
+      USDC:
+        address: "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48"
+        decimals: 6
+      USDT:
+        address: "0xdAC17F958D2ee523a2206206994597C13D831ec7"
+        decimals: 6
+      DAI:
+        address: "0x6B175474E89094C44Da98b954EedeAC495271d0F"
+        decimals: 18
+      REKT:
+        address: "0xdd3B11eF34cd511a2DA159034a05fcb94D806686"
+        decimals: 18
+  
+  ethereum_sepolia:
+    wallet_address:
+      fromEnvVar: ETH_WALLET_ADDRESS
+    private_key:
+      fromEnvVar: ETH_PRIVATE_KEY
+    gas_settings:
+      max_priority_fee: 10000000000  # 10 gwei, currently not used
+      gas_limit: 300000
+    rpc_url:
+      fromEnvVar: ETH_SEPOLIA_RPC_URL
+    tokens:
+      WETH:
+        address: "0xfff9976782d46cc05630d1f6ebab18b2324d6b14"
+        decimals: 18
+      USDC:
+        address: "0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238"
+        decimals: 6
+  
+  base:
+    wallet_address:
+      fromEnvVar: BASE_WALLET_ADDRESS
+    private_key:
+      fromEnvVar: BASE_PRIVATE_KEY
+    gas_settings:
+      max_priority_fee: 1000000000  # 1 gwei, currently not used
+      gas_limit: 200000
+    rpc_url:
+      fromEnvVar: BASE_RPC_URL
+    tokens:
+      WETH:
+        address: "0x4200000000000000000000000000000000000006"
+        decimals: 18
+      USDC:
+        address: "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913"
+        decimals: 6
+      AIXBT:
+        address: "0x4F9Fd6Be4a90f2620860d680c0d4d5Fb53d1A825"
+        decimals: 18
+      VIRTUAL:
+        address: "0x0b3e328455c4059EEb9e3f84b5543F74E24e7E1b"
+        decimals: 18
+      HENLO:
+        address: "0x23A96680Ccde03Bd4Bdd9a3e9a0Cb56A5D27F7c9"
+        decimals: 18
+      COOKIE:
+        address: "0xC0041EF357B183448B235a8Ea73Ce4E4eC8c265F" 
+        decimals: 18
+      TRUST:
+        address: "0xC841b4eaD3F70bE99472FFdB88E5c3C7aF6A481a"
+        decimals: 18
+      SEKOIA:
+        address: "0x1185cB5122Edad199BdBC0cbd7a0457E448f23c7"
+        decimals: 18
+      VADER:
+        address: "0x731814e491571A2e9eE3c5b1F7f3b962eE8f4870"
+        decimals: 18
+      WAI:
+        address: "0x6112b8714221bBd96AE0A0032A683E38B475d06C"
+        decimals: 18
+      CLANKER:
+        address: "0x1bc0c42215582d5A085795f4baDbaC3ff36d1Bcb"
+        decimals: 18
+
+  solana:
+    wallet_address:
+      fromEnvVar: SOL_WALLET_ADDRESS
+    private_key:
+      fromEnvVar: SOL_PRIVATE_KEY
+    rpc_url:
+      fromEnvVar: SOLANA_RPC_URL
+    tokens:
+      SOL:
+        address: "So11111111111111111111111111111111111111112"
+        decimals: 9
+        is_native: true
+      GIGA:
+        address: "63LfDmNb3MQ8mw9MtZ2To9bEA2M71kZUUGq5tiJxcqj9"
+        decimals: 5
+      FARTCOIN:
+        address: "9BB6NFEcjBCtnNLFko2FqVQBq8HHM13kCyYcdQbgpump"
+        decimals: 6
+      AI16Z:
+        address: "HeLp6NuQkmYB4pYWo2zYs22mESHXPQYzXbB8n4V98jwC" 
+        decimals: 9
+      GRIFFAIN:
+        address: "8x5VqbHA8D7NkD52uNuS5nnt3PwA8pLD34ymskeSo2Wn"
+        decimals: 6
+      ALCH:
+        address: "HNg5PYJmtqcmzXrv6S9zP1CDKk5BgDuyFBxbvNApump"
+        decimals: 9
+      ZEREBRO:
+        address: "8x5VqbHA8D7NkD52uNuS5nnt3PwA8pLD34ymskeSo2Wn" 
+        decimals: 6
+      AVA:
+        address: "DKu9kykSfbN5LBfFXtNNDPaX35o4Fv6vJ9FKk7pZpump" 
+        decimals: 6
+      SNAI:
+        address: "Hjw6bEcHtbHGpQr8onG3izfJY5DJiWdt7uk2BfdSpump" 
+        decimals: 6
+      ARC:
+        address: "61V8vBaqAGMpgDQi4JcAwo1dmBGHsyhzodcPqnEVpump" 
+        decimals: 6
+      ANON:
+        address: "9McvH6w97oewLmPxqQEoHUAv3u5iYMyQ9AeZZhguYf1T"
+        decimals: 9
+      SWARMS:
+        address: "74SBV4zDXxTRgv1pEMoECskKBkZHc2yGPnc7GYVepump"
+        decimals: 6
+      HYPER:
+        address: "8vBMibwpn8wpfYKbQ9xqzodymg3LjmYec2tSNGRy23K8"
+        decimals: 6
+      PIPPIN:
+        address: "Dfh5DzRgSvvCFDoYc2ciTkMrbDfRKybA4SoFbPmApump"
+        decimals: 6
+      GOAT:
+        address: "CzLSujWBLFsSjncfkh59rUFqvafWcY5tzedWJSuypump"
+        decimals: 6
+      AIMONICA:
+        address: "FVdo7CDJarhYoH6McyTFqx71EtzCPViinvdd1v86Qmy5"
+        decimals: 6
+      MAX:
+        address: "oraim8c9d1nkfuQk9EzGYEUGxqL3MHQYndRw1huVo5h"
+        decimals: 6
+      BUZZ:
+        address: "9DHe3pycTuymFk4H4bbPoAJ4hQrr2kaLDF6J6aAKpump"
+        decimals: 6
+      NEUR:
+        address: "3N2ETvNpPNAxhcaXgkhKoY1yDnQfs41Wnxsx5qNJpump"
+        decimals: 6
+      GOD:
+        address: "9qriMjPPAJTMCtfQnz7Mo9BsV2jAWTr2ff7yc3JWpump"
+        decimals: 6
+      BULLY:
+        address: "79yTpy8uwmAkrdgZdq6ZSBTvxKsgPrNqTLvYQBh1pump"
+        decimals: 6
+      GNON:
+        address: "HeJUFDxfJSzYFUuHLxkMqCgytU31G6mjP4wKviwqpump" 
+        decimals: 6 

@@ -13,6 +13,6 @@ poetry install
 
 to install with dev dependencies:
 ```shell
-poetry install --extras dev
+poetry install --with dev
 ```
 
