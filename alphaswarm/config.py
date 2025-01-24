@@ -122,14 +122,14 @@ class Config:
         )
         logger.debug(f"Logging configured with level {log_level} and format {log_format}")
 
-    def __init__(self, network_env: str = "production") -> None:
+    def __init__(self, *, config_path: Optional[str] = None, network_env: str = "production") -> None:
         """Initialize configuration with optional network environment filter.
 
         Args:
             network_env (str): Network environment to use. One of: "production", "test", "all"
         """
         self._network_env = network_env
-        self._load_config()
+        self._load_config(config_path)
 
     @staticmethod
     def _substitute_env_vars(value: Any) -> Any:
@@ -183,21 +183,13 @@ class Config:
 
         return processed
 
-    def _load_config(self) -> None:
+    def _load_config(self, config_path: Optional[str] = None) -> None:
         """Load configuration from YAML and substitute environment variables"""
-        config_path = CONFIG_PATH / "default.yaml"
-        logger.info(f"Loading configuration from '{config_path}'")
+        actual_path = config_path or str(CONFIG_PATH / "default.yaml")
+        logger.info(f"Loading configuration from '{actual_path}'")
 
-        with open(config_path, "r", encoding="utf-8") as f:
+        with open(actual_path, "r", encoding="utf-8") as f:
             self._config = yaml.safe_load(f)
-
-        # Load strategy config if exists
-        strategy_path = config_path.parent / "strategy.yaml"
-        if strategy_path.exists():
-            with open(strategy_path, "r", encoding="utf-8") as f:
-                strategy_config = yaml.safe_load(f)
-                if strategy_config:
-                    self._config["strategies"] = strategy_config.get("strategies", {})
 
         # First pass: process only environment variables
         self._config = self._process_config(self._config, process_env_vars=True)
