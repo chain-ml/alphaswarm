@@ -15,13 +15,18 @@ requires-python = ">=3.11,<4.0"
 dependencies = [
     "requests (>=2.32.3,<3.0.0)",
     "pyyaml (>=6.0.0,<7.0.0)",
-    "pydantic (>=2.0.0,<3.0.0)"
+    "pydantic (>=2.0.0,<3.0.0)",
 ]
+
+[tool.poetry.group.ai.dependencies]
+transformers = "4.47.1"  # fixed smolagents dependency
+litellm = "1.55.10"  # newer versions via smolagents will not work on windows
+smolagents = "1.2.2"
 
 [tool.poetry.group.web3.dependencies]
 web3 = "6.14.0"
 solana = "0.36.0"
-web3-ethereum-defi = "0.27"
+web3-ethereum-defi = "0.28"
 
 [tool.poetry.group.dev]
 optional = true
