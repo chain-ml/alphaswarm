@@ -2,6 +2,7 @@ import logging
 import os
 from typing import Any, Dict, Optional
 
+import web3
 from alphaswarm.config import Config, TokenInfo
 from eth_defi.token import TokenDetails, fetch_erc20_details
 from eth_typing import ChecksumAddress
@@ -24,7 +25,8 @@ class EVMClient(Web3Client):
         self._web3_instances: Dict[str, Web3] = {}  # Initialize dict to store web3 instances per chain
         logger.info("Initialized EVMClient")
 
-    def _validate_chain(self, chain: str) -> None:
+    @staticmethod
+    def _validate_chain(chain: str) -> None:
         """Validate that the chain is supported by EVMClient"""
         if chain not in SUPPORTED_CHAINS:
             raise ValueError(f"Chain '{chain}' is not supported by EVMClient. Supported chains: {SUPPORTED_CHAINS}")
@@ -56,10 +58,11 @@ class EVMClient(Web3Client):
         web3 = self.get_web3(chain)
         return web3.eth.contract(address=self.to_checksum_address(address, chain), abi=abi)
 
-    def to_checksum_address(self, address: str, chain: str) -> ChecksumAddress:
+    @classmethod
+    def to_checksum_address(cls, address: str, chain: str) -> ChecksumAddress:
         """Convert address to checksum format"""
-        self._validate_chain(chain)
-        return self.get_web3(chain).to_checksum_address(address)
+        cls._validate_chain(chain)
+        return web3.Web3.to_checksum_address(address)
 
     def _get_token_details(self, token_address: str, chain: str) -> TokenDetails:
         self._validate_chain(chain)

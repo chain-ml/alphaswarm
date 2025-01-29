@@ -3,7 +3,9 @@ from typing import Any
 import pytest
 from hexbytes import HexBytes
 
+from alphaswarm.services.chains import EVMClient
 from alphaswarm.services.exchanges.uniswap.uniswap import UniswapClientV3
+
 
 @pytest.fixture
 def mock_receipt() -> dict[str, Any]:
@@ -36,13 +38,16 @@ def mock_receipt() -> dict[str, Any]:
         "status": 1,
     }
 
+
 def test_get_final_swap_amount_received_usdc(mock_receipt: dict[str, Any]) -> None:
     # Test getting USDC amount received (user receives USDC)
     usdc_address = "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48"
     user_address = "0xcC825866E8bB5A3A9746F3EA32A2380c64a2C210"
     usdc_decimals = 6
 
-    usdc_amount = UniswapClientV3._get_final_swap_amount_received(mock_receipt, usdc_address, user_address, usdc_decimals)
+    usdc_amount = UniswapClientV3._get_final_swap_amount_received(
+        mock_receipt, EVMClient.to_checksum_address(usdc_address, "base"), user_address, usdc_decimals
+    )
 
     # Expected amount: 0x33746a = 3372138 raw amount = 3.372138 USDC
     expected_usdc = 3.372138
@@ -55,7 +60,9 @@ def test_get_final_swap_amount_received_weth(mock_receipt: dict[str, Any]) -> No
     user_address = "0xcC825866E8bB5A3A9746F3EA32A2380c64a2C210"
     weth_decimals = 18
 
-    weth_amount = UniswapClientV3._get_final_swap_amount_received(mock_receipt, weth_address, user_address, weth_decimals)
+    weth_amount = UniswapClientV3._get_final_swap_amount_received(
+        mock_receipt, EVMClient.to_checksum_address(weth_address, "base"), user_address, weth_decimals
+    )
 
     # Expected amount: 0 WETH (since user is sending, not receiving)
     assert weth_amount == 0, f"Expected 0 WETH but got {weth_amount}"
