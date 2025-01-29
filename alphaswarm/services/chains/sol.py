@@ -71,7 +71,6 @@ class SolanaClient(Web3Client):
             return Decimal(response.value) / 1_000_000_000
 
         token_address = token_info.address
-        decimals = token_info.decimals
 
         token_pubkey = Pubkey.from_string(token_address)
         wallet_pubkey = Pubkey.from_string(wallet_address)
@@ -112,7 +111,7 @@ class SolanaClient(Web3Client):
         elif amount_json is None:
             decimals = Decimal(0)  # or handle None how you like
         else:
-            raise TypeError(f"Unexpected type for decimals: {type(decimals)}")
+            raise TypeError(f"Unexpected type for decimals: {type(decimals_json)}")
 
         # Convert to human-readable format
         return balance / 10**decimals
