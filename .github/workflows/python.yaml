@@ -40,4 +40,5 @@ jobs:
           ETH_RPC_URL: ${{ secrets.ETH_RPC_URL }}
           ETH_SEPOLIA_RPC_URL: ${{ secrets.ETH_SEPOLIA_RPC_URL }}
           SOLANA_RPC_URL: ${{ secrets.SOLANA_RPC_URL }}
-        run: make unit-tests
+          ALCHEMY_API_KEY: ${{ secrets.ALCHEMY_API_KEY }}
+        run: make all-tests
