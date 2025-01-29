@@ -48,10 +48,14 @@ class UniswapClient(DEXClient):
         self._position_manager = None
         self._quoter = None
         self._blockchain_client = Web3ClientFactory.get_instance().get_client(self.chain, self.config)
-        self._web3: MultiProviderWeb3 = create_multi_provider_web3(self.config.get_chain_config(self.chain).rpc_url)
+        self._web3: MultiProviderWeb3 = self._create_multi_provider_web3(self.config.get_chain_config(self.chain).rpc_url)
 
         logger.info("Created UniswapClient instance (uninitialized)")
         self._initialize()
+
+    @staticmethod
+    def _create_multi_provider_web3(rpc_url) -> MultiProviderWeb3:
+        return create_multi_provider_web3(rpc_url)
 
     def initialize(self) -> None:
         """Initialize the client with version and chain information.
