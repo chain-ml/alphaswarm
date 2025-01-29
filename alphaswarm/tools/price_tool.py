@@ -1,4 +1,5 @@
-from datetime import datetime, UTC
+from datetime import UTC, datetime
+
 import requests
 from smolagents import Tool
 
@@ -16,7 +17,7 @@ class PriceTool(Tool):
         "token_id": {
             "type": "string",
             "required": True,
-            "description" : "The CoinGecko token ID (e.g., 'bitcoin', 'ethereum')"
+            "description": "The CoinGecko token ID (e.g., 'bitcoin', 'ethereum')",
         }
     }
     output_type = "object"
@@ -35,11 +36,7 @@ class PriceTool(Tool):
         """
         try:
             url = f"{self.base_url}/simple/price"
-            params = {
-                "ids": token_id,
-                "vs_currencies": "usd",
-                "include_24hr_change": "true"
-            }
+            params = {"ids": token_id, "vs_currencies": "usd", "include_24hr_change": "true"}
 
             response = self.session.get(url, params=params, timeout=10)
 
@@ -54,12 +51,8 @@ class PriceTool(Tool):
             price = data[token_id]["usd"]
             change_24h = data[token_id]["usd_24h_change"]
 
-            timestamp = datetime.now(UTC).strftime('%Y-%m-%d %H:%M:%S UTC')
-            return (
-                f"[{timestamp}] {token_id.upper()}\n"
-                f"Price: ${price:,.2f}\n"
-                f"24h Change: {change_24h:+.2f}%"
-            )
+            timestamp = datetime.now(UTC).strftime("%Y-%m-%d %H:%M:%S UTC")
+            return f"[{timestamp}] {token_id.upper()}\n" f"Price: ${price:,.2f}\n" f"24h Change: {change_24h:+.2f}%"
 
         except requests.RequestException as e:
             return f"Network error: {str(e)}"

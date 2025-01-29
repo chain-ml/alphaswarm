@@ -2,7 +2,7 @@ import asyncio
 import os
 from typing import Optional, Sequence
 
-from smolagents import CodeAgent, LiteLLMModel, Tool, CODE_SYSTEM_PROMPT
+from smolagents import CODE_SYSTEM_PROMPT, CodeAgent, LiteLLMModel, Tool
 
 
 class AlphaSwarmAgent:
