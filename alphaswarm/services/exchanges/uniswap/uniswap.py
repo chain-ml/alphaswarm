@@ -56,7 +56,7 @@ class UniswapClient(DEXClient):
         self._initialize()
 
     @staticmethod
-    def _create_multi_provider_web3(rpc_url) -> MultiProviderWeb3:
+    def _create_multi_provider_web3(rpc_url: str) -> MultiProviderWeb3:
         return create_multi_provider_web3(rpc_url)
 
     def initialize(self) -> None:
