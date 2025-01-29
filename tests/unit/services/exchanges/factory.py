@@ -4,8 +4,7 @@ from typing import List, Optional, Tuple
 import pytest
 
 from alphaswarm.config import Config, TokenInfo
-from alphaswarm.exchanges import DEXClient, DEXFactory
-from alphaswarm.exchanges.base import SwapResult
+from alphaswarm.services.exchanges import DEXClient, DEXFactory, SwapResult
 
 
 class MockDex(DEXClient):

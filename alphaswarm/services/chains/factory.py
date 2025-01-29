@@ -3,9 +3,9 @@ from __future__ import annotations
 import logging
 from typing import Dict
 
-from alphaswarm.chains.base import Web3Client
 from alphaswarm.config import Config
 
+from .base import Web3Client
 from .evm import SUPPORTED_CHAINS as EVM_CHAINS
 from .evm import EVMClient
 from .sol import SUPPORTED_CHAINS as SOLANA_CHAINS

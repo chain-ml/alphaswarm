@@ -5,7 +5,7 @@ from urllib.parse import urlencode
 
 import requests
 from alphaswarm.config import Config, TokenInfo
-from alphaswarm.exchanges.base import DEXClient, SwapResult
+from alphaswarm.services.exchanges.base import DEXClient, SwapResult
 
 logger = logging.getLogger(__name__)
 
