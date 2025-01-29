@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Optional
+from decimal import Decimal
 
 from alphaswarm.config import Config, TokenInfo
 from eth_typing import ChecksumAddress
@@ -22,6 +22,6 @@ class Web3Client(ABC):
         pass
 
     @abstractmethod
-    def get_token_balance(self, token: str, wallet_address: str, chain: str) -> Optional[float]:
+    def get_token_balance(self, token: str, wallet_address: str, chain: str) -> Decimal:
         """Get balance for a token symbol (resolved via Config) for a wallet address"""
         pass

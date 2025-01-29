@@ -1,5 +1,6 @@
 import logging
-from typing import Dict, Optional
+from decimal import Decimal
+from typing import Dict
 
 from alphaswarm.config import Config, TokenInfo
 from eth_typing import ChecksumAddress
@@ -30,7 +31,8 @@ class SolanaClient(Web3Client):
             self._clients[chain] = api.Client(rpc_url)
         return self._clients[chain]
 
-    def _validate_chain(self, chain: str) -> None:
+    @staticmethod
+    def _validate_chain(chain: str) -> None:
         """Validate that the chain is supported by SolanaClient"""
         if chain not in SUPPORTED_CHAINS:
             raise ValueError(f"Chain '{chain}' is not supported by SolanaClient. Supported chains: {SUPPORTED_CHAINS}")
@@ -45,7 +47,7 @@ class SolanaClient(Web3Client):
         self._validate_chain(chain)
         raise NotImplementedError("Token info not yet implemented for Solana")
 
-    def get_token_balance(self, token: str, wallet_address: str, chain: str) -> Optional[float]:
+    def get_token_balance(self, token: str, wallet_address: str, chain: str) -> Decimal:
         """Get token balance for a wallet address.
 
         Args:
@@ -56,83 +58,61 @@ class SolanaClient(Web3Client):
         Returns:
             Optional[float]: The token balance in human-readable format, or None if error
         """
-        try:
-            self._validate_chain(chain)
-            client = self._get_client(chain)
+        self._validate_chain(chain)
+        client = self._get_client(chain)
 
-            chain_config = self.config.get_chain_config_or_none(chain)
-            # Get token info from chain_config section
-            if chain_config is None:
-                logger.error(f"No token configuration found for chain {chain}")
-                return None
+        chain_config = self.config.get_chain_config(chain)
+        token_info = chain_config.get_token_info(token)
 
-            token_info = chain_config.get_token_info_or_none(token)
-            if token_info is None:
-                logger.error(f"No token configuration found for token {token}")
-                return None
+        # Handle native SOL balance
+        if token.upper() == "SOL":
+            pubkey = Pubkey.from_string(wallet_address)
+            response = client.get_balance(pubkey)
+            return Decimal(response.value) / 1_000_000_000
 
-            # Handle native SOL balance
-            if token.upper() == "SOL":
-                pubkey = Pubkey.from_string(wallet_address)
-                response = client.get_balance(pubkey)
-                if response.value is not None:
-                    # Convert lamports to SOL (1 SOL = 10^9 lamports)
-                    return float(response.value) / 1_000_000_000
-                return None
+        token_address = token_info.address
+        decimals = token_info.decimals
 
-            token_address = token_info.address
-            decimals = token_info.decimals
+        token_pubkey = Pubkey.from_string(token_address)
+        wallet_pubkey = Pubkey.from_string(wallet_address)
 
-            # For SPL tokens
-            try:
-                token_pubkey = Pubkey.from_string(token_address)
-                wallet_pubkey = Pubkey.from_string(wallet_address)
+        # Get token accounts
+        opts = TokenAccountOpts(mint=token_pubkey)
+        token_accounts = client.get_token_accounts_by_owner_json_parsed(wallet_pubkey, opts)
 
-                # Get token accounts
-                opts = TokenAccountOpts(mint=token_pubkey)
-                token_accounts = client.get_token_accounts_by_owner_json_parsed(wallet_pubkey, opts)
+        if not token_accounts.value:
+            return Decimal(0)  # No token account found means 0 balance
 
-                if not token_accounts.value:
-                    return 0.0  # No token account found means 0 balance
+        # Get balance from account data
+        account_data = token_accounts.value[0].account.data.parsed
 
-                # Get balance from account data
-                account_data = token_accounts.value[0].account.data.parsed
+        # Type checking to prevent issues (and lint errors)
+        if not isinstance(account_data, dict):
+            raise ValueError("Unexpected data format: 'parsed' is not a dict")
 
-                # Type checking to prevent issues (and lint errors)
-                if not isinstance(account_data, dict):
-                    raise ValueError("Unexpected data format: 'parsed' is not a dict")
+        info = account_data.get("info")
+        if not isinstance(info, dict):
+            raise ValueError("'info' is not a dict")
 
-                info = account_data.get("info")
-                if not isinstance(info, dict):
-                    raise ValueError("'info' is not a dict")
+        token_amount = info.get("tokenAmount")
+        if not isinstance(token_amount, dict):
+            raise ValueError("'tokenAmount' is not a dict")
 
-                token_amount = info.get("tokenAmount")
-                if not isinstance(token_amount, dict):
-                    raise ValueError("'tokenAmount' is not a dict")
+        amount_json = token_amount["amount"]
+        if isinstance(amount_json, (str, int, float)):
+            balance = Decimal(amount_json)
+        elif amount_json is None:
+            balance = Decimal(0)  # or handle None how you like
+        else:
+            raise TypeError(f"Unexpected type for amount: {type(amount_json)}")
 
-                amount_json = token_amount["amount"]
-                if isinstance(amount_json, (str, int, float)):
-                    balance = int(amount_json)
-                elif amount_json is None:
-                    balance = 0  # or handle None how you like
-                else:
-                    raise TypeError(f"Unexpected type for amount: {type(amount_json)}")
+        decimals_json = token_amount["decimals"]
+        if isinstance(decimals_json, (str, int, float)):
+            decimals = Decimal(decimals_json)
+        elif amount_json is None:
+            decimals = Decimal(0)  # or handle None how you like
+        else:
+            raise TypeError(f"Unexpected type for decimals: {type(decimals)}")
 
-                decimals_json = token_amount["decimals"]
-                if isinstance(decimals_json, (str, int, float)):
-                    decimals = int(decimals_json)
-                elif amount_json is None:
-                    decimals = 0  # or handle None how you like
-                else:
-                    raise TypeError(f"Unexpected type for decimals: {type(decimals)}")
-
-                # Convert to human-readable format
-                return float(balance) / (10**decimals)
-
-            except Exception:
-                logger.exception("Error getting SPL token balance")
-                return None
-
-        except Exception:
-            logger.exception("Error in get_token_balance")
-            return None
+        # Convert to human-readable format
+        return balance / 10**decimals

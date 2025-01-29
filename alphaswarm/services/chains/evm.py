@@ -1,6 +1,7 @@
 import logging
 import os
-from typing import Any, Dict, Optional
+from decimal import Decimal
+from typing import Any, Dict
 
 from alphaswarm.config import Config, TokenInfo
 from eth_defi.token import TokenDetails, fetch_erc20_details
@@ -74,42 +75,20 @@ class EVMClient(Web3Client):
     def get_token_info(self, token_address: str, chain: str) -> TokenInfo:
         """Get token info by token contract address"""
         self._validate_chain(chain)
-        try:
-            token_details: TokenDetails = self._get_token_details(token_address, chain)
-            symbol = token_details.symbol
-            decimals = token_details.decimals
+        token_details: TokenDetails = self._get_token_details(token_address, chain)
+        symbol = token_details.symbol
+        decimals = token_details.decimals
+        return TokenInfo(symbol=symbol, address=token_address, decimals=decimals, chain=chain, is_native=False)
 
-            return TokenInfo(symbol=symbol, address=token_address, decimals=decimals, chain=chain, is_native=False)
-
-        except Exception:
-            logger.exception(f"Error getting token info for {token_address} on {chain}")
-            raise
-
-    def get_token_balance(self, token: str, wallet_address: str, chain: str) -> Optional[float]:
+    def get_token_balance(self, token: str, wallet_address: str, chain: str) -> Decimal:
         """Get balance for token symbol (resolved via Config) for a wallet address"""
         self._validate_chain(chain)
-        try:
-            chain_config = self.config.get_chain_config_or_none(chain)
+        if token == "ETH":
+            return Decimal(self.get_web3(chain).eth.get_balance(self.to_checksum_address(wallet_address, chain)))
 
-            if token == "ETH":
-                balance = self.get_web3(chain).eth.get_balance(self.to_checksum_address(wallet_address, chain))
-            else:
-                # Get token info from chain_config section
-                if chain_config is None:
-                    logger.error(f"No token configuration found for chain {chain}")
-                    return None
+        chain_config = self.config.get_chain_config(chain)
+        token_info = chain_config.get_token_info(token)
 
-                token_info = chain_config.get_token_info_or_none(token)
-                if token_info is None:
-                    logger.error(f"No token configuration found for token {token}")
-                    return None
-
-                token_address = token_info.address
-                token_details: TokenDetails = self._get_token_details(token_address, chain)
-                balance = token_details.fetch_balance_of(self.to_checksum_address(wallet_address, chain))
-
-            return balance
-
-        except Exception as e:
-            logger.error(f"Error getting token balance: {str(e)}")
-            return None
+        token_address = token_info.address
+        token_details: TokenDetails = self._get_token_details(token_address, chain)
+        return token_details.fetch_balance_of(self.to_checksum_address(wallet_address, chain))
