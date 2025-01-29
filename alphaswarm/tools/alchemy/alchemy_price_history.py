@@ -19,6 +19,11 @@ class AlchemyPriceHistory(Tool):
             "nullable": True,
             "enum": NETWORKS,
         },
+        "interval": {
+            "type": "string",
+            "description": "Time interval between data points. Max history for each interval: (5m, 7d), (1h, 30d), (1d, 1yr)",
+            "enum": ["5m", "1h", "1d"],
+        },
         "history": {
             "type": "integer",
             "description": "Number of days to look back price history for",
@@ -32,10 +37,12 @@ class AlchemyPriceHistory(Tool):
         super().__init__()
         self.client = alchemy_client
 
-    def forward(self, address_or_symbol: str, history: int, network: Optional[str] = None) -> List[HistoricalPrice]:
+    def forward(self, address_or_symbol: str, interval: str, history: int, network: Optional[str] = None) -> List[HistoricalPrice]:
         end_time = datetime.now(timezone.utc)
+        max_history = self._max_history_from_interval(interval)
+        history = min(history, max_history)
         start_time = end_time - timedelta(days=history)
-        interval = self._interval_from_history(history)
+
         if network is not None:
             return self.client.get_historical_prices_by_address(
                 address_or_symbol, network, start_time, end_time, interval
@@ -44,9 +51,10 @@ class AlchemyPriceHistory(Tool):
             return self.client.get_historical_prices_by_symbol(address_or_symbol, start_time, end_time, interval).data
 
     @staticmethod
-    def _interval_from_history(history: int) -> str:
-        if history <= 7:
-            return "5m"
-        if history <= 30:
-            return "1h"
-        return "1d"
+    def _max_history_from_interval(interval: str) -> int:
+        interval_limits = {
+            "5m": 7,    # 7 days
+            "1h": 30,   # 30 days
+            "1d": 365,  # 1 year
+        }
+        return interval_limits[interval]

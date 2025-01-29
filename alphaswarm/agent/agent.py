@@ -1,8 +1,13 @@
 import asyncio
 import os
+import yaml
 from typing import Optional, Sequence
+import pydantic
 
 from smolagents import CODE_SYSTEM_PROMPT, CodeAgent, LiteLLMModel, Tool
+
+from alphaswarm.config import BASE_PATH
+from alphaswarm.strategy.schema import Strategy
 
 
 class AlphaSwarmAgent:
@@ -16,6 +21,7 @@ class AlphaSwarmAgent:
             model=LiteLLMModel(model_id=model_id),
             system_prompt=system_prompt,
         )
+        self._strategy_config = self._load_and_validate_strategy_config()
 
     async def process_message(self, current_message: str) -> Optional[str]:
         """
@@ -42,9 +48,26 @@ class AlphaSwarmAgent:
             "# Base Wallet Address",
             str(self._wallet_address),
             "",
+            "# Strategy",
+            str(self._strategy_config.model_dump(mode='json')),
+            "",
             "# Messages",
             current_message,
             "",
         ]
 
         return "\n".join(messages)
+    
+
+    def _load_and_validate_strategy_config(self) -> Strategy:
+        # TODO: place strategy yaml in appropriate directory
+        strategy_path = os.path.join(BASE_PATH, "alphaswarm", "strategy", "strategy_config.yaml")
+        try:
+            with open(strategy_path, "r", encoding="utf-8") as f:
+                strategy_dict = yaml.safe_load(f)
+                strategy = Strategy.model_validate(strategy_dict)
+                return strategy
+        except FileNotFoundError:
+            raise Exception("No trading strategy exists. Please configure a strategy before editing.")
+        except pydantic.ValidationError as e:
+            raise Exception(f"Invalid strategy configuration: {str(e)}")
