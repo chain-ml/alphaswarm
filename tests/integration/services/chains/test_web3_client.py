@@ -11,7 +11,6 @@ def test_get_token_info(default_config: Config):
     token_info = client.get_token_info(usdc_address, chain)
     print(token_info)
 
-    assert token_info is not None
     assert token_info.address == usdc_address
     assert token_info.decimals == 6  # USDC has 6 decimals
     assert token_info.symbol == "USDC"

@@ -40,7 +40,7 @@ class SolanaClient(Web3Client):
         self._validate_chain(chain)
         raise NotImplementedError("Checksum address not applicable for Solana")
 
-    def get_token_info(self, token_address: str, chain: str) -> Optional[TokenInfo]:
+    def get_token_info(self, token_address: str, chain: str) -> TokenInfo:
         """Get token info by token contract address"""
         self._validate_chain(chain)
         raise NotImplementedError("Token info not yet implemented for Solana")

@@ -17,7 +17,7 @@ class Web3Client(ABC):
         pass
 
     @abstractmethod
-    def get_token_info(self, token_address: str, chain: str) -> Optional[TokenInfo]:
+    def get_token_info(self, token_address: str, chain: str) -> TokenInfo:
         """Get token info by token contract address"""
         pass
 

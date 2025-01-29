@@ -2,7 +2,6 @@ import logging
 import os
 from typing import Any, Dict, Optional
 
-import web3
 from alphaswarm.config import Config, TokenInfo
 from eth_defi.token import TokenDetails, fetch_erc20_details
 from eth_typing import ChecksumAddress
@@ -59,17 +58,20 @@ class EVMClient(Web3Client):
         return web3.eth.contract(address=self.to_checksum_address(address, chain), abi=abi)
 
     @classmethod
-    def to_checksum_address(cls, address: str, chain: str) -> ChecksumAddress:
+    def _to_checksum_address(cls, address: str) -> ChecksumAddress:
         """Convert address to checksum format"""
-        cls._validate_chain(chain)
-        return web3.Web3.to_checksum_address(address)
+        return Web3.to_checksum_address(address)
+
+    def to_checksum_address(self, address: str, chain: str) -> ChecksumAddress:
+        self._validate_chain(chain)
+        return self._to_checksum_address(address)
 
     def _get_token_details(self, token_address: str, chain: str) -> TokenDetails:
         self._validate_chain(chain)
         web3 = self.get_web3(chain)
         return fetch_erc20_details(web3, token_address, chain_id=web3.eth.chain_id)
 
-    def get_token_info(self, token_address: str, chain: str) -> Optional[TokenInfo]:
+    def get_token_info(self, token_address: str, chain: str) -> TokenInfo:
         """Get token info by token contract address"""
         self._validate_chain(chain)
         try:
@@ -79,9 +81,9 @@ class EVMClient(Web3Client):
 
             return TokenInfo(symbol=symbol, address=token_address, decimals=decimals, chain=chain, is_native=False)
 
-        except Exception as e:
-            logger.error(f"Error getting token info for {token_address} on {chain}: {str(e)}")
-            return None
+        except Exception:
+            logger.exception(f"Error getting token info for {token_address} on {chain}")
+            raise
 
     def get_token_balance(self, token: str, wallet_address: str, chain: str) -> Optional[float]:
         """Get balance for token symbol (resolved via Config) for a wallet address"""

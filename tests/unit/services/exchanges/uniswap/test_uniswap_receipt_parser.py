@@ -46,7 +46,7 @@ def test_get_final_swap_amount_received_usdc(mock_receipt: dict[str, Any]) -> No
     usdc_decimals = 6
 
     usdc_amount = UniswapClientV3._get_final_swap_amount_received(
-        mock_receipt, EVMClient.to_checksum_address(usdc_address, "base"), user_address, usdc_decimals
+        mock_receipt, EVMClient._to_checksum_address(usdc_address), user_address, usdc_decimals
     )
 
     # Expected amount: 0x33746a = 3372138 raw amount = 3.372138 USDC
@@ -61,7 +61,7 @@ def test_get_final_swap_amount_received_weth(mock_receipt: dict[str, Any]) -> No
     weth_decimals = 18
 
     weth_amount = UniswapClientV3._get_final_swap_amount_received(
-        mock_receipt, EVMClient.to_checksum_address(weth_address, "base"), user_address, weth_decimals
+        mock_receipt, EVMClient._to_checksum_address(weth_address), user_address, weth_decimals
     )
 
     # Expected amount: 0 WETH (since user is sending, not receiving)
