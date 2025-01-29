@@ -2,10 +2,10 @@ from hexbytes import HexBytes
 from unittest.mock import Mock, patch
 
 from alphaswarm.config import Config
-from alphaswarm.exchanges.uniswap.uniswap import UniswapClientV3
+from alphaswarm.services.exchanges.uniswap.uniswap import UniswapClientV3
 
 
-@patch("alphaswarm.exchanges.uniswap.uniswap.create_multi_provider_web3")
+@patch("alphaswarm.services.exchanges.uniswap.uniswap.create_multi_provider_web3")
 def test_get_final_swap_amount_received(mock_create_web3):
     # Create a real swap receipt with Transfer events
     mock_receipt = {

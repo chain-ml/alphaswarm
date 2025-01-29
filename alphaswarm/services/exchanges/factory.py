@@ -2,9 +2,10 @@ import logging
 from typing import Dict, Type
 
 from alphaswarm.config import Config
-from alphaswarm.exchanges.base import DEXClient
-from alphaswarm.exchanges.jupiter.jupiter import JupiterClient
-from alphaswarm.exchanges.uniswap.uniswap import UniswapClientV2, UniswapClientV3
+
+from .base import DEXClient
+from .jupiter.jupiter import JupiterClient
+from .uniswap.uniswap import UniswapClientV2, UniswapClientV3
 
 logger = logging.getLogger(__name__)
 

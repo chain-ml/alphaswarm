@@ -1,4 +1,4 @@
-from alphaswarm.chains.factory import Web3ClientFactory
+from alphaswarm.services.chains import Web3ClientFactory
 from alphaswarm.config import Config
 
 

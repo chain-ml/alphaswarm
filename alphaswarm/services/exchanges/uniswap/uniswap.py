@@ -4,9 +4,9 @@ import logging
 from decimal import Decimal
 from typing import Any, Dict, List, Optional, Tuple
 
-from alphaswarm.chains.factory import Web3ClientFactory
 from alphaswarm.config import Config, TokenInfo
-from alphaswarm.exchanges.base import DEXClient, SwapResult
+from alphaswarm.services.chains.factory import Web3ClientFactory
+from alphaswarm.services.exchanges.base import DEXClient, SwapResult
 from eth_account import Account
 from eth_account.signers.local import LocalAccount
 from eth_defi.confirmation import wait_transactions_to_complete

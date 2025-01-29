@@ -1,12 +1,12 @@
 import logging
 from typing import Dict, Optional
 
+from alphaswarm.config import Config, TokenInfo
 from eth_typing import ChecksumAddress
 from solana.rpc import api
 from solana.rpc.types import TokenAccountOpts
 from solders.pubkey import Pubkey  # type: ignore
 
-from ..config import Config, TokenInfo
 from .base import Web3Client
 
 logger = logging.getLogger(__name__)
