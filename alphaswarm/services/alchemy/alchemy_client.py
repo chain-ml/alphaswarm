@@ -34,6 +34,9 @@ class HistoricalPriceByAddress:
     data: List[HistoricalPrice]
 
 
+NETWORKS = ["eth-mainnet", "base-mainnet", "solana-mainnet", "eth-sepolia", "base-sepolia", "solana-devnet"]
+
+
 class AlchemyClient:
     """Alchemy API data source for historical token prices"""
 
