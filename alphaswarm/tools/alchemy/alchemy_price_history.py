@@ -28,9 +28,9 @@ class AlchemyPriceHistory(Tool):
     }
     output_type = "object"
 
-    def __init__(self, alchemy_client: AlchemyClient):
+    def __init__(self, alchemy_client: Optional[AlchemyClient] = None):
         super().__init__()
-        self.client = alchemy_client
+        self.client = alchemy_client or AlchemyClient()
 
     def forward(self, address_or_symbol: str, history: int, network: Optional[str] = None) -> List[HistoricalPrice]:
         end_time = datetime.now(timezone.utc)
