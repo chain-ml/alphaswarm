@@ -39,7 +39,7 @@ ENV/
 # Project specific
 config/*.yaml
 !config/default.yaml
-!config/strategy_config.yaml
+!config/reference_strategy_config.yaml
 config/alerting_configs/*.yaml
 !config/alerting_configs/reference_alerting_config.yaml
 logs/
