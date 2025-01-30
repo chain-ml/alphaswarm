@@ -24,6 +24,9 @@ transformers = "4.47.1"  # fixed smolagents dependency
 litellm = "1.55.10"  # newer versions via smolagents will not work on windows
 smolagents = "1.2.2"
 
+[tool.poetry.group.clients.dependencies]
+python-telegram-bot = "21.10"
+
 [tool.poetry.group.web3.dependencies]
 web3 = "6.14.0"
 solana = "0.36.0"
