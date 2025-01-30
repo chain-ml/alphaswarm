@@ -316,22 +316,17 @@ class UniswapClient(DEXClient):
         )
 
         # Send approval and wait for it to be mined
-        try:
-            tx_hash_1 = self._web3.eth.send_transaction(tx_1)
-            logger.info(f"Waiting for approval transaction {tx_hash_1.hex()} to be mined...")
-            approval_receipt = wait_transactions_to_complete(
-                self._web3,
-                [tx_hash_1],
-                max_timeout=datetime.timedelta(minutes=2.5),
-                confirmation_block_count=2,
-            )
+        tx_hash_1 = self._web3.eth.send_transaction(tx_1)
+        logger.info(f"Waiting for approval transaction {tx_hash_1.hex()} to be mined...")
+        approval_receipt = wait_transactions_to_complete(
+            self._web3,
+            [tx_hash_1],
+            max_timeout=datetime.timedelta(minutes=2.5),
+            confirmation_block_count=2,
+        )
 
-            if approval_receipt[tx_hash_1]["status"] == 0:
-                raise ValueError("Approval transaction failed")
-
-        except Exception as e:
-            logger.error(f"Approval transaction failed: {str(e)}")
-            raise ValueError(f"Failed to approve token spend: {str(e)}")
+        if approval_receipt[tx_hash_1]["status"] == 0:
+            raise ValueError("Approval transaction failed")
 
         # Get fresh nonce after approval
         nonce = self._web3.eth.get_transaction_count(address)
@@ -502,7 +497,7 @@ class UniswapClient(DEXClient):
 
         return {**approval_receipt, **swap_receipt}
 
-    def _get_v2_price(self, *, base_token: TokenInfo, quote_token: TokenInfo) -> Optional[Decimal]:
+    def _get_v2_price(self, *, base_token: TokenInfo, quote_token: TokenInfo) -> Decimal:
         """Get the current price from a Uniswap V2 pool for a token pair.
 
         Finds the V2 pool for the token pair and gets the current mid price.
@@ -516,34 +511,29 @@ class UniswapClient(DEXClient):
             Decimal: Current mid price in base/quote terms, or None if no pool exists
             or there was an error getting the price
         """
-        try:
-            # Create factory contract instance
-            factory_contract = self._web3.eth.contract(
-                address=self._web3.to_checksum_address(self._factory), abi=UNISWAP_V2_FACTORY_ABI
-            )
+        # Create factory contract instance
+        factory_contract = self._web3.eth.contract(
+            address=self._web3.to_checksum_address(self._factory), abi=UNISWAP_V2_FACTORY_ABI
+        )
 
-            # Get pair address from factory using checksum addresses
-            pair_address = factory_contract.functions.getPair(
-                base_token.checksum_address, quote_token.checksum_address
-            ).call()
+        # Get pair address from factory using checksum addresses
+        pair_address = factory_contract.functions.getPair(
+            base_token.checksum_address, quote_token.checksum_address
+        ).call()
 
-            if pair_address == ZERO_ADDRESS:
-                logger.warning(f"No V2 pair found for {base_token.symbol}/{quote_token.symbol}")
-                return None
+        if pair_address == ZERO_ADDRESS:
+            logger.warning(f"No V2 pair found for {base_token.symbol}/{quote_token.symbol}")
+            raise RuntimeError(f"No V2 pair found for {base_token.symbol}/{quote_token.symbol}")
 
-            # Get V2 pair details - we want price in base/quote terms
-            # If base_token is token1, we need reverse=True to get base/quote
-            reverse = base_token.checksum_address.lower() > quote_token.checksum_address.lower()
-            pair = fetch_pair_details(self._web3, pair_address, reverse_token_order=reverse)
-            price = pair.get_current_mid_price()
+        # Get V2 pair details - we want price in base/quote terms
+        # If base_token is token1, we need reverse=True to get base/quote
+        reverse = base_token.checksum_address.lower() > quote_token.checksum_address.lower()
+        pair = fetch_pair_details(self._web3, pair_address, reverse_token_order=reverse)
+        price = pair.get_current_mid_price()
 
-            return price
+        return price
 
-        except Exception as e:
-            logger.error(f"Error getting V2 price: {str(e)}")
-            return None
-
-    def _get_v3_pool(self, *, base_token: TokenInfo, quote_token: TokenInfo) -> Optional[PoolDetails]:
+    def _get_v3_pool(self, *, base_token: TokenInfo, quote_token: TokenInfo) -> PoolDetails:
         """Find the Uniswap V3 pool with highest liquidity for a token pair.
 
         Checks all configured fee tiers and returns the pool with the highest liquidity.
@@ -557,56 +547,49 @@ class UniswapClient(DEXClient):
             PoolDetails: Details about the pool with highest liquidity, or None if no pool exists
             or there was an error finding a pool
         """
-        try:
-            settings = self.config.get_venue_settings_uniswap_v3()
-            factory_contract = self._web3.eth.contract(
-                address=self._web3.to_checksum_address(self._factory), abi=UNISWAP_V3_FACTORY_ABI
-            )
+        settings = self.config.get_venue_settings_uniswap_v3()
+        factory_contract = self._web3.eth.contract(
+            address=self._web3.to_checksum_address(self._factory), abi=UNISWAP_V3_FACTORY_ABI
+        )
 
-            max_liquidity = 0
-            best_pool_details = None
+        max_liquidity = 0
+        best_pool_details = None
 
-            # Check all fee tiers to find pool with highest liquidity
-            for fee in settings.fee_tiers:
-                try:
-                    pool_address = factory_contract.functions.getPool(
-                        base_token.address, quote_token.address, fee
-                    ).call()
-                    if pool_address == ZERO_ADDRESS:
-                        continue
-
-                    # Get pool details to access the contract
-                    pool_details = fetch_pool_details(self._web3, pool_address)
-                    if not pool_details:
-                        continue
-
-                    # Check liquidity
-                    liquidity = pool_details.pool.functions.liquidity().call()
-                    logger.info(f"Pool {pool_address} (fee tier {fee} bps) liquidity: {liquidity}")
-
-                    # Update best pool if this one has more liquidity
-                    if liquidity > max_liquidity:
-                        max_liquidity = liquidity
-                        best_pool_details = pool_details
-
-                except Exception as e:
-                    logger.debug(f"Failed to get pool for fee tier {fee}: {str(e)}")
+        # Check all fee tiers to find pool with highest liquidity
+        for fee in settings.fee_tiers:
+            try:
+                pool_address = factory_contract.functions.getPool(base_token.address, quote_token.address, fee).call()
+                if pool_address == ZERO_ADDRESS:
                     continue
 
-            if best_pool_details:
-                logger.info(
-                    f"Selected pool with highest liquidity: {best_pool_details.address} (liquidity: {max_liquidity})"
-                )
-                return best_pool_details
+                # Get pool details to access the contract
+                pool_details = fetch_pool_details(self._web3, pool_address)
+                if not pool_details:
+                    continue
 
-            logger.warning(f"No V3 pool found for {base_token.symbol}/{quote_token.symbol}")
-            return None
+                # Check liquidity
+                liquidity = pool_details.pool.functions.liquidity().call()
+                logger.info(f"Pool {pool_address} (fee tier {fee} bps) liquidity: {liquidity}")
 
-        except Exception as e:
-            logger.error(f"Error finding V3 pool: {str(e)}")
-            return None
+                # Update best pool if this one has more liquidity
+                if liquidity > max_liquidity:
+                    max_liquidity = liquidity
+                    best_pool_details = pool_details
 
-    def _get_v3_price(self, *, base_token: TokenInfo, quote_token: TokenInfo) -> Optional[Decimal]:
+            except Exception:
+                logger.exception(f"Failed to get pool for fee tier {fee}")
+                continue
+
+        if best_pool_details:
+            logger.info(
+                f"Selected pool with highest liquidity: {best_pool_details.address} (liquidity: {max_liquidity})"
+            )
+            return best_pool_details
+
+        logger.warning(f"No V3 pool found for {base_token.symbol}/{quote_token.symbol}")
+        raise RuntimeError(f"No pool found for {base_token.symbol}/{quote_token.symbol}")
+
+    def _get_v3_price(self, *, base_token: TokenInfo, quote_token: TokenInfo) -> Decimal:
         """Get the current price from a Uniswap V3 pool for a token pair.
 
         Finds the first available pool for the token pair and gets the current price.
@@ -624,21 +607,14 @@ class UniswapClient(DEXClient):
             Uses the pool with the most liquidity.
             Uses the pool with the most liquidity.
         """
-        try:
-            pool_details = self._get_v3_pool(base_token=base_token, quote_token=quote_token)
-            if pool_details is None:
-                raise ValueError("pool details not found for Uniswap V3")
-            # Get raw price from pool
-            reverse = quote_token.address.lower() == pool_details.token0.address.lower()
-            raw_price = get_onchain_price_v3(self._web3, pool_details.address, reverse_token_order=reverse)
+        pool_details = self._get_v3_pool(base_token=base_token, quote_token=quote_token)
+        # Get raw price from pool
+        reverse = quote_token.address.lower() == pool_details.token0.address.lower()
+        raw_price = get_onchain_price_v3(self._web3, pool_details.address, reverse_token_order=reverse)
 
-            return raw_price
+        return raw_price
 
-        except Exception as e:
-            logger.error(f"Error getting V3 price: {str(e)}")
-            return None
-
-    def get_token_price(self, base_token: TokenInfo, quote_token: TokenInfo) -> Optional[Decimal]:
+    def get_token_price(self, base_token: TokenInfo, quote_token: TokenInfo) -> Decimal:
         """Get token price using the appropriate Uniswap version.
 
         Gets the current price from either Uniswap V2 or V3 pools based on the client version.
@@ -649,25 +625,18 @@ class UniswapClient(DEXClient):
             quote_token (TokenInfo): Quote token info (denominator token)
 
         Returns:
-            Optional[Decimal]: Current price in base/quote terms, or None if no pool exists
-            or there was an error getting the price
-            or there was an error getting the price
+            Decimal: Current price in base/quote terms
         """
-        try:
-            logger.debug(
-                f"Getting price for {base_token.symbol}/{quote_token.symbol} on {self.chain} using Uniswap {self.version}"
-            )
+        logger.debug(
+            f"Getting price for {base_token.symbol}/{quote_token.symbol} on {self.chain} using Uniswap {self.version}"
+        )
 
-            if self.version == "v2":
-                return self._get_v2_price(base_token=base_token, quote_token=quote_token)
-            elif self.version == "v3":
-                return self._get_v3_price(base_token=base_token, quote_token=quote_token)
-            else:
-                raise ValueError(f"Unsupported Uniswap version: {self.version}")
-
-        except Exception as e:
-            logger.error(f"Error getting price: {str(e)}")
-            return None
+        if self.version == "v2":
+            return self._get_v2_price(base_token=base_token, quote_token=quote_token)
+        elif self.version == "v3":
+            return self._get_v3_price(base_token=base_token, quote_token=quote_token)
+        else:
+            raise ValueError(f"Unsupported Uniswap version: {self.version}")
 
     def get_markets_for_tokens(self, tokens: List[TokenInfo]) -> List[Tuple[TokenInfo, TokenInfo]]:
         """Get list of valid trading pairs between the provided tokens.
