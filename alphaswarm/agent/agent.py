@@ -56,6 +56,7 @@ class AlphaSwarmAgentManager:
         self._agent = agent
         self._clients: Set[str] = set()
         self._locks: Dict[str, asyncio.Lock] = defaultdict(asyncio.Lock)
+        self._agent_lock = asyncio.Lock()
 
     async def register_client(self, client_id: str):
         """Register a new client connection"""
@@ -68,7 +69,7 @@ class AlphaSwarmAgentManager:
 
     async def handle_message(self, client_id: str, message: str) -> str:
         """Handle a message from a specific client"""
-        async with self._locks[client_id]:
+        async with self._locks[client_id], self._agent_lock:
             try:
                 response = await self._agent.process_message(message)
                 return response if response else "No response"
