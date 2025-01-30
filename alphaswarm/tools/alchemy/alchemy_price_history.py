@@ -9,14 +9,13 @@ class AlchemyPriceHistory(Tool):
     name = "AlchemyPriceHistory"
     description = "Retrieve price history for a given token using Alchemy"
     inputs = {
-        "address_or_symbol": {
+        "address": {
             "type": "string",
-            "description": "Address or symbol of the token to retrieve price history for",
+            "description": "Address of the token to retrieve price history for",
         },
         "network": {
             "type": "string",
-            "description": "Name of the network hosting the token. Provide ONLY if a token address is used",
-            "nullable": True,
+            "description": "Name of the network hosting the token.",
             "enum": NETWORKS,
         },
         "interval": {
@@ -38,19 +37,16 @@ class AlchemyPriceHistory(Tool):
         self.client = alchemy_client or AlchemyClient()
 
     def forward(
-        self, address_or_symbol: str, interval: str, history: int, network: Optional[str] = None
-    ) -> List[HistoricalPrice]:
+        self, address: str, network: str, interval: str, history: int
+) -> List[HistoricalPrice]:
         end_time = datetime.now(timezone.utc)
         max_history = self._max_history_from_interval(interval)
         history = min(history, max_history)
         start_time = end_time - timedelta(days=history)
 
-        if network is not None:
-            return self.client.get_historical_prices_by_address(
-                address_or_symbol, network, start_time, end_time, interval
-            ).data
-        else:
-            return self.client.get_historical_prices_by_symbol(address_or_symbol, start_time, end_time, interval).data
+        return self.client.get_historical_prices_by_address(
+            address, network, start_time, end_time, interval
+        ).data
 
     @staticmethod
     def _max_history_from_interval(interval: str) -> int:
