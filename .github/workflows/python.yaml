@@ -41,4 +41,6 @@ jobs:
           ETH_SEPOLIA_RPC_URL: ${{ secrets.ETH_SEPOLIA_RPC_URL }}
           SOLANA_RPC_URL: ${{ secrets.SOLANA_RPC_URL }}
           ALCHEMY_API_KEY: ${{ secrets.ALCHEMY_API_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         run: make all-tests
