@@ -26,10 +26,12 @@ class SolanaClient(Web3Client):
 
     def _get_client(self, chain: str) -> api.Client:
         """Get or create RPC client for the chain"""
-        if chain not in self._clients:
+        client = self._clients.get(chain)
+        if client is None:
             rpc_url = self.config.get_chain_config(chain).rpc_url
-            self._clients[chain] = api.Client(rpc_url)
-        return self._clients[chain]
+            client = api.Client(rpc_url)
+            self._clients[chain] = client
+        return client
 
     @staticmethod
     def _validate_chain(chain: str) -> None:

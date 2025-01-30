@@ -36,7 +36,7 @@ class DEXClient(ABC):
         self.chain = chain
 
     @abstractmethod
-    def get_token_price(self, base_token: TokenInfo, quote_token: TokenInfo) -> Optional[Decimal]:
+    def get_token_price(self, base_token: TokenInfo, quote_token: TokenInfo) -> Decimal:
         """Get current token price.
 
         Gets the current price from either Uniswap V2 or V3 pools based on the client version.

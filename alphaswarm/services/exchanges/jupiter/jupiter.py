@@ -1,13 +1,23 @@
 import logging
 from decimal import Decimal
-from typing import List, Optional, Tuple
+from typing import Any, Dict, List, Tuple
 from urllib.parse import urlencode
 
 import requests
 from alphaswarm.config import Config, TokenInfo
+from alphaswarm.services import ApiException
 from alphaswarm.services.exchanges.base import DEXClient, SwapResult
+from pydantic import Field
+from pydantic.dataclasses import dataclass
 
 logger = logging.getLogger(__name__)
+
+
+@dataclass
+class QuoteResponse:
+    # TODO capture more fields if needed
+    out_amount: Decimal = Field(alias="outAmount")
+    route_plan: List[Dict[str, Any]] = Field(alias="routePlan")
 
 
 class JupiterClient(DEXClient):
@@ -29,7 +39,7 @@ class JupiterClient(DEXClient):
         """Execute a token swap on Jupiter (Not Implemented)"""
         raise NotImplementedError("Jupiter swap functionality is not yet implemented")
 
-    def get_token_price(self, base_token: TokenInfo, quote_token: TokenInfo) -> Optional[Decimal]:
+    def get_token_price(self, base_token: TokenInfo, quote_token: TokenInfo) -> Decimal:
         """Get token price.
 
         Gets the current price from Jupiter based on the client version.
@@ -40,79 +50,45 @@ class JupiterClient(DEXClient):
             quote_token (TokenInfo): Quote token info (denominator token)
 
         Returns:
-            Optional[Decimal]: Current price in base/quote terms, or None if no pool exists
-            or there was an error getting the price
+            Decimal: Current price in base/quote terms
         """
-        try:
-            # Verify tokens are on Solana
-            if not base_token.chain == "solana" or not quote_token.chain == "solana":
-                raise ValueError(f"Jupiter only supports Solana tokens. Got {base_token.chain} and {quote_token.chain}")
+        # Verify tokens are on Solana
+        if not base_token.chain == "solana" or not quote_token.chain == "solana":
+            raise ValueError(f"Jupiter only supports Solana tokens. Got {base_token.chain} and {quote_token.chain}")
 
-            logger.debug(
-                f"Getting price for {base_token.symbol}/{quote_token.symbol} on {base_token.chain} using Jupiter"
-            )
+        logger.debug(f"Getting price for {base_token.symbol}/{quote_token.symbol} on {base_token.chain} using Jupiter")
 
-            # Prepare query parameters
-            params = {
-                "inputMint": base_token.address,
-                "outputMint": quote_token.address,
-                "amount": str(base_token.convert_to_wei(1.0)),  # Get price for 1 full token
-                "slippageBps": self.config.get_venue_settings_jupiter().slippage_bps,
-            }
+        # Prepare query parameters
+        params = {
+            "inputMint": base_token.address,
+            "outputMint": quote_token.address,
+            "amount": str(base_token.convert_to_wei(1.0)),  # Get price for 1 full token
+            "slippageBps": self.config.get_venue_settings_jupiter().slippage_bps,
+        }
 
-            try:
-                venue_config = self.config.get_venue_jupiter("solana")
-                url = f"{venue_config.quote_api_url}?{urlencode(params)}"
+        venue_config = self.config.get_venue_jupiter("solana")
+        url = f"{venue_config.quote_api_url}?{urlencode(params)}"
 
-                response = requests.get(url)
-                if response.status_code != 200:
-                    logger.error(f"Jupiter API error: {response.text}")
-                    return None
-                response = requests.get(url)
-                if response.status_code != 200:
-                    logger.error(f"Jupiter API error: {response.text}")
-                    return None
+        response = requests.get(url)
+        if response.status_code != 200:
+            raise ApiException(response)
 
-                quote = response.json()
+        result = response.json()
+        quote = QuoteResponse(**result)
 
-                if not quote or "outAmount" not in quote:
-                    logger.warning(f"No quote found for {base_token.symbol}/{quote_token.symbol}")
-                    return None
-                if not quote or "outAmount" not in quote:
-                    logger.warning(f"No quote found for {base_token.symbol}/{quote_token.symbol}")
-                    return None
+        # Calculate price (quote_token per base_token)
+        amount_out = quote.out_amount
+        # TODO Actually use Decimal
+        price = Decimal(str(quote_token.convert_from_wei(int(amount_out))))  # Convert to Decimal
 
-                # Calculate price (quote_token per base_token)
-                amount_out = int(quote["outAmount"])
-                price = Decimal(str(quote_token.convert_from_wei(amount_out)))  # Convert to Decimal
-                # Calculate price (quote_token per base_token)
-                amount_out = int(quote["outAmount"])
-                price = Decimal(str(quote_token.convert_from_wei(amount_out)))  # Convert to Decimal
+        # Log quote details
+        logger.debug("Quote successful:")
+        logger.debug(f"- Input: 1 {base_token.symbol}")
+        logger.debug(f"- Output: {amount_out} {quote_token.symbol} lamports")
+        logger.debug(f"- Price: {price} {quote_token.symbol}/{base_token.symbol}")
+        logger.debug(f"- Route: {quote.route_plan}")
 
-                # Log quote details
-                logger.debug("Quote successful:")
-                logger.debug(f"- Input: 1 {base_token.symbol}")
-                logger.debug(f"- Output: {amount_out} {quote_token.symbol} lamports")
-                logger.debug(f"- Price: {price} {quote_token.symbol}/{base_token.symbol}")
-                if "routePlan" in quote:
-                    logger.debug(f"- Route: {quote['routePlan']}")
-                # Log quote details
-                logger.debug("Quote successful:")
-                logger.debug(f"- Input: 1 {base_token.symbol}")
-                logger.debug(f"- Output: {amount_out} {quote_token.symbol} lamports")
-                logger.debug(f"- Price: {price} {quote_token.symbol}/{base_token.symbol}")
-                if "routePlan" in quote:
-                    logger.debug(f"- Route: {quote['routePlan']}")
-
-                return price
-
-            except Exception as e:
-                logger.error(f"Error getting Jupiter quote: {str(e)}")
-                return None
-
-        except Exception as e:
-            logger.error(f"Error getting price: {str(e)}")
-            return None
+        return price
 
     def get_markets_for_tokens(self, tokens: List[TokenInfo]) -> List[Tuple[TokenInfo, TokenInfo]]:
         """Get list of valid trading pairs between the provided tokens.

@@ -29,6 +29,7 @@ class TokenInfo:
     def convert_to_wei(self, amount: float) -> int:
         return int(amount * (10**self.decimals))
 
+    # TODO: use Decimal
     def convert_from_wei(self, amount: float) -> float:
         return float(amount / (10**self.decimals))
 
