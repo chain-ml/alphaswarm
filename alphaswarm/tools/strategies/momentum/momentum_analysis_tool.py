@@ -3,7 +3,7 @@ from typing import Any, Dict, List
 
 import yaml
 from alphaswarm.config import BASE_PATH, CONFIG_PATH
-from alphaswarm.utils import LLMFunctionFromPromptFiles
+from alphaswarm.utils import LLMFunctionFromPromptFiles, load_strategy_config
 from pydantic import BaseModel, Field
 from smolagents import Tool
 
@@ -35,7 +35,7 @@ class PriceMomentumStrategyAnalysisTool(Tool):
 
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
-        self.strategy_config = self._load_strategy_config()
+        self.strategy_config = load_strategy_config()
 
         # Init the LLMFunction
         self._llm_function = LLMFunctionFromPromptFiles(
@@ -58,11 +58,3 @@ class PriceMomentumStrategyAnalysisTool(Tool):
             }
         )
         return response
-
-    def _load_strategy_config(self) -> Dict[str, Any]:
-        strategy_path = os.path.join(CONFIG_PATH, "reference_strategy_config.yaml")
-        try:
-            with open(strategy_path, "r", encoding="utf-8") as f:
-                return yaml.safe_load(f)
-        except FileNotFoundError:
-            raise Exception("No trading strategy exists. Please configure a strategy.")
