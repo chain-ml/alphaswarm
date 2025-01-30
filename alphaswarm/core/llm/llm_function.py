@@ -6,7 +6,7 @@ import instructor
 from litellm import completion
 from pydantic import BaseModel
 
-from .message_factory import MessageFactory
+from .message import Message
 
 T_Response = TypeVar("T_Response", bound=BaseModel)
 
@@ -22,7 +22,7 @@ class LLMFunction(Generic[T_Response]):
         model_id: str,
         response_model: Type[T_Response],
         system_message: Optional[str] = None,
-        messages: Optional[Sequence[Dict[str, Any]]] = None,
+        messages: Optional[Sequence[Message]] = None,
         max_retries: int = 3,
     ) -> None:
         """Initialize an LLMFunction instance.
@@ -31,7 +31,7 @@ class LLMFunction(Generic[T_Response]):
             model_id (str): LiteLLM model ID to use
             response_model (Type[BaseModel]): Pydantic model class for structuring responses
             system_message (Optional[str]): Optional system message
-            messages (Optional[Sequence[Dict[str, Any]]]): Optional sequence of pre-formatted messages
+            messages (Optional[Sequence[Message]]): Optional sequence of pre-formatted messages
             max_retries (int): Maximum number of retry attempts
 
         Raises:
@@ -47,15 +47,15 @@ class LLMFunction(Generic[T_Response]):
     @staticmethod
     def _validate_messages(
         str_message: Optional[str],
-        messages: Optional[Sequence[Dict[str, Any]]],
+        messages: Optional[Sequence[Message]],
         role: Literal["system", "user"],
         allow_empty: bool = False,
-    ) -> List[Dict[str, Any]]:
+    ) -> List[Message]:
         """Convert a string message and/or a list of messages to a proper list of messages.
 
         Args:
             str_message (Optional[str]): Optional string message to convert
-            messages (Optional[Sequence[Dict[str, Any]]]): Optional sequence of pre-formatted messages
+            messages (Optional[Sequence[Message]]): Optional sequence of pre-formatted messages
             role (Literal["system", "user"]): The role for the string message
             allow_empty (bool): Whether to allow returning an empty list when no messages are provided
 
@@ -70,9 +70,9 @@ class LLMFunction(Generic[T_Response]):
                 return []
             raise ValueError("At least one of str message, messages is required")
 
-        llm_messages: List[Dict[str, Any]] = []
+        llm_messages: List[Message] = []
         if str_message is not None:
-            llm_messages.append(MessageFactory.message(role=role, content=str_message))
+            llm_messages.append(Message(role=role, content=str_message))
         if messages is not None:
             llm_messages.extend(messages)
 
@@ -81,25 +81,26 @@ class LLMFunction(Generic[T_Response]):
     def execute(
         self,
         user_message: Optional[str] = None,
-        messages: Optional[Sequence[Dict[str, Any]]] = None,
+        messages: Optional[Sequence[Message]] = None,
         **kwargs: Any,
     ) -> T_Response:
         """Execute the LLM function with the given messages.
 
         Args:
             user_message (Optional[str]): Optional string message from the user
-            messages (Optional[Sequence[Dict[str, Any]]]): Optional sequence of pre-formatted messages
+            messages (Optional[Sequence[Message]]): Optional sequence of pre-formatted messages
             **kwargs: Additional keyword arguments to pass to the LLM client
 
         Returns:
             A structured response matching the provided response_model type
         """
         llm_messages = self.messages + self._validate_messages(user_message, messages, role="user", allow_empty=True)
+        llm_messages_dicts: List[Dict[str, Any]] = [message.to_dict() for message in llm_messages]
 
         return self.client.create(
             model=self.model_id,
             response_model=self.response_model,
-            messages=llm_messages,
+            messages=llm_messages_dicts,
             max_retries=self.max_retries,
             **kwargs,
         )
@@ -149,7 +150,7 @@ class LLMFunctionFromPromptFiles(LLMFunction[T_Response]):
     def execute(
         self,
         user_message: Optional[str] = None,
-        messages: Optional[Sequence[Dict[str, Any]]] = None,
+        messages: Optional[Sequence[Message]] = None,
         user_prompt_params: Optional[Dict[str, Any]] = None,
         **kwargs: Any,
     ) -> T_Response:
@@ -157,7 +158,7 @@ class LLMFunctionFromPromptFiles(LLMFunction[T_Response]):
 
         Args:
             user_message (Optional[str]): Must be None - direct messages not supported
-            messages (Optional[Sequence[Dict[str, Any]]]): Must be None - direct messages not supported
+            messages (Optional[Sequence[Message]]): Must be None - direct messages not supported
             user_prompt_params (Optional[Dict[str, Any]]): Optional parameters to format the user prompt template
             **kwargs: Additional keyword arguments to pass to the LLM client
 

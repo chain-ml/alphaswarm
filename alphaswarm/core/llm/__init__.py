@@ -1,4 +1,4 @@
 from .llm_function import LLMFunction, LLMFunctionFromPromptFiles
-from .message_factory import MessageFactory
+from .message import Message
 
-__all__ = ["LLMFunction", "LLMFunctionFromPromptFiles", "MessageFactory"]
+__all__ = ["LLMFunction", "LLMFunctionFromPromptFiles", "Message"]

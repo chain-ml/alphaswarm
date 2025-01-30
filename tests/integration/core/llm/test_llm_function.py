@@ -3,7 +3,7 @@ from typing import List, Literal, Type
 import dotenv
 from pydantic import BaseModel, Field
 
-from alphaswarm.core.llm import LLMFunction
+from alphaswarm.core.llm import LLMFunction, Message
 
 dotenv.load_dotenv()
 
@@ -43,7 +43,7 @@ def test_llm_function_simple():
 def test_llm_function_messages():
     llm_func = get_llm_function(
         system_message="Output a random number",
-        messages=[{"role": "user", "content": "Pick between 2 and 5"}],
+        messages=[Message(role="user", content="Pick between 2 and 5")],
     )
 
     result = llm_func.execute()
