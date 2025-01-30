@@ -10,10 +10,6 @@ from alphaswarm.tools.exchanges import GetTokenPriceTool
 from alphaswarm.tools.price_tool import PriceTool
 from smolagents import Tool
 
-# summarize the price history for ETH for the past week
-# what is the current price for AIXBT
-# how much AIXBT could I buy for 10 USDC?
-
 
 async def main():
     # Initialize the manager with your tools
