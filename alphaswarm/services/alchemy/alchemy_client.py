@@ -5,14 +5,10 @@ from decimal import Decimal
 from typing import Dict, List, Optional
 
 import requests
+from alphaswarm.services.api_exception import ApiException
 from pydantic.dataclasses import dataclass
 
 logger = logging.getLogger(__name__)
-
-
-class ApiException(Exception):
-    def __init__(self, response: requests.Response):
-        super().__init__(f"status code {response.status_code}: {response.text or 'no content'}")
 
 
 @dataclass
