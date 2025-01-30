@@ -25,12 +25,6 @@ class Web3ClientFactory:
             cls._instance = super(Web3ClientFactory, cls).__new__(cls)
         return cls._instance
 
-    def __init__(self) -> None:
-        # Initialize only once
-        if not hasattr(self, "_initialized"):
-            self._initialized = True
-            self._clients = {}
-
     def get_client(self, chain: str, config: Config) -> Web3Client:
         """Get a blockchain client for the specified chain.
 
@@ -44,23 +38,19 @@ class Web3ClientFactory:
         Raises:
             ValueError: If the chain is not supported
         """
-        # Return existing client if we have one
-        if chain in self._clients:
-            return self._clients[chain]
+        client = self._clients.get(chain)
+        if client is None:
+            if chain in EVM_CHAINS:
+                client = EVMClient(config)
+            elif chain in SOLANA_CHAINS:
+                client = SolanaClient(config)
+            else:
+                supported_chains = EVM_CHAINS.union(SOLANA_CHAINS)
+                raise ValueError(f"Chain '{chain}' is not supported. Supported chains: {supported_chains}")
 
-        # Create new client based on chain
-        client: Web3Client
-        if chain in EVM_CHAINS:
-            client = EVMClient(config)
-        elif chain in SOLANA_CHAINS:
-            client = SolanaClient(config)
-        else:
-            supported_chains = EVM_CHAINS.union(SOLANA_CHAINS)
-            raise ValueError(f"Chain '{chain}' is not supported. Supported chains: {supported_chains}")
-
-        # Cache and return the client
-        self._clients[chain] = client
-        logger.info(f"Created new {client.__class__.__name__} for chain {chain}")
+            # Cache and return the client
+            self._clients[chain] = client
+            logger.info(f"Created new {client.__class__.__name__} for chain {chain}")
         return client
 
     @classmethod

@@ -1,5 +1,4 @@
 import logging
-import os
 from decimal import Decimal
 from typing import Any, Dict
 
@@ -39,17 +38,10 @@ class EVMClient(Web3Client):
             logger.debug(f"Config structure for web3: {self.config}")
 
             # Get provider URL from chain config
-            rpc_url = None
             chain_config = self.config.get_chain_config(chain)
-            if hasattr(chain_config, "rpc_url"):
-                rpc_url = chain_config.rpc_url
-                if isinstance(rpc_url, dict) and "fromEnvVar" in rpc_url:
-                    rpc_url = os.getenv(rpc_url["fromEnvVar"])
-
-            if not rpc_url:
-                raise ValueError(f"Could not find RPC URL for chain {chain}")
-
+            rpc_url = chain_config.rpc_url
             self._web3_instances[chain] = Web3(Web3.HTTPProvider(rpc_url))
+
         return self._web3_instances[chain]
 
     def get_contract(self, address: str, abi: Any, chain: str) -> Contract:
