@@ -1,12 +1,28 @@
 import logging
 from datetime import UTC, datetime
-from typing import Dict, Optional, Sequence
+from decimal import Decimal
+from typing import List, Optional, Sequence
 
 from alphaswarm.config import Config
 from alphaswarm.services.exchanges import DEXFactory
+from pydantic.dataclasses import dataclass
 from smolagents import Tool
 
 logger = logging.getLogger(__name__)
+
+
+@dataclass
+class TokenPrice:
+    price: Decimal
+    source: str
+
+
+@dataclass
+class TokenPriceResult:
+    base_token: str
+    quote_token: str
+    timestamp: str
+    prices: List[TokenPrice]
 
 
 class GetTokenPriceTool(Tool):
@@ -47,7 +63,7 @@ class GetTokenPriceTool(Tool):
 
     def forward(
         self, base_token: str, quote_token: str, dex_type: Optional[str] = None, chain: str = "ethereum"
-    ) -> Optional[Dict]:
+    ) -> TokenPriceResult:
         """Get token price from DEX(es)"""
         # TODO: Debug "ERROR - Error getting price: Event loop is closed" when invoked.
         logger.debug(f"Getting price for {base_token}/{quote_token} on {chain}")
@@ -71,11 +87,11 @@ class GetTokenPriceTool(Tool):
             try:
                 dex = DEXFactory.create(venue, self.config, chain)
                 price = dex.get_token_price(base_token_info, quote_token_info)
-                prices.append({"price": price, "source": venue})
+                prices.append(TokenPrice(price=price, source=venue))
             except Exception:
                 logger.exception(f"Error getting price from {venue}")
 
-        if not prices:
+        if len(prices) == 0:
             logger.warning(f"No valid prices found for {base_token}/{quote_token}")
             raise RuntimeError(f"No valid prices found for {base_token}/{quote_token}")
 
@@ -83,6 +99,6 @@ class GetTokenPriceTool(Tool):
         timestamp = datetime.now(UTC).strftime("%Y-%m-%d %H:%M UTC")
 
         # If we have multiple prices, return them all
-        result = {"base_token": base_token, "quote_token": quote_token, "timestamp": timestamp, "prices": prices}
+        result = TokenPriceResult(base_token=base_token, quote_token=quote_token, timestamp=timestamp, prices=prices)
         logger.debug(f"Returning result: {result}")
         return result
