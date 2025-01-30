@@ -15,7 +15,7 @@ class AlphaSwarmAgent:
             tools=list(tools),
             model=LiteLLMModel(model_id=model_id),
             system_prompt=system_prompt,
-            additional_authorized_imports=["json"]
+            additional_authorized_imports=["json"],
         )
 
     async def process_message(self, current_message: str) -> Optional[str]:

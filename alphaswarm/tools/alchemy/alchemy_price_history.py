@@ -37,7 +37,9 @@ class AlchemyPriceHistory(Tool):
         super().__init__()
         self.client = alchemy_client or AlchemyClient()
 
-    def forward(self, address_or_symbol: str, interval: str, history: int, network: Optional[str] = None) -> List[HistoricalPrice]:
+    def forward(
+        self, address_or_symbol: str, interval: str, history: int, network: Optional[str] = None
+    ) -> List[HistoricalPrice]:
         end_time = datetime.now(timezone.utc)
         max_history = self._max_history_from_interval(interval)
         history = min(history, max_history)
@@ -53,8 +55,8 @@ class AlchemyPriceHistory(Tool):
     @staticmethod
     def _max_history_from_interval(interval: str) -> int:
         interval_limits = {
-            "5m": 7,    # 7 days
-            "1h": 30,   # 30 days
+            "5m": 7,  # 7 days
+            "1h": 30,  # 30 days
             "1d": 365,  # 1 year
         }
         return interval_limits[interval]
