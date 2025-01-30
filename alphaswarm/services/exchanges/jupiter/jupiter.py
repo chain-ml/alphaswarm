@@ -78,8 +78,7 @@ class JupiterClient(DEXClient):
 
         # Calculate price (quote_token per base_token)
         amount_out = quote.out_amount
-        price = quote_token.convert_from_wei(int(amount_out))  # Convert to Decimal
-
+        price = quote_token.convert_from_wei(amount_out)
         # Log quote details
         logger.debug("Quote successful:")
         logger.debug(f"- Input: 1 {base_token.symbol}")
