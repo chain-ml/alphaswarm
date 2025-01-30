@@ -16,8 +16,8 @@ async def main():
     dotenv.load_dotenv()
     config = Config()
 
-    tools: List[Tool] = [PriceTool(), GetTokenPriceTool(config), AlchemyPriceHistory()]  # Add you
-    agent = AlphaSwarmAgent(tools=tools, model_id="gpt-4o")  # r tools here
+    tools: List[Tool] = [PriceTool(), GetTokenPriceTool(config), AlchemyPriceHistory()]
+    agent = AlphaSwarmAgent(tools=tools, model_id="gpt-4o")
     manager = AlphaSwarmAgentManager(agent)
 
     terminal = TerminalClient(manager, "terminal")

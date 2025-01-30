@@ -9,7 +9,7 @@ class CronJobClient:
         self,
         manager: AlphaSwarmAgentManager,
         client_id: str,
-        interval_seconds: float,
+        interval_seconds: int,
         message_generator: Callable[[], str],
         response_handler: Callable[[str], Any] = print,
     ):
