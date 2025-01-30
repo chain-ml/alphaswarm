@@ -29,16 +29,8 @@ class AlchemyPriceHistoryBySymbol(Tool):
     def forward(self, symbol: str, history: int) -> HistoricalPriceBySymbol:
         end_time = datetime.now(timezone.utc)
         start_time = end_time - timedelta(days=history)
-        interval = self._interval_from_history(history)
+        interval = self.client.interval_from_history(history)
         return self.client.get_historical_prices_by_symbol(symbol, start_time, end_time, interval)
-
-    @staticmethod
-    def _interval_from_history(history: int) -> str:
-        if history <= 7:
-            return "5m"
-        if history <= 30:
-            return "1h"
-        return "1d"
 
 
 class AlchemyPriceHistoryByAddress(Tool):
@@ -70,13 +62,5 @@ class AlchemyPriceHistoryByAddress(Tool):
     def forward(self, address: str, history: int, network: str) -> HistoricalPriceByAddress:
         end_time = datetime.now(timezone.utc)
         start_time = end_time - timedelta(days=history)
-        interval = self._interval_from_history(history)
+        interval = self.client.interval_from_history(history)
         return self.client.get_historical_prices_by_address(address, network, start_time, end_time, interval)
-
-    @staticmethod
-    def _interval_from_history(history: int) -> str:
-        if history <= 7:
-            return "5m"
-        if history <= 30:
-            return "1h"
-        return "1d"
