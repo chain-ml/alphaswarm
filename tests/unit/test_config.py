@@ -1,6 +1,14 @@
 import os
+from decimal import Decimal
 
-from alphaswarm.config import Config
+import pytest
+
+from alphaswarm.config import Config, TokenInfo
+
+
+@pytest.fixture
+def token_info():
+    return TokenInfo(symbol="TK", address="0x123", decimals=18, chain="test", is_native=False)
 
 
 def test_config_default_from_env(default_config: Config) -> None:
@@ -54,3 +62,17 @@ def test_config_jupiter_settings(default_config: Config) -> None:
 def test_config_jupiter(default_config: Config) -> None:
     actual = default_config.get_venue_jupiter("solana")
     assert actual.quote_api_url == "https://quote-api.jup.ag/v6/quote"
+
+
+def test_token_info_convert_to_wei(token_info: TokenInfo) -> None:
+    initial = Decimal("1.000000000000000001")
+    expected = "1000000000000000001"
+    wei = token_info.convert_to_wei(initial)
+    assert str(wei) == expected
+
+
+def test_token_info_convert_from_wei(token_info: TokenInfo) -> None:
+    wei = 1000000000000000001
+    expected = "1.000000000000000001"
+    actual = token_info.convert_from_wei(wei)
+    assert str(actual) == expected
