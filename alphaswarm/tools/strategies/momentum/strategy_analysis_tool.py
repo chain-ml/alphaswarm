@@ -16,17 +16,12 @@ class MomentumItem(BaseModel):
 
 class StrategyAnalysis(BaseModel):
     analysis: str = Field(description="A summary of the analysis, including the values of any satisfied conditions.")
-    momentum_items: List[MomentumItem] = Field(description="A list of momentum items that were satisfied.")
+    momentum_items: List[MomentumItem] = Field(description="A list of metric rules that were satisfied.")
 
 class PriceMomentumStrategyAnalysisTool(Tool):
     name = "PriceMomentumStrategyAnalysisTool"
     description = """Analyze the price momentum strategy against the percentage price changes of relevant tokens over the last 24 hours
-    and decide if the strategy rules are triggered. Returns a StrategyAnalysis object, which is defined as follows:
-    - analysis: A summary of the analysis (str), including the values of any satisfied conditions.
-    - momentum_items: A list of momentum items (MomentumItem), which is defined as follows:
-        - symbol: The symbol of the token (str)
-        - rule: The rule that was satisfied (str)
-        - value: The value of the rule that was satisfied (float)
+    and decide if the strategy rules are triggered. Returns a StrategyAnalysis object.
     """
     inputs = {
         "percent_price_change_24_hour": {

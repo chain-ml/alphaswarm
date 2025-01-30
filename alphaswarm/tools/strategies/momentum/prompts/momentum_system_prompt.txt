@@ -8,3 +8,4 @@ You will also be given a set of rules that the price momentum strategy is based 
 
 Your task is to analyze the price momentum strategy and decide if the strategy rules are triggered.
 
+Please apply the rules as explicitly as possible.
