@@ -7,4 +7,4 @@ def test_get_token_price_tool(default_config: Config):
     tool = GetTokenPriceTool(config)
     result = tool.forward(base_token="VIRTUAL", quote_token="WETH", dex_type="uniswap_v3", chain="base")
 
-    assert result is not None
+    assert len(result.prices) > 0

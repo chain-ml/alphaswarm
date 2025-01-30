@@ -3,7 +3,7 @@ from typing import Optional
 
 from alphaswarm.config import Config
 from alphaswarm.services.chains import Web3Client, Web3ClientFactory
-from alphaswarm.services.exchanges import DEXFactory
+from alphaswarm.services.exchanges import DEXFactory, SwapResult
 from smolagents import Tool
 
 logger = logging.getLogger(__name__)
@@ -18,37 +18,29 @@ class ExecuteTokenSwapTool(Tool):
         "token_quote": {
             "type": "string",
             "description": "The quote token symbol (e.g., 'USDC', 'ETH', 'WETH') - the token being sold",
-            "required": True,
         },
         "token_base": {
             "type": "string",
             "description": "The base token symbol (e.g., 'USDC', 'ETH', 'WETH') - the token being bought",
-            "required": True,
         },
         "amount": {"type": "number", "description": "The amount of quote token to swap", "required": True},
         "chain": {
             "type": "string",
             "description": "The chain to execute the swap on (e.g., 'ethereum', 'ethereum_sepolia', 'base')",
-            "required": False,
-            "default": "ethereum",
             "nullable": True,
         },
         "dex_type": {
             "type": "string",
             "description": "The DEX type to use (e.g., 'uniswap_v2', 'uniswap_v3')",
-            "required": False,
-            "default": "uniswap_v3",
             "nullable": True,
         },
         "slippage_bps": {
             "type": "integer",
             "description": "Maximum slippage in basis points (e.g., 100 = 1%)",
-            "required": False,
-            "default": 100,
             "nullable": True,
         },
     }
-    output_type = "string"
+    output_type = "object"
 
     def __init__(self, config: Config, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
@@ -72,43 +64,31 @@ class ExecuteTokenSwapTool(Tool):
         chain: str = "ethereum",
         dex_type: str = "uniswap_v3",
         slippage_bps: int = 100,
-    ) -> str:
+    ) -> SwapResult:
         """Execute a token swap."""
+        # Create DEX client
+        dex_client = DEXFactory.create(dex_name=dex_type, config=self.config, chain=chain)
+
+        # Get wallet address and private key from chain config
+        chain_config = self.config.get_chain_config(chain)
+
+        # Get token info and create TokenInfo objects
         try:
-            # Create DEX client
-            dex_client = DEXFactory.create(dex_name=dex_type, config=self.config, chain=chain)
-            if not dex_client:
-                return f"Could not create DEX client for {dex_type}"
+            token_config = chain_config.tokens
+            base_token_info = token_config[token_base]
+            quote_token_info = token_config[token_quote]
+        except KeyError as e:
+            raise RuntimeError("Token not found in config") from e
 
-            # Get wallet address and private key from chain config
-            chain_config = self.config.get_chain_config(chain)
+        # Log token details
+        logger.info(
+            f"Swapping {amount} {quote_token_info.symbol} ({quote_token_info.address}) for {base_token_info.symbol} ({base_token_info.address}) on {chain}"
+        )
 
-            # Get token info and create TokenInfo objects
-            try:
-                token_config = chain_config.tokens
-                base_token_info = token_config[token_base]
-                quote_token_info = token_config[token_quote]
-            except KeyError as e:
-                return f"Token not found in config: {str(e)}"
-
-            # Log token details
-            logger.info(
-                f"Swapping {amount} {quote_token_info.symbol} ({quote_token_info.address}) for {base_token_info.symbol} ({base_token_info.address}) on {chain}"
-            )
-
-            # Execute swap
-            result = dex_client.swap(
-                base_token=base_token_info,
-                quote_token=quote_token_info,
-                quote_amount=amount,
-                slippage_bps=slippage_bps,
-            )
-
-            if result.success:
-                return f"Swap successful! Swapped {result.quote_amount} {quote_token_info.symbol} for {result.base_amount} {base_token_info.symbol}. TX Hash: {result.tx_hash}"
-            else:
-                return f"Swap failed: {result.error}"
-
-        except Exception as e:
-            logger.error(f"Error executing swap: {str(e)}")
-            return f"Error executing swap: {str(e)}"
+        # Execute swap
+        return dex_client.swap(
+            base_token=base_token_info,
+            quote_token=quote_token_info,
+            quote_amount=amount,
+            slippage_bps=slippage_bps,
+        )
