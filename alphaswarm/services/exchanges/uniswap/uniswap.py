@@ -4,9 +4,9 @@ import logging
 from decimal import Decimal
 from typing import Any, Dict, List, Optional, Tuple
 
-from alphaswarm.chains.factory import Web3ClientFactory
 from alphaswarm.config import Config, TokenInfo
-from alphaswarm.exchanges.base import DEXClient, SwapResult
+from alphaswarm.services.chains.factory import Web3ClientFactory
+from alphaswarm.services.exchanges.base import DEXClient, SwapResult
 from eth_account import Account
 from eth_account.signers.local import LocalAccount
 from eth_defi.confirmation import wait_transactions_to_complete
@@ -48,10 +48,16 @@ class UniswapClient(DEXClient):
         self._position_manager = None
         self._quoter = None
         self._blockchain_client = Web3ClientFactory.get_instance().get_client(self.chain, self.config)
-        self._web3: MultiProviderWeb3 = create_multi_provider_web3(self.config.get_chain_config(self.chain).rpc_url)
+        self._web3: MultiProviderWeb3 = self._create_multi_provider_web3(
+            self.config.get_chain_config(self.chain).rpc_url
+        )
 
         logger.info("Created UniswapClient instance (uninitialized)")
         self._initialize()
+
+    @staticmethod
+    def _create_multi_provider_web3(rpc_url: str) -> MultiProviderWeb3:
+        return create_multi_provider_web3(rpc_url)
 
     def initialize(self) -> None:
         """Initialize the client with version and chain information.

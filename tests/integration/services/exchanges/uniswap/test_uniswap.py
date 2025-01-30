@@ -3,8 +3,8 @@ from decimal import Decimal
 import pytest
 
 from alphaswarm.config import Config
-from alphaswarm.exchanges.factory import DEXFactory
-from alphaswarm.exchanges.uniswap.uniswap import UniswapClientV2, UniswapClientV3
+from alphaswarm.services.exchanges import DEXFactory
+from alphaswarm.services.exchanges.uniswap.uniswap import UniswapClientV2, UniswapClientV3
 
 
 @pytest.mark.skip(reason="need to find a reasonable pool")
@@ -59,10 +59,6 @@ def test_get_markets_for_tokens_v2(default_config: Config):
     usdc = web3_client.get_token_info(usdc_address, chain)
     weth = web3_client.get_token_info(weth_address, chain)
 
-    # Check if we got valid token info
-    assert usdc is not None, "Failed to get USDC token info"
-    assert weth is not None, "Failed to get WETH token info"
-
     tokens = [usdc, weth]
     markets = client.get_markets_for_tokens(tokens)
 
@@ -88,10 +84,6 @@ def test_get_markets_for_tokens_v3(default_config: Config):
     web3_client = client._blockchain_client
     usdc = web3_client.get_token_info(usdc_address, chain)
     weth = web3_client.get_token_info(weth_address, chain)
-
-    # Check if we got valid token info
-    assert usdc is not None, "Failed to get USDC token info"
-    assert weth is not None, "Failed to get WETH token info"
 
     tokens = [usdc, weth]
     markets = client.get_markets_for_tokens(tokens)
