@@ -1,6 +1,7 @@
 import datetime
 import decimal
 import logging
+from abc import abstractmethod
 from decimal import Decimal
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -20,13 +21,8 @@ from hexbytes import HexBytes
 from web3.middleware.signing import construct_sign_and_send_raw_middleware
 
 from .constants_erc20 import ERC20_ABI
-from .constants_v2 import (
-    UNISWAP_V2_DEPLOYMENTS,
-    UNISWAP_V2_FACTORY_ABI,
-    UNISWAP_V2_INIT_CODE_HASH,
-    UNISWAP_V2_ROUTER_ABI,
-)
-from .constants_v3 import UNISWAP_V3_DEPLOYMENTS, UNISWAP_V3_FACTORY_ABI, UNISWAP_V3_ROUTER2_ABI, UNISWAP_V3_ROUTER_ABI
+from .constants_v2 import UNISWAP_V2_FACTORY_ABI, UNISWAP_V2_ROUTER_ABI
+from .constants_v3 import UNISWAP_V3_FACTORY_ABI, UNISWAP_V3_ROUTER2_ABI, UNISWAP_V3_ROUTER_ABI
 
 # Set up logger
 logger = logging.getLogger(__name__)
@@ -59,38 +55,13 @@ class UniswapClient(DEXClient):
     def initialize(self) -> None:
         """Initialize the client with version and chain information.
         This should be called by DEXFactory after creating the instance."""
-        self._initialize()
+        if not self._initialize():
+            raise ValueError(f"Uniswap {self.version} not supported on chain: {self.chain}")
         logger.info(f"Finished initializing Uniswap-Client {self.version} on {self.chain}")
 
-    def _initialize(self) -> None:
-
-        # Initialize contract and deployment data
-        if self.version == "v2" and self.chain in UNISWAP_V2_DEPLOYMENTS:  # Check for V2 support
-            deployment_data_v2 = UNISWAP_V2_DEPLOYMENTS[self.chain]
-            init_code_hash = UNISWAP_V2_INIT_CODE_HASH.get(self.chain)
-            if not init_code_hash:
-                raise ValueError(f"No V2 init code hash found for chain: {self.chain}")
-
-            logger.info(f"Initializing Uniswap V2 on {self.chain} with:")
-            logger.info(f"  Factory: {deployment_data_v2['factory']}")
-            logger.info(f"  Router: {deployment_data_v2['router']}")
-            logger.info(f"  Init Code Hash: {init_code_hash}")
-
-            self._factory = deployment_data_v2["factory"]
-            self._router = deployment_data_v2["router"]
-        elif self.version == "v3" and self.chain in UNISWAP_V3_DEPLOYMENTS:  # Check for V3 support
-            deployment_data_v3 = UNISWAP_V3_DEPLOYMENTS[self.chain]
-
-            logger.info(f"Initializing Uniswap V3 on {self.chain} with:")
-            logger.info(f"  Factory: {deployment_data_v3['factory']}")
-            logger.info(f"  Router: {deployment_data_v3['router']}")
-            logger.info(f"  Position Manager: {deployment_data_v3['position_manager']}")
-            logger.info(f"  Quoter: {deployment_data_v3['quoter']}")
-
-            self._router = deployment_data_v3["router"]
-            self._factory = deployment_data_v3["factory"]
-        else:
-            raise ValueError(f"Uniswap {self.version} not supported on chain: {self.chain}")
+    @abstractmethod
+    def _initialize(self) -> bool:
+        pass
 
     @staticmethod
     def _get_final_swap_amount_received(
@@ -703,13 +674,3 @@ class UniswapClient(DEXClient):
                     continue
 
         return markets
-
-
-class UniswapClientV2(UniswapClient):
-    def __init__(self, config: Config, chain: str):
-        super().__init__(config, chain, "v2")
-
-
-class UniswapClientV3(UniswapClient):
-    def __init__(self, config: Config, chain: str):
-        super().__init__(config, chain, "v3")

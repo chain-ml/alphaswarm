@@ -4,7 +4,7 @@ import pytest
 from hexbytes import HexBytes
 
 from alphaswarm.services.chains import EVMClient
-from alphaswarm.services.exchanges.uniswap.uniswap import UniswapClientV3
+from alphaswarm.services.exchanges.uniswap import UniswapClientV3
 
 
 @pytest.fixture

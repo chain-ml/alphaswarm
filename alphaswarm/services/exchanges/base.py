@@ -32,8 +32,16 @@ class DEXClient(ABC):
     @abstractmethod
     def __init__(self, config: Config, chain: str) -> None:
         """Initialize the DEX client with configuration"""
-        self.config = config
-        self.chain = chain
+        self._config = config
+        self._chain = chain
+
+    @property
+    def config(self) -> Config:
+        return self._config
+
+    @property
+    def chain(self) -> str:
+        return self._chain
 
     @abstractmethod
     def get_token_price(self, base_token: TokenInfo, quote_token: TokenInfo) -> Decimal:

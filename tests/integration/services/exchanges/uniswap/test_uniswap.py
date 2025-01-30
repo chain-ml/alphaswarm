@@ -4,7 +4,7 @@ import pytest
 
 from alphaswarm.config import Config
 from alphaswarm.services.exchanges import DEXFactory
-from alphaswarm.services.exchanges.uniswap.uniswap import UniswapClientV2, UniswapClientV3
+from alphaswarm.services.exchanges.uniswap import UniswapClientV2, UniswapClientV3
 
 
 @pytest.mark.skip(reason="need to find a reasonable pool")
