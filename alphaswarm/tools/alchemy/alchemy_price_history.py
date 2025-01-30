@@ -11,11 +11,11 @@ class AlchemyPriceHistory(Tool):
     inputs = {
         "address_or_symbol": {
             "type": "string",
-            "description": "Address of the token to retrieve price history for",
+            "description": "Address or symbol of the token to retrieve price history for",
         },
         "network": {
             "type": "string",
-            "description": "Name of the network hosting the token. Only relevant is a token address is used",
+            "description": "Name of the network hosting the token. Provide ONLY if a token address is used",
             "nullable": True,
             "enum": NETWORKS,
         },
