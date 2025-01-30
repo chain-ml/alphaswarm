@@ -1,7 +1,7 @@
 import asyncio
 import os
 from collections import defaultdict
-from typing import Dict, Optional, Sequence, Set
+from typing import Dict, Optional, Sequence
 
 from smolagents import CODE_SYSTEM_PROMPT, CodeAgent, LiteLLMModel, Tool
 
