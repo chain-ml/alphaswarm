@@ -1,6 +1,7 @@
 import asyncio
 import os
-from typing import Optional, Sequence
+from collections import defaultdict
+from typing import Optional, Sequence, Dict
 
 from smolagents import CODE_SYSTEM_PROMPT, CodeAgent, LiteLLMModel, Tool
 
@@ -15,6 +16,7 @@ class AlphaSwarmAgent:
             tools=list(tools),
             model=LiteLLMModel(model_id=model_id),
             system_prompt=system_prompt,
+            verbosity_level=0,
         )
 
     async def process_message(self, current_message: str) -> Optional[str]:
@@ -48,3 +50,24 @@ class AlphaSwarmAgent:
         ]
 
         return "\n".join(messages)
+
+class AlphaSwarmAgentManager:
+    def __init__(self, agent: AlphaSwarmAgent):
+        self._agent = agent
+        self._clients = set()
+        self._locks: Dict[str, asyncio.Lock] = defaultdict(asyncio.Lock)
+        
+    async def register_client(self, client_id: str):
+        """Register a new client connection"""
+        self._clients.add(client_id)
+        
+    async def unregister_client(self, client_id: str):
+        """Unregister a client and cleanup its resources"""
+        if client_id in self._clients:
+            self._clients.discard(client_id)
+                    
+    async def handle_message(self, client_id: str, message: str) -> str:
+        """Handle a message from a specific client"""
+        async with self._locks[client_id]:
+            response = await self._agent.process_message(message)
+            return response
