@@ -15,7 +15,7 @@ class MomentumItem(BaseModel):
     value: float = Field(description="The value of the rule that was satisfied.")
 
 class StrategyAnalysis(BaseModel):
-    analysis: str = Field(description="A summary of the analysis, including the values of any satisfied conditions.")
+    analysis: str = Field(description="A summary of the analysis.")
     momentum_items: List[MomentumItem] = Field(description="A list of metric rules that were satisfied.")
 
 class PriceMomentumStrategyAnalysisTool(Tool):
@@ -40,9 +40,9 @@ class PriceMomentumStrategyAnalysisTool(Tool):
         self._llm_function = LLMFunctionFromPromptFiles(
             model_id="anthropic/claude-3-5-sonnet-latest",  # this should come from the config
             response_model=StrategyAnalysis,
-            system_prompt_path=os.path.join(BASE_PATH, "alphaswarm", "tools", "strategies", "momentum", "prompts", "momentum_system_prompt.txt"),
+            system_prompt_path=os.path.join(BASE_PATH, "alphaswarm", "tools", "strategies", "momentum", "prompts", "momentum_system_prompt.md"),
             system_prompt_params={},
-            user_prompt_path=os.path.join(BASE_PATH, "alphaswarm", "tools", "strategies", "momentum", "prompts", "momentum_user_prompt.txt"),
+            user_prompt_path=os.path.join(BASE_PATH, "alphaswarm", "tools", "strategies", "momentum", "prompts", "momentum_user_prompt.md"),
         )
 
     

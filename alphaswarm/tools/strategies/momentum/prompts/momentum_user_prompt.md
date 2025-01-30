@@ -5,6 +5,3 @@
 
 ## Strategy Rules
 {momentum_strategy_rules}
-
-# Output
-Please respond as instructed.
