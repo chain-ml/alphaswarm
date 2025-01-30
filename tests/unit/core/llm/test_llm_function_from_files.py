@@ -3,7 +3,7 @@ import tempfile
 import pytest
 from pydantic import BaseModel
 
-from alphaswarm.utils import LLMFunctionFromPromptFiles
+from alphaswarm.core.llm import LLMFunctionFromPromptFiles
 
 
 class Response(BaseModel):

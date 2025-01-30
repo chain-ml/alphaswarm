@@ -3,7 +3,7 @@ from typing import List, Literal, Type
 import dotenv
 from pydantic import BaseModel, Field
 
-from alphaswarm.utils import LLMFunction
+from alphaswarm.core.llm import LLMFunction
 
 dotenv.load_dotenv()
 

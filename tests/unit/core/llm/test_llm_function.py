@@ -1,6 +1,6 @@
 import pytest
 
-from alphaswarm.utils import LLMFunction
+from alphaswarm.core.llm import LLMFunction
 
 
 def test_validate_messages_str_only():

@@ -3,7 +3,7 @@ import tempfile
 import dotenv
 from pydantic import BaseModel, Field
 
-from alphaswarm.utils import LLMFunctionFromPromptFiles
+from alphaswarm.core.llm import LLMFunctionFromPromptFiles
 
 dotenv.load_dotenv()
 

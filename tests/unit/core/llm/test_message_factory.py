@@ -1,4 +1,4 @@
-from alphaswarm.utils import MessageFactory
+from alphaswarm.core.llm import MessageFactory
 
 
 def test_message_basic():
