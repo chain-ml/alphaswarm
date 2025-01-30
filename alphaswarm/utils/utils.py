@@ -1,8 +1,9 @@
-from typing import Any, Dict
 import os
-import yaml
+from typing import Any, Dict
 
+import yaml
 from alphaswarm.config import CONFIG_PATH
+
 
 def load_strategy_config() -> Dict[str, Any]:
     strategy_path = os.path.join(CONFIG_PATH, "strategy_config.yaml")
