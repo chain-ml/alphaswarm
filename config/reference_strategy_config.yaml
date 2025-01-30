@@ -1,14 +1,14 @@
-name: "Test v0 Strategy"
-token:
+name: "Reference Price Momentum Strategy"
+tokens:
   - "WETH"
   - "VIRTUAL"
   - "AIXBT" 
 metric_rules:
   - metric: "price"
-    threshold_percentage: 20.0
+    threshold_percentage: 2.0
     measurement_window: "1d"
   - metric: "price"
-    threshold_percentage: -20.0
+    threshold_percentage: -2.0
     measurement_window: "1d"
 
 
