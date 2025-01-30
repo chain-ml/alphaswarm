@@ -59,8 +59,7 @@ class AlphaSwarmAgentManager:
 
     async def register_client(self, client_id: str):
         """Register a new client connection"""
-        # Client is registered by creating a lock for it
-        self._locks[client_id]
+        self._locks[client_id] = asyncio.Lock()
 
     async def unregister_client(self, client_id: str):
         """Unregister a client and cleanup its resources"""

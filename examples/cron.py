@@ -24,11 +24,11 @@ async def main():
     agent = AlphaSwarmAgent(tools=tools, model_id="gpt-4o")  # r tools here
     manager = AlphaSwarmAgentManager(agent)
 
-    def generate_message() -> str:
+    def generate_message_cron_job1() -> str:
         c = random.choice(["ETH", "BTC", "bitcoin", "weth"])
         return f"What's the value of {c}?"
 
-    def generate_message_2() -> str:
+    def generate_message_cron_job2() -> str:
         b = random.choice([1, 2])
         return "What's the price history for ETH?" if b == 1 else "What's the pair price of GIGA/SOL?"
 
@@ -43,7 +43,7 @@ async def main():
         manager=manager,
         client_id="cron1",
         interval_seconds=60,
-        message_generator=generate_message,
+        message_generator=generate_message_cron_job1,
         response_handler=response_handler("CronJob1"),
     )
 
@@ -51,7 +51,7 @@ async def main():
         manager=manager,
         client_id="cron2",
         interval_seconds=45,
-        message_generator=generate_message_2,
+        message_generator=generate_message_cron_job2,
         response_handler=response_handler("CronJob2"),
     )
 
