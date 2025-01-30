@@ -15,7 +15,7 @@ class SimpleResponse(BaseModel):
 
 def get_llm_function_from_files(**kwargs) -> LLMFunctionFromPromptFiles[SimpleResponse]:
     return LLMFunctionFromPromptFiles(
-        model_id="gpt-4o",
+        model_id="anthropic/claude-3-haiku-20240307",
         response_model=SimpleResponse,
         **kwargs,
     )

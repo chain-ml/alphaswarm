@@ -26,7 +26,7 @@ class ComplexResponse(BaseModel):
 
 def get_llm_function(response_model: Type[BaseModel] = SimpleResponse, **kwargs) -> LLMFunction:
     return LLMFunction(
-        model_id="gpt-4o",
+        model_id="anthropic/claude-3-haiku-20240307",
         response_model=response_model,
         **kwargs,
     )

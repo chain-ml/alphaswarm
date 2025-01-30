@@ -3,12 +3,14 @@ from __future__ import annotations
 from typing import Any, Dict, Generic, List, Literal, Optional, Sequence, Type, TypeVar
 
 import instructor
-from litellm import completion
+import litellm
 from pydantic import BaseModel
 
 from .message import Message
 
 T_Response = TypeVar("T_Response", bound=BaseModel)
+
+litellm.modify_params = True  # for calls with system message only for anthropic
 
 
 class LLMFunction(Generic[T_Response]):
@@ -42,7 +44,7 @@ class LLMFunction(Generic[T_Response]):
         self.max_retries = max_retries
         self.messages = self._validate_messages(system_message, messages, role="system")
 
-        self.client = instructor.from_litellm(completion)
+        self.client = instructor.from_litellm(litellm.completion)
 
     @staticmethod
     def _validate_messages(
