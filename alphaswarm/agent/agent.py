@@ -54,18 +54,18 @@ class AlphaSwarmAgent:
 class AlphaSwarmAgentManager:
     def __init__(self, agent: AlphaSwarmAgent):
         self._agent = agent
-        self._clients: Set[str] = set()
         self._locks: Dict[str, asyncio.Lock] = defaultdict(asyncio.Lock)
         self._agent_lock = asyncio.Lock()
 
     async def register_client(self, client_id: str):
         """Register a new client connection"""
-        self._clients.add(client_id)
+        # Client is registered by creating a lock for it
+        self._locks[client_id]
 
     async def unregister_client(self, client_id: str):
         """Unregister a client and cleanup its resources"""
-        if client_id in self._clients:
-            self._clients.discard(client_id)
+        if client_id in self._locks:
+            del self._locks[client_id]
 
     async def handle_message(self, client_id: str, message: str) -> str:
         """Handle a message from a specific client"""

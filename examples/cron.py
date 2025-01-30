@@ -25,7 +25,8 @@ async def main():
     manager = AlphaSwarmAgentManager(agent)
 
     def generate_message() -> str:
-        return "What's the value of BTC?"
+        c = random.choice(["ETH", "BTC", "bitcoin", "weth"])
+        return f"What's the value of {c}?"
 
     def generate_message_2() -> str:
         b = random.choice([1, 2])
