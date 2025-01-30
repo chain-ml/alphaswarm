@@ -7,7 +7,12 @@ from smolagents import Tool
 
 class AlchemyPriceHistory(Tool):
     name = "AlchemyPriceHistory"
-    description = "Retrieve price history for a given token using Alchemy"
+    description = """Retrieve price history for a given token using Alchemy.
+    Alchemy has the following limits for each interval:
+    - 2016 samples (7d) for 5m
+    - 720 samples (30d) for 1h
+    - 365 samples (1y) for 1d
+    """
     inputs = {
         "address": {
             "type": "string",
@@ -20,14 +25,14 @@ class AlchemyPriceHistory(Tool):
         },
         "interval": {
             "type": "string",
-            "description": "Time interval between data points. Max history for each interval: (5m, 7d), (1h, 30d), (1d, 1yr)",
+            "description": "Time interval between data points. Max samples for each interval: (5m, 2016), (1h, 720), (1d, 365)",
             "enum": ["5m", "1h", "1d"],
         },
-        "history": {
+        "num_samples": {
             "type": "integer",
-            "description": "Number of days to look back price history for",
+            "description": "Number of price samples to retrieve",
             "gt": 0,
-            "lte": 365,
+            "le": 2016,
         },
     }
     output_type = "object"
@@ -36,19 +41,27 @@ class AlchemyPriceHistory(Tool):
         super().__init__()
         self.client = alchemy_client or AlchemyClient()
 
-    def forward(self, address: str, network: str, interval: str, history: int) -> List[HistoricalPrice]:
+    def forward(self, address: str, network: str, interval: str, num_samples: int) -> List[HistoricalPrice]:
         end_time = datetime.now(timezone.utc)
-        max_history = self._max_history_from_interval(interval)
-        history = min(history, max_history)
-        start_time = end_time - timedelta(days=history)
+        max_samples = self._max_samples_from_interval(interval)
+        samples = min(num_samples, max_samples)
+
+        # Calculate duration based on interval and number of samples
+        interval_durations = {
+            "5m": timedelta(minutes=5),
+            "1h": timedelta(hours=1),
+            "1d": timedelta(days=1),
+        }
+        duration = interval_durations[interval] * (samples - 1)
+        start_time = end_time - duration
 
         return self.client.get_historical_prices_by_address(address, network, start_time, end_time, interval).data
 
     @staticmethod
-    def _max_history_from_interval(interval: str) -> int:
+    def _max_samples_from_interval(interval: str) -> int:
         interval_limits = {
-            "5m": 7,  # 7 days
-            "1h": 30,  # 30 days
-            "1d": 365,  # 1 year
+            "5m": 2016,  # 7 days worth of 5-minute samples
+            "1h": 720,   # 30 days worth of hourly samples
+            "1d": 365,   # 1 year worth of daily samples
         }
         return interval_limits[interval]
