@@ -4,21 +4,21 @@ from typing import Any, Dict, List, Tuple
 from urllib.parse import urlencode
 
 import requests
-from pydantic import Field
-from pydantic.dataclasses import dataclass
-
 from alphaswarm.config import Config, TokenInfo
 from alphaswarm.services import ApiException
 from alphaswarm.services.exchanges.base import DEXClient, SwapResult
+from pydantic import Field
+from pydantic.dataclasses import dataclass
 
 logger = logging.getLogger(__name__)
 
 
 @dataclass
 class QuoteResponse:
-# TODO capture more fields if needed
+    # TODO capture more fields if needed
     out_amount: Decimal = Field(alias="outAmount")
     route_plan: List[Dict[str, Any]] = Field(alias="routePlan")
+
 
 class JupiterClient(DEXClient):
     """Client for Jupiter DEX on Solana"""

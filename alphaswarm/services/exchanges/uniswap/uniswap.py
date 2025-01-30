@@ -224,13 +224,7 @@ class UniswapClient(DEXClient):
             if receipt.get("status") == 0:
                 revert_reason = fetch_transaction_revert_reason(self._web3, completed_tx_hash)
                 logger.error(f"Transaction {completed_tx_hash.hex()} failed because of: {revert_reason}")
-                return SwapResult(
-                    success=False,
-                    base_amount=0,
-                    quote_amount=quote_amount,
-                    tx_hash=completed_tx_hash.hex(),
-                    error=revert_reason,
-                )
+                return SwapResult.build_error(error=revert_reason, base_amount=0)
 
         # Get the actual amount of base token received from the swap receipt
         swap_receipt = receipts[list(receipts.keys())[1]]
@@ -238,12 +232,10 @@ class UniswapClient(DEXClient):
             swap_receipt, self._web3.to_checksum_address(base_token.address), wallet_address, base_token.decimals
         )
 
-        return SwapResult(
-            success=True,
+        return SwapResult.build_success(
             base_amount=base_amount,
             quote_amount=quote_amount,
-            tx_hash=list(receipts.keys())[1].hex(),  # Return the swap tx hash, not the approve tx
-            error=None,
+            tx_hash=list(receipts.keys())[1],  # Return the swap tx hash, not the approve tx
         )
 
     def _get_gas_fees(self) -> tuple[int, int, int, int]:

@@ -3,7 +3,7 @@ from typing import Optional
 
 from alphaswarm.config import Config
 from alphaswarm.services.chains import Web3Client, Web3ClientFactory
-from alphaswarm.services.exchanges import DEXFactory
+from alphaswarm.services.exchanges import DEXFactory, SwapResult
 from smolagents import Tool
 
 logger = logging.getLogger(__name__)
@@ -40,7 +40,7 @@ class ExecuteTokenSwapTool(Tool):
             "nullable": True,
         },
     }
-    output_type = "string"
+    output_type = "object"
 
     def __init__(self, config: Config, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
@@ -64,7 +64,7 @@ class ExecuteTokenSwapTool(Tool):
         chain: str = "ethereum",
         dex_type: str = "uniswap_v3",
         slippage_bps: int = 100,
-    ) -> str:
+    ) -> SwapResult:
         """Execute a token swap."""
         # Create DEX client
         dex_client = DEXFactory.create(dex_name=dex_type, config=self.config, chain=chain)
@@ -78,7 +78,7 @@ class ExecuteTokenSwapTool(Tool):
             base_token_info = token_config[token_base]
             quote_token_info = token_config[token_quote]
         except KeyError as e:
-            return f"Token not found in config: {str(e)}"
+            raise RuntimeError("Token not found in config") from e
 
         # Log token details
         logger.info(
@@ -86,14 +86,9 @@ class ExecuteTokenSwapTool(Tool):
         )
 
         # Execute swap
-        result = dex_client.swap(
+        return dex_client.swap(
             base_token=base_token_info,
             quote_token=quote_token_info,
             quote_amount=amount,
             slippage_bps=slippage_bps,
         )
-
-        if result.success:
-            return f"Swap successful! Swapped {result.quote_amount} {quote_token_info.symbol} for {result.base_amount} {base_token_info.symbol}. TX Hash: {result.tx_hash}"
-
-        raise RuntimeError(f"Swap failed: {result.error}")
