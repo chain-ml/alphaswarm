@@ -19,17 +19,14 @@ from eth_typing import HexAddress
 from hexbytes import HexBytes
 from web3.middleware.signing import construct_sign_and_send_raw_middleware
 
-from .constants import (
-    ERC20_ABI,
+from .constants_erc20 import ERC20_ABI
+from .constants_v2 import (
     UNISWAP_V2_DEPLOYMENTS,
     UNISWAP_V2_FACTORY_ABI,
     UNISWAP_V2_INIT_CODE_HASH,
     UNISWAP_V2_ROUTER_ABI,
-    UNISWAP_V3_DEPLOYMENTS,
-    UNISWAP_V3_FACTORY_ABI,
-    UNISWAP_V3_ROUTER2_ABI,
-    UNISWAP_V3_ROUTER_ABI,
 )
+from .constants_v3 import UNISWAP_V3_DEPLOYMENTS, UNISWAP_V3_FACTORY_ABI, UNISWAP_V3_ROUTER2_ABI, UNISWAP_V3_ROUTER_ABI
 
 # Set up logger
 logger = logging.getLogger(__name__)
