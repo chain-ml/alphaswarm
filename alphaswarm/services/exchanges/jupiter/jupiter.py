@@ -1,15 +1,24 @@
 import logging
 from decimal import Decimal
-from typing import List, Tuple
+from typing import Any, Dict, List, Tuple
 from urllib.parse import urlencode
 
 import requests
+from pydantic import Field
+from pydantic.dataclasses import dataclass
+
 from alphaswarm.config import Config, TokenInfo
 from alphaswarm.services import ApiException
 from alphaswarm.services.exchanges.base import DEXClient, SwapResult
 
 logger = logging.getLogger(__name__)
 
+
+@dataclass
+class QuoteResponse:
+# TODO capture more fields if needed
+    out_amount: Decimal = Field(alias="outAmount")
+    route_plan: List[Dict[str, Any]] = Field(alias="routePlan")
 
 class JupiterClient(DEXClient):
     """Client for Jupiter DEX on Solana"""
@@ -64,22 +73,20 @@ class JupiterClient(DEXClient):
         if response.status_code != 200:
             raise ApiException(response)
 
-        quote = response.json()
-
-        if not quote or "outAmount" not in quote:
-            raise RuntimeError(f"No quote found for {base_token.symbol}/{quote_token.symbol}")
+        result = response.json()
+        quote = QuoteResponse(**result)
 
         # Calculate price (quote_token per base_token)
-        amount_out = int(quote["outAmount"])
-        price = Decimal(str(quote_token.convert_from_wei(amount_out)))  # Convert to Decimal
+        amount_out = quote.out_amount
+        # TODO Actually use Decimal
+        price = Decimal(str(quote_token.convert_from_wei(int(amount_out))))  # Convert to Decimal
 
         # Log quote details
         logger.debug("Quote successful:")
         logger.debug(f"- Input: 1 {base_token.symbol}")
         logger.debug(f"- Output: {amount_out} {quote_token.symbol} lamports")
         logger.debug(f"- Price: {price} {quote_token.symbol}/{base_token.symbol}")
-        if "routePlan" in quote:
-            logger.debug(f"- Route: {quote['routePlan']}")
+        logger.debug(f"- Route: {quote.route_plan}")
 
         return price
 
