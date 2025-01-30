@@ -2,8 +2,9 @@ from __future__ import annotations
 
 import logging
 import os
+from decimal import Decimal
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Sequence
+from typing import Any, Dict, List, Optional, Sequence, Union
 
 import yaml
 from pydantic.dataclasses import dataclass
@@ -26,12 +27,11 @@ class TokenInfo:
     chain: str
     is_native: bool = False
 
-    def convert_to_wei(self, amount: float) -> int:
+    def convert_to_wei(self, amount: Decimal) -> int:
         return int(amount * (10**self.decimals))
 
-    # TODO: use Decimal
-    def convert_from_wei(self, amount: float) -> float:
-        return float(amount / (10**self.decimals))
+    def convert_from_wei(self, amount: Union[int, Decimal]) -> Decimal:
+        return Decimal(amount) / (10**self.decimals)
 
     def address_to_path(self) -> str:
         # Remove '0x' and pad to 20 bytes

@@ -62,7 +62,7 @@ class JupiterClient(DEXClient):
         params = {
             "inputMint": base_token.address,
             "outputMint": quote_token.address,
-            "amount": str(base_token.convert_to_wei(1.0)),  # Get price for 1 full token
+            "amount": str(base_token.convert_to_wei(Decimal(1))),  # Get price for 1 full token
             "slippageBps": self.config.get_venue_settings_jupiter().slippage_bps,
         }
 
@@ -78,8 +78,7 @@ class JupiterClient(DEXClient):
 
         # Calculate price (quote_token per base_token)
         amount_out = quote.out_amount
-        # TODO Actually use Decimal
-        price = Decimal(str(quote_token.convert_from_wei(int(amount_out))))  # Convert to Decimal
+        price = quote_token.convert_from_wei(int(amount_out))  # Convert to Decimal
 
         # Log quote details
         logger.debug("Quote successful:")
