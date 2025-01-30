@@ -1,9 +1,7 @@
-from alphaswarm.tools.strategies.momentum.strategy_analysis_tool import PriceMomentumStrategyAnalysisTool
-from alphaswarm.config import Config
+from alphaswarm.tools.strategies.momentum.momentum_analysis_tool import PriceMomentumStrategyAnalysisTool
 
 
-def test_get_token_price_tool(default_config: Config):
-    config = default_config
+def test_get_token_price_tool():
     tool = PriceMomentumStrategyAnalysisTool()
     result = tool.forward(percent_price_change_24_hour="WETH: +4%, VIRTUAL: +2.1%, AIXBT: +1.5%")
     assert result is not None
