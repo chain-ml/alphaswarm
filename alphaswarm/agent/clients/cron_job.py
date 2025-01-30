@@ -1,5 +1,5 @@
 import asyncio
-from typing import Callable, Any
+from typing import Any, Callable
 
 from ..agent import AlphaSwarmAgentManager
 
@@ -11,7 +11,7 @@ class CronJobClient:
         client_id: str,
         interval_seconds: float,
         message_generator: Callable[[], str],
-        response_handler: Callable[[str], Any] = print
+        response_handler: Callable[[str], Any] = print,
     ):
         self.client_id = client_id
         self._manager = manager

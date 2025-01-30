@@ -12,9 +12,7 @@ class TerminalClient:
         await self.manager.register_client(self.client_id)
         try:
             while True:
-                message = await asyncio.get_event_loop().run_in_executor(
-                    None, input, f"{self.client_id}> "
-                )
+                message = await asyncio.get_event_loop().run_in_executor(None, input, f"{self.client_id}> ")
                 if message.lower() == "quit":
                     break
                 response = await self._manager.handle_message(self.client_id, message)
