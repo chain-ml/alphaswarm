@@ -19,9 +19,7 @@ def alchemy_client(default_config: Config) -> AlchemyClient:
 
 
 @pytest.fixture
-def cookiefun_client() -> CookieFunClient:
+def cookiefun_client(default_config: Config) -> CookieFunClient:
     """Create CookieFun client for testing"""
     # Set test API key if not present
-    if not os.getenv("COOKIE_FUN_API_KEY"):
-        raise ValueError("COOKIE_FUN_API_KEY environment variable not set")
     return CookieFunClient()
