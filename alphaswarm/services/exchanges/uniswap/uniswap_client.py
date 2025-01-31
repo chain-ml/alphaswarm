@@ -3,7 +3,7 @@ import decimal
 import logging
 from abc import abstractmethod
 from decimal import Decimal
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Tuple
 
 from alphaswarm.config import Config, TokenInfo
 from alphaswarm.services.chains.factory import Web3ClientFactory
@@ -13,7 +13,7 @@ from eth_account.signers.local import LocalAccount
 from eth_defi.confirmation import wait_transactions_to_complete
 from eth_defi.provider.multi_provider import MultiProviderWeb3, create_multi_provider_web3
 from eth_defi.revert_reason import fetch_transaction_revert_reason
-from eth_typing import HexAddress
+from eth_typing import ChecksumAddress, HexAddress
 from hexbytes import HexBytes
 from web3.middleware.signing import construct_sign_and_send_raw_middleware
 
@@ -31,24 +31,25 @@ class UniswapClient(DEXClient):
         super().__init__(config, chain)
         self.version = version
         self._config = config
-        self._router: Optional[str] = None
-        self._factory: Optional[str] = None
-        self._position_manager = None
-        self._quoter = None
+        self._router = self._get_router(self.chain)
+        self._factory = self._get_factory(self.chain)
         self._blockchain_client = Web3ClientFactory.get_instance().get_client(self.chain, self.config)
         self._web3: MultiProviderWeb3 = self._create_multi_provider_web3(
             self.config.get_chain_config(self.chain).rpc_url
         )
 
-        logger.info("Created UniswapClient instance (uninitialized)")
-        self._initialize()
+        logger.info(f"Created {self.__class__.__name__} instance for chain {self.chain}")
 
     @staticmethod
     def _create_multi_provider_web3(rpc_url: str) -> MultiProviderWeb3:
         return create_multi_provider_web3(rpc_url)
 
     @abstractmethod
-    def _initialize(self) -> bool:
+    def _get_router(self, chain: str) -> ChecksumAddress:
+        pass
+
+    @abstractmethod
+    def _get_factory(self, chain: str) -> ChecksumAddress:
         pass
 
     @abstractmethod
@@ -64,13 +65,6 @@ class UniswapClient(DEXClient):
     @abstractmethod
     def _get_markets_for_tokens(self, tokens: List[TokenInfo]) -> List[Tuple[TokenInfo, TokenInfo]]:
         pass
-
-    def initialize(self) -> None:
-        """Initialize the client with version and chain information.
-        This should be called by DEXFactory after creating the instance."""
-        if not self._initialize():
-            raise ValueError(f"Uniswap {self.version} not supported on chain: {self.chain}")
-        logger.info(f"Finished initializing Uniswap-Client {self.version} on {self.chain}")
 
     @staticmethod
     def _get_final_swap_amount_received(
@@ -185,7 +179,7 @@ class UniswapClient(DEXClient):
         # Get the actual amount of base token received from the swap receipt
         swap_receipt = receipts[list(receipts.keys())[1]]
         base_amount = self._get_final_swap_amount_received(
-            swap_receipt, self._web3.to_checksum_address(base_token.address), wallet_address, base_token.decimals
+            swap_receipt, base_token.checksum_address, wallet_address, base_token.decimals
         )
 
         return SwapResult.build_success(
@@ -247,7 +241,7 @@ class UniswapClient(DEXClient):
         quote_contract = self._web3.eth.contract(address=quote.checksum_address, abi=ERC20_ABI)
 
         # Uniswap router must be allowed to spend our quote token
-        approve = quote_contract.functions.approve(self._web3.to_checksum_address(self._router), raw_amount)
+        approve = quote_contract.functions.approve(self._router, raw_amount)
 
         # Get gas fees
         max_fee_per_gas, _, priority_fee, gas_limit = self._get_gas_fees()

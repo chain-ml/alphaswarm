@@ -7,12 +7,13 @@ from alphaswarm.config import Config, TokenInfo
 from alphaswarm.services.exchanges.uniswap.constants_v2 import (
     UNISWAP_V2_DEPLOYMENTS,
     UNISWAP_V2_FACTORY_ABI,
-    UNISWAP_V2_INIT_CODE_HASH,
     UNISWAP_V2_ROUTER_ABI,
 )
 from alphaswarm.services.exchanges.uniswap.uniswap_client import ZERO_ADDRESS, UniswapClient
 from eth_defi.confirmation import wait_transactions_to_complete
 from eth_defi.uniswap_v2.pair import fetch_pair_details
+from eth_typing import ChecksumAddress
+from eth_utils import to_checksum_address
 from hexbytes import HexBytes
 
 logger = logging.getLogger(__name__)
@@ -22,23 +23,11 @@ class UniswapClientV2(UniswapClient):
     def __init__(self, config: Config, chain: str):
         super().__init__(config, chain, "v2")
 
-    def _initialize(self) -> bool:
-        if self.chain in UNISWAP_V2_DEPLOYMENTS:  # Check for V2 support
-            deployment_data_v2 = UNISWAP_V2_DEPLOYMENTS[self.chain]
-            init_code_hash = UNISWAP_V2_INIT_CODE_HASH.get(self.chain)
-            if not init_code_hash:
-                raise ValueError(f"No V2 init code hash found for chain: {self.chain}")
+    def _get_router(self, chain: str) -> ChecksumAddress:
+        return to_checksum_address(UNISWAP_V2_DEPLOYMENTS[chain]["router"])
 
-            logger.info(f"Initializing Uniswap V2 on {self.chain} with:")
-            logger.info(f"  Factory: {deployment_data_v2['factory']}")
-            logger.info(f"  Router: {deployment_data_v2['router']}")
-            logger.info(f"  Init Code Hash: {init_code_hash}")
-
-            self._factory = deployment_data_v2["factory"]
-            self._router = deployment_data_v2["router"]
-            return True
-
-        return False
+    def _get_factory(self, chain: str) -> ChecksumAddress:
+        return to_checksum_address(UNISWAP_V2_DEPLOYMENTS[chain]["factory"])
 
     def _swap(
         self, base: TokenInfo, quote: TokenInfo, address: str, raw_amount: int, slippage_bps: int
@@ -63,12 +52,10 @@ class UniswapClientV2(UniswapClient):
         logger.info(f"Minimum output with {slippage_bps} bps slippage (raw): {min_output_raw}")
 
         # Build swap path
-        path = [self._web3.to_checksum_address(quote.address), self._web3.to_checksum_address(base.address)]
+        path = [quote.checksum_address, base.checksum_address]
 
         # Build swap transaction with EIP-1559 parameters
-        router_contract = self._web3.eth.contract(
-            address=self._web3.to_checksum_address(self._router), abi=UNISWAP_V2_ROUTER_ABI
-        )
+        router_contract = self._web3.eth.contract(address=self._router, abi=UNISWAP_V2_ROUTER_ABI)
         deadline = int(self._web3.eth.get_block("latest")["timestamp"] + 300)  # 5 minutes
 
         swap = router_contract.functions.swapExactTokensForTokens(
@@ -120,9 +107,7 @@ class UniswapClientV2(UniswapClient):
             or there was an error getting the price
         """
         # Create factory contract instance
-        factory_contract = self._web3.eth.contract(
-            address=self._web3.to_checksum_address(self._factory), abi=UNISWAP_V2_FACTORY_ABI
-        )
+        factory_contract = self._web3.eth.contract(address=self._factory, abi=UNISWAP_V2_FACTORY_ABI)
 
         # Get pair address from factory using checksum addresses
         pair_address = factory_contract.functions.getPair(
@@ -144,9 +129,7 @@ class UniswapClientV2(UniswapClient):
     def _get_markets_for_tokens(self, tokens: List[TokenInfo]) -> List[Tuple[TokenInfo, TokenInfo]]:
         """Get all V2 pairs between the provided tokens."""
         markets = []
-        factory = self._web3.eth.contract(
-            address=self._web3.to_checksum_address(self._factory), abi=UNISWAP_V2_FACTORY_ABI
-        )
+        factory = self._web3.eth.contract(address=self._factory, abi=UNISWAP_V2_FACTORY_ABI)
 
         # Check each possible token pair
         for i, token1 in enumerate(tokens):

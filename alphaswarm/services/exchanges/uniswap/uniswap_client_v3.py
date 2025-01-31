@@ -11,9 +11,11 @@ from alphaswarm.services.exchanges.uniswap.constants_v3 import (
     UNISWAP_V3_ROUTER_ABI,
 )
 from alphaswarm.services.exchanges.uniswap.uniswap_client import ZERO_ADDRESS, UniswapClient
+from cchecksum import to_checksum_address
 from eth_defi.confirmation import wait_transactions_to_complete
 from eth_defi.uniswap_v3.pool import PoolDetails, fetch_pool_details
 from eth_defi.uniswap_v3.price import get_onchain_price
+from eth_typing import ChecksumAddress
 from hexbytes import HexBytes
 
 logger = logging.getLogger(__name__)
@@ -23,21 +25,11 @@ class UniswapClientV3(UniswapClient):
     def __init__(self, config: Config, chain: str):
         super().__init__(config, chain, "v3")
 
-    def _initialize(self) -> bool:
-        if self.chain in UNISWAP_V3_DEPLOYMENTS:  # Check for V3 support
-            deployment_data_v3 = UNISWAP_V3_DEPLOYMENTS[self.chain]
+    def _get_router(self, chain: str) -> ChecksumAddress:
+        return to_checksum_address(UNISWAP_V3_DEPLOYMENTS[chain]["router"])
 
-            logger.info(f"Initializing Uniswap V3 on {self.chain} with:")
-            logger.info(f"  Factory: {deployment_data_v3['factory']}")
-            logger.info(f"  Router: {deployment_data_v3['router']}")
-            logger.info(f"  Position Manager: {deployment_data_v3['position_manager']}")
-            logger.info(f"  Quoter: {deployment_data_v3['quoter']}")
-
-            self._router = deployment_data_v3["router"]
-            self._factory = deployment_data_v3["factory"]
-            return True
-
-        return False
+    def _get_factory(self, chain: str) -> ChecksumAddress:
+        return to_checksum_address(UNISWAP_V3_DEPLOYMENTS[chain]["factory"])
 
     def _swap(
         self, base: TokenInfo, quote: TokenInfo, address: str, raw_amount: int, slippage_bps: int
@@ -96,8 +88,8 @@ class UniswapClientV3(UniswapClient):
 
         # Build swap parameters for `exactInputSingle`
         params = {
-            "tokenIn": self._web3.to_checksum_address(quote.address),
-            "tokenOut": self._web3.to_checksum_address(base.address),
+            "tokenIn": quote.checksum_address,
+            "tokenOut": base.checksum_address,
             "fee": pool_details.raw_fee,
             "recipient": self._web3.to_checksum_address(address),
             "deadline": int(self._web3.eth.get_block("latest")["timestamp"] + 300),
@@ -111,7 +103,7 @@ class UniswapClientV3(UniswapClient):
 
         # Build swap transaction with EIP-1559 parameters
         router_abi = UNISWAP_V3_ROUTER2_ABI if self.chain in ["base", "ethereum_sepolia"] else UNISWAP_V3_ROUTER_ABI
-        router_contract = self._web3.eth.contract(address=self._web3.to_checksum_address(self._router), abi=router_abi)
+        router_contract = self._web3.eth.contract(address=self._router, abi=router_abi)
         swap = router_contract.functions.exactInputSingle(params)
 
         # Get gas fees
@@ -179,9 +171,7 @@ class UniswapClientV3(UniswapClient):
             or there was an error finding a pool
         """
         settings = self.config.get_venue_settings_uniswap_v3()
-        factory_contract = self._web3.eth.contract(
-            address=self._web3.to_checksum_address(self._factory), abi=UNISWAP_V3_FACTORY_ABI
-        )
+        factory_contract = self._web3.eth.contract(address=self._factory, abi=UNISWAP_V3_FACTORY_ABI)
 
         max_liquidity = 0
         best_pool_details = None
@@ -223,9 +213,7 @@ class UniswapClientV3(UniswapClient):
     def _get_markets_for_tokens(self, tokens: List[TokenInfo]) -> List[Tuple[TokenInfo, TokenInfo]]:
         """Get all V3 pools between the provided tokens."""
         markets = []
-        factory = self._web3.eth.contract(
-            address=self._web3.to_checksum_address(self._factory), abi=UNISWAP_V3_FACTORY_ABI
-        )
+        factory = self._web3.eth.contract(address=self._factory, abi=UNISWAP_V3_FACTORY_ABI)
 
         # Get fee tiers from settings
         settings = self.config.get_venue_settings_uniswap_v3()
