@@ -12,8 +12,7 @@ logger = logging.getLogger(__name__)
 
 
 class TelegramApp:
-    def __init__(self, bot_token: str):
-        # Initialize bot
+    def __init__(self, bot_token: str) -> None:
         self._app = Application.builder().token(bot_token).build()
 
     async def _start(self):
@@ -39,7 +38,7 @@ class TelegramApp:
 
 
 class TelegramBot(TelegramApp, AlphaSwarmAgentClient[Update]):
-    def __init__(self, agent: AlphaSwarmAgent, bot_token: str):
+    def __init__(self, agent: AlphaSwarmAgent, bot_token: str) -> None:
         TelegramApp.__init__(self, bot_token)
         AlphaSwarmAgentClient.__init__(self, agent=agent, client_id="telegram")
 

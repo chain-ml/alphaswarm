@@ -35,7 +35,6 @@ class SendTelegramNotificationTool(Tool):
 
     def forward(self, message: str, confidence: float, priority: str) -> str:
         message_to_send = self.format_alert_message(message=message, confidence=confidence, priority=priority)
-
         asyncio.run(self.app.send_message(chat_id=self.chat_id, message=message_to_send))
         return "Message sent successfully"
 

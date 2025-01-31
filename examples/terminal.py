@@ -8,11 +8,11 @@ from alphaswarm.config import Config
 from alphaswarm.tools.alchemy import AlchemyPriceHistoryByAddress, AlchemyPriceHistoryBySymbol
 from alphaswarm.tools.exchanges import GetTokenPriceTool
 from alphaswarm.tools.price_tool import PriceTool
+from alphaswarm.tools.telegram import SendTelegramNotificationTool
 from smolagents import Tool
 
 
 async def main():
-    # Initialize the manager with your tools
     dotenv.load_dotenv()
     config = Config()
 
@@ -21,7 +21,8 @@ async def main():
         GetTokenPriceTool(config),
         AlchemyPriceHistoryByAddress(),
         AlchemyPriceHistoryBySymbol(),
-    ]
+        SendTelegramNotificationTool(),
+    ]  # Add your tools here
     agent = AlphaSwarmAgent(tools=tools, model_id="gpt-4o")
 
     terminal = TerminalClient("AlphaSwarm terminal", agent)

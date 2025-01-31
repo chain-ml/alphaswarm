@@ -16,12 +16,11 @@ logging.getLogger("smolagents").setLevel(logging.ERROR)
 
 
 async def main():
-    # Initialize the manager with your tools
     dotenv.load_dotenv()
     config = Config()
 
-    tools: List[Tool] = [PriceTool(), GetTokenPriceTool(config), AlchemyPriceHistory()]  # Add you
-    agent = AlphaSwarmAgent(tools=tools, model_id="gpt-4o")  # r tools here
+    tools: List[Tool] = [PriceTool(), GetTokenPriceTool(config), AlchemyPriceHistory()]  # Add your tools here
+    agent = AlphaSwarmAgent(tools=tools, model_id="gpt-4o")
 
     def generate_message_cron_job1() -> str:
         c = random.choice(["ETH", "BTC", "bitcoin", "weth", "quit"])
@@ -46,6 +45,7 @@ async def main():
         response_handler=response_handler("AlphaSwarm1"),
     )
 
+    # Create a second cron job client that runs every 15 seconds
     cron_client_2 = CronJobClient(
         agent=agent,
         client_id="AlphaSwarm2",
