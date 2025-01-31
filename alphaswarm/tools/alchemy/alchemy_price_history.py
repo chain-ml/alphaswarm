@@ -13,9 +13,14 @@ class AlchemyPriceHistoryBySymbol(Tool):
             "type": "string",
             "description": "Symbol/Name of the token to retrieve price history for",
         },
+        "interval": {
+            "type": "string",
+            "description": "Time interval between data points.",
+            "enum": ["5m", "1h", "1d"],
+        },
         "history": {
             "type": "integer",
-            "description": "Number of days to look back price history for",
+            "description": "Number of days to look back price history for. Max history for each interval: (5m, 7d), (1h, 30d), (1d, 365d).",
             "gt": 0,
             "lte": 365,
         },
@@ -26,10 +31,9 @@ class AlchemyPriceHistoryBySymbol(Tool):
         super().__init__()
         self.client = alchemy_client or AlchemyClient()
 
-    def forward(self, symbol: str, history: int) -> HistoricalPriceBySymbol:
+    def forward(self, symbol: str, interval: str, history: int) -> HistoricalPriceBySymbol:
         end_time = datetime.now(timezone.utc)
         start_time = end_time - timedelta(days=history)
-        interval = self.client.interval_from_history(history)
         return self.client.get_historical_prices_by_symbol(symbol, start_time, end_time, interval)
 
 
@@ -46,9 +50,14 @@ class AlchemyPriceHistoryByAddress(Tool):
             "description": "Name of the network hosting the token",
             "enum": NETWORKS,
         },
+        "interval": {
+            "type": "string",
+            "description": "Time interval between data points.",
+            "enum": ["5m", "1h", "1d"],
+        },
         "history": {
             "type": "integer",
-            "description": "Number of days to look back price history for",
+            "description": "Number of days to look back price history for. Max history for each interval: (5m, 7d), (1h, 30d), (1d, 365d).",
             "gt": 0,
             "lte": 365,
         },
@@ -59,8 +68,7 @@ class AlchemyPriceHistoryByAddress(Tool):
         super().__init__()
         self.client = alchemy_client or AlchemyClient()
 
-    def forward(self, address: str, history: int, network: str) -> HistoricalPriceByAddress:
+    def forward(self, address: str, history: int, interval: str, network: str) -> HistoricalPriceByAddress:
         end_time = datetime.now(timezone.utc)
         start_time = end_time - timedelta(days=history)
-        interval = self.client.interval_from_history(history)
         return self.client.get_historical_prices_by_address(address, network, start_time, end_time, interval)

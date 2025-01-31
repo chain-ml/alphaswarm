@@ -4,7 +4,7 @@ import random
 from typing import List
 
 import dotenv
-from alphaswarm.agent.agent import AlphaSwarmAgent, AlphaSwarmAgentManager
+from alphaswarm.agent.agent import AlphaSwarmAgent
 from alphaswarm.agent.clients import CronJobClient
 from alphaswarm.config import Config
 from alphaswarm.tools.alchemy import AlchemyPriceHistory
@@ -22,15 +22,14 @@ async def main():
 
     tools: List[Tool] = [PriceTool(), GetTokenPriceTool(config), AlchemyPriceHistory()]  # Add you
     agent = AlphaSwarmAgent(tools=tools, model_id="gpt-4o")  # r tools here
-    manager = AlphaSwarmAgentManager(agent)
 
     def generate_message_cron_job1() -> str:
-        c = random.choice(["ETH", "BTC", "bitcoin", "weth"])
-        return f"What's the value of {c}?"
+        c = random.choice(["ETH", "BTC", "bitcoin", "weth", "quit"])
+        return f"What's the value of {c}?" if c != "quit" else c
 
     def generate_message_cron_job2() -> str:
-        b = random.choice([1, 2])
-        return "What's the price history for ETH?" if b == 1 else "What's the pair price of GIGA/SOL?"
+        c = random.choice(["What's the price history for ETH?", "What's the pair price of GIGA/SOL?", "quit"])
+        return c
 
     def response_handler(prefix: str):
         def handler(response: str):
@@ -40,19 +39,19 @@ async def main():
 
     # Create a cron job client that runs every 60 seconds
     cron_client_1 = CronJobClient(
-        manager=manager,
-        client_id="cron1",
+        agent=agent,
+        client_id="AlphaSwarm1",
         interval_seconds=60,
         message_generator=generate_message_cron_job1,
-        response_handler=response_handler("CronJob1"),
+        response_handler=response_handler("AlphaSwarm1"),
     )
 
     cron_client_2 = CronJobClient(
-        manager=manager,
-        client_id="cron2",
-        interval_seconds=45,
+        agent=agent,
+        client_id="AlphaSwarm2",
+        interval_seconds=15,
         message_generator=generate_message_cron_job2,
-        response_handler=response_handler("CronJob2"),
+        response_handler=response_handler("AlphaSwarm2"),
     )
 
     await asyncio.gather(

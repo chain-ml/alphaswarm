@@ -44,7 +44,7 @@ class AlchemyClient:
         base_url: str = DEFAULT_BASE_URL,
         api_key: Optional[str] = None,
         **kwargs,
-    ):
+    ) -> None:
         """Initialize Alchemy data source"""
         self.base_url = base_url
         self.api_key = api_key or os.getenv("ALCHEMY_API_KEY")
@@ -121,11 +121,3 @@ class AlchemyClient:
         }
         response = self._make_request(self.ENDPOINT_TOKENS_HISTORICAL, data)
         return HistoricalPriceByAddress(**response)
-
-    @staticmethod
-    def interval_from_history(history_in_days: int) -> str:
-        if history_in_days <= 7:
-            return "5m"
-        if history_in_days <= 30:
-            return "1h"
-        return "1d"
