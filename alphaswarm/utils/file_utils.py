@@ -7,7 +7,7 @@ def read_text_file_to_string(file_path: Union[str, Path]) -> str:
     try:
         path = Path(file_path) if isinstance(file_path, str) else file_path
         return path.read_text(encoding="utf-8")
-    except FileNotFoundError:
-        raise FileNotFoundError(f"File not found: {file_path}")
+    except FileNotFoundError as e:
+        raise FileNotFoundError(f"File not found: {file_path}") from e
     except Exception as e:
-        raise Exception(f"Error while reading file: {str(e)}")
+        raise Exception(f"Error while reading file: {str(e)}") from e
