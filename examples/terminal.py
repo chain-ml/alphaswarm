@@ -6,7 +6,7 @@ from alphaswarm.agent.agent import AlphaSwarmAgent, AlphaSwarmAgentManager
 from alphaswarm.agent.clients import TerminalClient
 from alphaswarm.config import Config
 from alphaswarm.tools.alchemy import AlchemyPriceHistoryByAddress, AlchemyPriceHistoryBySymbol
-from alphaswarm.tools.cookie.cookie_metrics import CookieMetricsByTwitter, CookieMetricsByContract, CookieMetricsPaged
+from alphaswarm.tools.cookie.cookie_metrics import CookieMetricsByContract, CookieMetricsByTwitter, CookieMetricsPaged
 from alphaswarm.tools.exchanges import GetTokenPriceTool
 from alphaswarm.tools.price_tool import PriceTool
 from smolagents import Tool

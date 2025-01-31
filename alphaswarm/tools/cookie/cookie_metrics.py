@@ -1,9 +1,8 @@
-from typing import Optional
 import logging
+from typing import Optional
 
+from alphaswarm.services.cookiefun.cookiefun_client import AgentMetrics, CookieFunClient, Interval, PagedAgentsResponse
 from smolagents import Tool
-
-from alphaswarm.services.cookiefun.cookiefun_client import CookieFunClient, AgentMetrics, Interval, PagedAgentsResponse
 
 # Set up logging
 logger = logging.getLogger(__name__)
