@@ -5,7 +5,6 @@ import dotenv
 from alphaswarm.agent.agent import AlphaSwarmAgent, AlphaSwarmAgentManager
 from alphaswarm.agent.clients import TerminalClient
 from alphaswarm.tools.alchemy import AlchemyPriceHistoryByAddress, AlchemyPriceHistoryBySymbol
-from alphaswarm.tools.alerting.alerting_tool import SendTradeAlert
 from alphaswarm.tools.strategy_analysis.generic.generic_analysis import GenericStrategyAnalysisTool
 from smolagents import Tool
 
@@ -19,7 +18,6 @@ async def main():
         AlchemyPriceHistoryByAddress(),
         AlchemyPriceHistoryBySymbol(),
         GenericStrategyAnalysisTool(),
-        SendTradeAlert(),
     ]
     hints = """You are a trading agent that uses a set of tools to analyze the market and make trading decisions.
     You are given a set of tools to analyze the market and make trading decisions.
