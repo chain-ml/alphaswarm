@@ -2,7 +2,7 @@ import asyncio
 from typing import List
 
 import dotenv
-from alphaswarm.agent.agent import AlphaSwarmAgent, AlphaSwarmAgentManager
+from alphaswarm.agent.agent import AlphaSwarmAgent
 from alphaswarm.agent.clients import TerminalClient
 from alphaswarm.tools.alchemy import AlchemyPriceHistoryByAddress, AlchemyPriceHistoryBySymbol
 from alphaswarm.tools.strategy_analysis.generic.generic_analysis import GenericStrategyAnalysisTool
@@ -26,8 +26,7 @@ async def main():
     agent = AlphaSwarmAgent(tools=tools, model_id="anthropic/claude-3-5-sonnet-latest", hints=hints)
     manager = AlphaSwarmAgentManager(agent)
 
-    terminal = TerminalClient(manager, "terminal")
-
+    terminal = TerminalClient("AlphaSwarm terminal", agent)
     await asyncio.gather(
         terminal.start(),
     )
