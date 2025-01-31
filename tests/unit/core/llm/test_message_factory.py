@@ -1,10 +1,12 @@
 from dataclasses import asdict
 
-from alphaswarm.core.llm import CacheControl, ContentBlock, Message
+from alphaswarm.core.llm import CacheControl, ImageURL, Message
+from alphaswarm.core.llm.message import TextContentBlock
+from tests import get_data_filename
 
 
 def test_message_basic():
-    message = Message(role="system", content=[ContentBlock.default("test message")])
+    message = Message(role="system", content=[TextContentBlock.default("test message")])
 
     assert isinstance(message, Message)
     assert message.role == "system"
@@ -77,3 +79,25 @@ def test_assistant_message_with_cache():
     assert message.role == "assistant"
     assert message.content[0].text == "assistant test"
     assert message.content[0].cache_control == CacheControl.ephemeral()
+
+
+def test_message_with_image_link():
+    message = Message.message(role="user", content="user test", image_url=ImageURL("https://example.com/image.jpg"))
+
+    assert isinstance(message, Message)
+    assert message.role == "user"
+    assert message.content[0].type == "image_url"
+    assert message.content[0].image_url.url == "https://example.com/image.jpg"
+    assert message.content[1].text == "user test"
+
+
+def test_message_with_image_path():
+    path = get_data_filename("parrot.jpg")
+    message = Message.message(role="user", content="user test", image_url=ImageURL.from_path(path))
+
+    assert isinstance(message, Message)
+    assert message.role == "user"
+    assert len(message.content) == 2
+    assert message.content[0].type == "image_url"
+    assert message.content[0].image_url.url.startswith("data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEA")
+    assert message.content[1].text == "user test"

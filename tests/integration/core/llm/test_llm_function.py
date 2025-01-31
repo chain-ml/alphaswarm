@@ -1,11 +1,17 @@
+import time
 from typing import List, Literal, Type
 
 import dotenv
 from pydantic import BaseModel, Field
 
-from alphaswarm.core.llm import LLMFunction, Message
+from alphaswarm.core.llm import LLMFunction, ImageURL, Message
+from tests import get_data_filename
 
 dotenv.load_dotenv()
+
+
+class TestResponse(BaseModel):
+    content: str = Field(..., description="The content of the response")
 
 
 class SimpleResponse(BaseModel):
@@ -72,24 +78,33 @@ def test_llm_function_with_complex_response_model():
 
 
 def test_llm_function_with_cache():
-    class Response(BaseModel):
-        content: str = Field(..., description="The content of the response")
-
     large_content = "Paris is capital of France" * 300  # caching from 2k tokens for haiku
     llm_func = LLMFunction(
         model_id="anthropic/claude-3-haiku-20240307",
-        response_model=Response,
+        response_model=TestResponse,
         messages=[Message.system(large_content, cache=True)],
     )
 
     result, completion = llm_func.execute_with_completion("What's the capital of France?")
-    assert isinstance(result, Response)
+    assert isinstance(result, TestResponse)
     assert "Paris" in result.content
 
-    # assert completion.usage.prompt_tokens_details.cached_tokens > 0
+    time.sleep(1)
 
     result, completion = llm_func.execute_with_completion("What's the capital of France?")
-    assert isinstance(result, Response)
+    assert isinstance(result, TestResponse)
     assert "Paris" in result.content
 
-    # assert completion.usage. .. > 0
+    assert completion.usage.prompt_tokens_details.cached_tokens > 0
+
+
+def test_llm_function_with_image():
+    image_url = ImageURL.from_path(get_data_filename("parrot.jpg"))
+    llm_func = get_llm_function(
+        response_model=TestResponse,
+        messages=[Message.message(role="user", content="Describe the image", image_url=image_url)],
+    )
+
+    result = llm_func.execute()
+    assert isinstance(result, TestResponse)
+    assert "parrot" in result.content.lower()
