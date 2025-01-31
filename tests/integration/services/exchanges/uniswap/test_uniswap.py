@@ -36,7 +36,7 @@ def test_base_v3_pool(default_config: Config):
     swap: UniswapClientV3 = DEXFactory.create("uniswap_v3", default_config, chain)  # type: ignore
     token_in = config.get_token_info(chain=chain, token="USDC")
     token_out = config.get_token_info(chain=chain, token="AIXBT")
-    result = swap._get_v3_pool(base_token=token_in, quote_token=token_out)
+    result = swap._get_pool(base_token=token_in, quote_token=token_out)
 
     assert result is not None
     assert result.address.lower() == "0xf1Fdc83c3A336bdbDC9fB06e318B08EadDC82FF4".lower()

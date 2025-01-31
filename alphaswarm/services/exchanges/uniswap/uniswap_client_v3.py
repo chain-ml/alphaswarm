@@ -1,16 +1,18 @@
 import logging
 from datetime import timedelta
 from decimal import Decimal
-from typing import Dict
+from typing import Dict, List, Tuple
 
 from alphaswarm.config import Config, TokenInfo
 from alphaswarm.services.exchanges.uniswap.constants_v3 import (
     UNISWAP_V3_DEPLOYMENTS,
+    UNISWAP_V3_FACTORY_ABI,
     UNISWAP_V3_ROUTER2_ABI,
     UNISWAP_V3_ROUTER_ABI,
 )
-from alphaswarm.services.exchanges.uniswap.uniswap_client import UniswapClient
+from alphaswarm.services.exchanges.uniswap.uniswap_client import ZERO_ADDRESS, UniswapClient
 from eth_defi.confirmation import wait_transactions_to_complete
+from eth_defi.uniswap_v3.pool import PoolDetails, fetch_pool_details
 from eth_defi.uniswap_v3.price import get_onchain_price
 from hexbytes import HexBytes
 
@@ -45,7 +47,7 @@ class UniswapClientV3(UniswapClient):
         nonce, approval_receipt = self._approve_token_spend(quote, address, raw_amount)
 
         # Build a swap transaction
-        pool_details = self._get_v3_pool(base_token=base, quote_token=quote)
+        pool_details = self._get_pool(base_token=base, quote_token=quote)
         if not pool_details:
             raise ValueError(f"No V3 pool found for {base.symbol}/{quote.symbol}")
 
@@ -136,3 +138,118 @@ class UniswapClientV3(UniswapClient):
         )
 
         return {**approval_receipt, **swap_receipt}
+
+    def _get_token_price(self, base_token: TokenInfo, quote_token: TokenInfo) -> Decimal:
+        """Get the current price from a Uniswap V3 pool for a token pair.
+
+        Finds the first available pool for the token pair and gets the current price.
+        The price is returned in terms of base/quote (how much quote token per base token).
+
+        Args:
+            base_token: Base token info (token being priced)
+            quote_token: Quote token info (denominator token)
+
+        Returns:
+            Decimal: Current price in base/quote terms, or None if no pool exists
+            or there was an error getting the price
+
+        Note:
+            Uses the pool with the most liquidity.
+            Uses the pool with the most liquidity.
+        """
+        pool_details = self._get_pool(base_token=base_token, quote_token=quote_token)
+        # Get raw price from pool
+        reverse = quote_token.address.lower() == pool_details.token0.address.lower()
+        raw_price = get_onchain_price(self._web3, pool_details.address, reverse_token_order=reverse)
+
+        return raw_price
+
+    def _get_pool(self, *, base_token: TokenInfo, quote_token: TokenInfo) -> PoolDetails:
+        """Find the Uniswap V3 pool with highest liquidity for a token pair.
+
+        Checks all configured fee tiers and returns the pool with the highest liquidity.
+        The pool details include addresses, tokens, and fee information.
+
+        Args:
+            base_token: Base token info (token being priced)
+            quote_token: Quote token info (denominator token)
+
+        Returns:
+            PoolDetails: Details about the pool with highest liquidity, or None if no pool exists
+            or there was an error finding a pool
+        """
+        settings = self.config.get_venue_settings_uniswap_v3()
+        factory_contract = self._web3.eth.contract(
+            address=self._web3.to_checksum_address(self._factory), abi=UNISWAP_V3_FACTORY_ABI
+        )
+
+        max_liquidity = 0
+        best_pool_details = None
+
+        # Check all fee tiers to find pool with highest liquidity
+        for fee in settings.fee_tiers:
+            try:
+                pool_address = factory_contract.functions.getPool(base_token.address, quote_token.address, fee).call()
+                if pool_address == ZERO_ADDRESS:
+                    continue
+
+                # Get pool details to access the contract
+                pool_details = fetch_pool_details(self._web3, pool_address)
+                if not pool_details:
+                    continue
+
+                # Check liquidity
+                liquidity = pool_details.pool.functions.liquidity().call()
+                logger.info(f"Pool {pool_address} (fee tier {fee} bps) liquidity: {liquidity}")
+
+                # Update best pool if this one has more liquidity
+                if liquidity > max_liquidity:
+                    max_liquidity = liquidity
+                    best_pool_details = pool_details
+
+            except Exception:
+                logger.exception(f"Failed to get pool for fee tier {fee}")
+                continue
+
+        if best_pool_details:
+            logger.info(
+                f"Selected pool with highest liquidity: {best_pool_details.address} (liquidity: {max_liquidity})"
+            )
+            return best_pool_details
+
+        logger.warning(f"No V3 pool found for {base_token.symbol}/{quote_token.symbol}")
+        raise RuntimeError(f"No pool found for {base_token.symbol}/{quote_token.symbol}")
+
+    def _get_markets_for_tokens(self, tokens: List[TokenInfo]) -> List[Tuple[TokenInfo, TokenInfo]]:
+        """Get all V3 pools between the provided tokens."""
+        markets = []
+        factory = self._web3.eth.contract(
+            address=self._web3.to_checksum_address(self._factory), abi=UNISWAP_V3_FACTORY_ABI
+        )
+
+        # Get fee tiers from settings
+        settings = self.config.get_venue_settings_uniswap_v3()
+        fee_tiers = settings.fee_tiers
+
+        # Check each possible token pair
+        for i, token1 in enumerate(tokens):
+            for token2 in tokens[i + 1 :]:  # Only check each pair once
+                try:
+                    # Check each fee tier
+                    for fee in fee_tiers:
+                        pool_address = factory.functions.getPool(token1.address, token2.address, fee).call()
+
+                        if pool_address != ZERO_ADDRESS:
+                            # Order tokens consistently
+                            if token1.address.lower() < token2.address.lower():
+                                markets.append((token1, token2))
+                            else:
+                                markets.append((token2, token1))
+                            # Break after finding first pool for this pair
+                            break
+
+                except Exception as e:
+                    logger.error(f"Error checking pool {token1.symbol}/{token2.symbol}: {str(e)}")
+                    continue
+
+        return markets

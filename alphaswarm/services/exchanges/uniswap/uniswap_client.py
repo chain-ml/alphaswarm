@@ -13,16 +13,11 @@ from eth_account.signers.local import LocalAccount
 from eth_defi.confirmation import wait_transactions_to_complete
 from eth_defi.provider.multi_provider import MultiProviderWeb3, create_multi_provider_web3
 from eth_defi.revert_reason import fetch_transaction_revert_reason
-from eth_defi.uniswap_v2.pair import fetch_pair_details
-from eth_defi.uniswap_v3.pool import PoolDetails, fetch_pool_details
-from eth_defi.uniswap_v3.price import get_onchain_price as get_onchain_price_v3
 from eth_typing import HexAddress
 from hexbytes import HexBytes
 from web3.middleware.signing import construct_sign_and_send_raw_middleware
 
 from .constants_erc20 import ERC20_ABI
-from .constants_v2 import UNISWAP_V2_FACTORY_ABI
-from .constants_v3 import UNISWAP_V3_FACTORY_ABI
 
 # Set up logger
 logger = logging.getLogger(__name__)
@@ -52,16 +47,30 @@ class UniswapClient(DEXClient):
     def _create_multi_provider_web3(rpc_url: str) -> MultiProviderWeb3:
         return create_multi_provider_web3(rpc_url)
 
+    @abstractmethod
+    def _initialize(self) -> bool:
+        pass
+
+    @abstractmethod
+    def _swap(
+        self, base: TokenInfo, quote: TokenInfo, address: str, raw_amount: int, slippage_bps: int
+    ) -> Dict[HexBytes, Dict]:
+        pass
+
+    @abstractmethod
+    def _get_token_price(self, base_token: TokenInfo, quote_token: TokenInfo) -> Decimal:
+        pass
+
+    @abstractmethod
+    def _get_markets_for_tokens(self, tokens: List[TokenInfo]) -> List[Tuple[TokenInfo, TokenInfo]]:
+        pass
+
     def initialize(self) -> None:
         """Initialize the client with version and chain information.
         This should be called by DEXFactory after creating the instance."""
         if not self._initialize():
             raise ValueError(f"Uniswap {self.version} not supported on chain: {self.chain}")
         logger.info(f"Finished initializing Uniswap-Client {self.version} on {self.chain}")
-
-    @abstractmethod
-    def _initialize(self) -> bool:
-        pass
 
     @staticmethod
     def _get_final_swap_amount_received(
@@ -74,7 +83,6 @@ class UniswapClient(DEXClient):
 
         Args:
             swap_receipt (dict): The transaction receipt from the swap
-            token_address (HexAddress): Hexed Address of the token to track transfers for
             token_address (HexAddress): Hexed Address of the token to track transfers for
             user_address (str): Address of the user receiving the tokens
             token_decimals (int): Number of decimals for the token
@@ -114,10 +122,6 @@ class UniswapClient(DEXClient):
         """Execute a token swap on Uniswap.
 
         Args:
-            base_token: TokenInfo object for the token being sold
-            quote_token: TokenInfo object for the token being bought
-            quote_amount: Amount of quote_token to spend (output amount)
-            slippage_bps: Maximum allowed slippage in basis points (1 bp = 0.01%)
             base_token: TokenInfo object for the token being sold
             quote_token: TokenInfo object for the token being bought
             quote_amount: Amount of quote_token to spend (output amount)
@@ -189,12 +193,6 @@ class UniswapClient(DEXClient):
             quote_amount=quote_amount,
             tx_hash=list(receipts.keys())[1],  # Return the swap tx hash, not the approve tx
         )
-
-    @abstractmethod
-    def _swap(
-        self, base: TokenInfo, quote: TokenInfo, address: str, raw_amount: int, slippage_bps: int
-    ) -> Dict[HexBytes, Dict]:
-        pass
 
     def _get_gas_fees(self) -> tuple[int, int, int, int]:
         """Calculate gas fees for transactions and get gas limit from config.
@@ -282,123 +280,6 @@ class UniswapClient(DEXClient):
         nonce = self._web3.eth.get_transaction_count(address)
         return nonce, approval_receipt
 
-    def _get_v2_price(self, *, base_token: TokenInfo, quote_token: TokenInfo) -> Decimal:
-        """Get the current price from a Uniswap V2 pool for a token pair.
-
-        Finds the V2 pool for the token pair and gets the current mid price.
-        The price is returned in terms of base/quote.
-
-        Args:
-            base_token: Base token info (token being priced)
-            quote_token: Quote token info (denominator token)
-
-        Returns:
-            Decimal: Current mid price in base/quote terms, or None if no pool exists
-            or there was an error getting the price
-        """
-        # Create factory contract instance
-        factory_contract = self._web3.eth.contract(
-            address=self._web3.to_checksum_address(self._factory), abi=UNISWAP_V2_FACTORY_ABI
-        )
-
-        # Get pair address from factory using checksum addresses
-        pair_address = factory_contract.functions.getPair(
-            base_token.checksum_address, quote_token.checksum_address
-        ).call()
-
-        if pair_address == ZERO_ADDRESS:
-            logger.warning(f"No V2 pair found for {base_token.symbol}/{quote_token.symbol}")
-            raise RuntimeError(f"No V2 pair found for {base_token.symbol}/{quote_token.symbol}")
-
-        # Get V2 pair details - we want price in base/quote terms
-        # If base_token is token1, we need reverse=True to get base/quote
-        reverse = base_token.checksum_address.lower() > quote_token.checksum_address.lower()
-        pair = fetch_pair_details(self._web3, pair_address, reverse_token_order=reverse)
-        price = pair.get_current_mid_price()
-
-        return price
-
-    def _get_v3_pool(self, *, base_token: TokenInfo, quote_token: TokenInfo) -> PoolDetails:
-        """Find the Uniswap V3 pool with highest liquidity for a token pair.
-
-        Checks all configured fee tiers and returns the pool with the highest liquidity.
-        The pool details include addresses, tokens, and fee information.
-
-        Args:
-            base_token: Base token info (token being priced)
-            quote_token: Quote token info (denominator token)
-
-        Returns:
-            PoolDetails: Details about the pool with highest liquidity, or None if no pool exists
-            or there was an error finding a pool
-        """
-        settings = self.config.get_venue_settings_uniswap_v3()
-        factory_contract = self._web3.eth.contract(
-            address=self._web3.to_checksum_address(self._factory), abi=UNISWAP_V3_FACTORY_ABI
-        )
-
-        max_liquidity = 0
-        best_pool_details = None
-
-        # Check all fee tiers to find pool with highest liquidity
-        for fee in settings.fee_tiers:
-            try:
-                pool_address = factory_contract.functions.getPool(base_token.address, quote_token.address, fee).call()
-                if pool_address == ZERO_ADDRESS:
-                    continue
-
-                # Get pool details to access the contract
-                pool_details = fetch_pool_details(self._web3, pool_address)
-                if not pool_details:
-                    continue
-
-                # Check liquidity
-                liquidity = pool_details.pool.functions.liquidity().call()
-                logger.info(f"Pool {pool_address} (fee tier {fee} bps) liquidity: {liquidity}")
-
-                # Update best pool if this one has more liquidity
-                if liquidity > max_liquidity:
-                    max_liquidity = liquidity
-                    best_pool_details = pool_details
-
-            except Exception:
-                logger.exception(f"Failed to get pool for fee tier {fee}")
-                continue
-
-        if best_pool_details:
-            logger.info(
-                f"Selected pool with highest liquidity: {best_pool_details.address} (liquidity: {max_liquidity})"
-            )
-            return best_pool_details
-
-        logger.warning(f"No V3 pool found for {base_token.symbol}/{quote_token.symbol}")
-        raise RuntimeError(f"No pool found for {base_token.symbol}/{quote_token.symbol}")
-
-    def _get_v3_price(self, *, base_token: TokenInfo, quote_token: TokenInfo) -> Decimal:
-        """Get the current price from a Uniswap V3 pool for a token pair.
-
-        Finds the first available pool for the token pair and gets the current price.
-        The price is returned in terms of base/quote (how much quote token per base token).
-
-        Args:
-            base_token: Base token info (token being priced)
-            quote_token: Quote token info (denominator token)
-
-        Returns:
-            Decimal: Current price in base/quote terms, or None if no pool exists
-            or there was an error getting the price
-
-        Note:
-            Uses the pool with the most liquidity.
-            Uses the pool with the most liquidity.
-        """
-        pool_details = self._get_v3_pool(base_token=base_token, quote_token=quote_token)
-        # Get raw price from pool
-        reverse = quote_token.address.lower() == pool_details.token0.address.lower()
-        raw_price = get_onchain_price_v3(self._web3, pool_details.address, reverse_token_order=reverse)
-
-        return raw_price
-
     def get_token_price(self, base_token: TokenInfo, quote_token: TokenInfo) -> Decimal:
         """Get token price using the appropriate Uniswap version.
 
@@ -416,12 +297,7 @@ class UniswapClient(DEXClient):
             f"Getting price for {base_token.symbol}/{quote_token.symbol} on {self.chain} using Uniswap {self.version}"
         )
 
-        if self.version == "v2":
-            return self._get_v2_price(base_token=base_token, quote_token=quote_token)
-        elif self.version == "v3":
-            return self._get_v3_price(base_token=base_token, quote_token=quote_token)
-        else:
-            raise ValueError(f"Unsupported Uniswap version: {self.version}")
+        return self._get_token_price(base_token=base_token, quote_token=quote_token)
 
     def get_markets_for_tokens(self, tokens: List[TokenInfo]) -> List[Tuple[TokenInfo, TokenInfo]]:
         """Get list of valid trading pairs between the provided tokens.
@@ -432,70 +308,4 @@ class UniswapClient(DEXClient):
         Returns:
             List of token pairs (base, quote) that form valid markets
         """
-        if self.version == "v2":
-            return self._get_v2_markets_for_tokens(tokens)
-        elif self.version == "v3":
-            return self._get_v3_markets_for_tokens(tokens)
-        else:
-            raise ValueError(f"Unsupported Uniswap version: {self.version}")
-
-    def _get_v2_markets_for_tokens(self, tokens: List[TokenInfo]) -> List[Tuple[TokenInfo, TokenInfo]]:
-        """Get all V2 pairs between the provided tokens."""
-        markets = []
-        factory = self._web3.eth.contract(
-            address=self._web3.to_checksum_address(self._factory), abi=UNISWAP_V2_FACTORY_ABI
-        )
-
-        # Check each possible token pair
-        for i, token1 in enumerate(tokens):
-            for token2 in tokens[i + 1 :]:  # Only check each pair once
-                try:
-                    # Get pair address from factory
-                    pair_address = factory.functions.getPair(token1.checksum_address, token2.checksum_address).call()
-
-                    if pair_address != ZERO_ADDRESS:
-                        # Order tokens consistently
-                        if token1.address.lower() < token2.address.lower():
-                            markets.append((token1, token2))
-                        else:
-                            markets.append((token2, token1))
-
-                except Exception as e:
-                    logger.error(f"Error checking pair {token1.symbol}/{token2.symbol}: {str(e)}")
-                    continue
-
-        return markets
-
-    def _get_v3_markets_for_tokens(self, tokens: List[TokenInfo]) -> List[Tuple[TokenInfo, TokenInfo]]:
-        """Get all V3 pools between the provided tokens."""
-        markets = []
-        factory = self._web3.eth.contract(
-            address=self._web3.to_checksum_address(self._factory), abi=UNISWAP_V3_FACTORY_ABI
-        )
-
-        # Get fee tiers from settings
-        settings = self.config.get_venue_settings_uniswap_v3()
-        fee_tiers = settings.fee_tiers
-
-        # Check each possible token pair
-        for i, token1 in enumerate(tokens):
-            for token2 in tokens[i + 1 :]:  # Only check each pair once
-                try:
-                    # Check each fee tier
-                    for fee in fee_tiers:
-                        pool_address = factory.functions.getPool(token1.address, token2.address, fee).call()
-
-                        if pool_address != ZERO_ADDRESS:
-                            # Order tokens consistently
-                            if token1.address.lower() < token2.address.lower():
-                                markets.append((token1, token2))
-                            else:
-                                markets.append((token2, token1))
-                            # Break after finding first pool for this pair
-                            break
-
-                except Exception as e:
-                    logger.error(f"Error checking pool {token1.symbol}/{token2.symbol}: {str(e)}")
-                    continue
-
-        return markets
+        return self._get_markets_for_tokens(tokens)
