@@ -8,8 +8,8 @@ from alphaswarm.config import Config
 from alphaswarm.tools.alchemy import AlchemyPriceHistoryByAddress, AlchemyPriceHistoryBySymbol
 from alphaswarm.tools.exchanges import GetTokenPriceTool
 from alphaswarm.tools.price_tool import PriceTool
-from alphaswarm.tools.telegram import SendTelegramNotificationTool
 from alphaswarm.tools.strategy_analysis.generic import GenericStrategyAnalysisTool
+from alphaswarm.tools.telegram import SendTelegramNotificationTool
 from smolagents import Tool
 
 
