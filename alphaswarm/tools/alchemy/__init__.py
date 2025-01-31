@@ -1,1 +1,1 @@
-from .alchemy_price_history import AlchemyPriceHistory
+from .alchemy_price_history import AlchemyPriceHistoryBySymbol, AlchemyPriceHistoryByAddress
