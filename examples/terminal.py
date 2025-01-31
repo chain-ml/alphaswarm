@@ -24,7 +24,6 @@ async def main():
     You are also given a strategy config that outlines the rules for the trading strategy.
     """
     agent = AlphaSwarmAgent(tools=tools, model_id="anthropic/claude-3-5-sonnet-latest", hints=hints)
-    manager = AlphaSwarmAgentManager(agent)
 
     terminal = TerminalClient("AlphaSwarm terminal", agent)
     await asyncio.gather(

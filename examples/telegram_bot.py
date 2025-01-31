@@ -7,6 +7,7 @@ from alphaswarm.agent.agent import AlphaSwarmAgent
 from alphaswarm.agent.clients.telegram_bot import TelegramBot
 from alphaswarm.config import Config
 from alphaswarm.tools.alchemy import AlchemyPriceHistoryByAddress, AlchemyPriceHistoryBySymbol
+from alphaswarm.tools.strategy_analysis.generic.generic_analysis import GenericStrategyAnalysisTool
 from alphaswarm.tools.exchanges import GetTokenPriceTool
 from alphaswarm.tools.price_tool import PriceTool
 from smolagents import Tool
@@ -24,6 +25,7 @@ async def main():
         GetTokenPriceTool(config),
         AlchemyPriceHistoryByAddress(),
         AlchemyPriceHistoryBySymbol(),
+        GenericStrategyAnalysisTool(),
     ]  # Add your tools here
 
     agent = AlphaSwarmAgent(tools=tools, model_id="gpt-4o")
