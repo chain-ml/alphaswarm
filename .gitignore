@@ -37,10 +37,6 @@ ENV/
 .DS_Store
 
 # Project specific
-config/*.yaml
-!config/default.yaml
-config/alerting_configs/*.yaml
-!config/alerting_configs/reference_alerting_config.yaml
 logs/
 *.log
 .coverage
