@@ -6,6 +6,7 @@ import os
 
 import requests
 from alphaswarm.services.api_exception import ApiException
+from alphaswarm.config import Config
 
 # Set up logging
 logger = logging.getLogger(__name__)
@@ -64,9 +65,14 @@ class CookieFunClient:
     
     BASE_URL = "https://api.cookie.fun/v2/agents"
     
-    def __init__(self, base_url: str = BASE_URL, api_key: Optional[str] = None, **kwargs):
+    def __init__(self, base_url: str = BASE_URL, api_key: Optional[str] = None, config: Optional[Config] = None, **kwargs):
         """Initialize the Cookie.fun API client
         
+        Args:
+            base_url: Base URL for the API
+            api_key: API key for authentication
+            config: Config instance for token lookups
+            
         Raises:
             ValueError: If COOKIE_FUN_API_KEY environment variable is not set
         """
@@ -76,7 +82,36 @@ class CookieFunClient:
             raise ValueError("COOKIE_FUN_API_KEY environment variable not set")
         
         self.headers = {"x-api-key": self.api_key}
+        self.config = config or Config()
         logger.debug("CookieFun client initialized")
+
+    def _get_token_address(self, symbol: str) -> tuple[Optional[str], Optional[str]]:
+        """Get token address and chain from symbol using config
+        
+        Args:
+            symbol: Token symbol to look up
+            
+        Returns:
+            tuple: (token_address, chain) if found, (None, None) otherwise
+        """
+        try:
+            # Get all supported chains from config
+            supported_chains = self.config.get_supported_networks()
+            
+            # Search through each chain for the token
+            for chain in supported_chains:
+                chain_config = self.config.get_chain_config(chain)
+                token_info = chain_config.get_token_info_or_none(symbol)
+                if token_info:
+                    logger.debug(f"Found token {symbol} on chain {chain}")
+                    return token_info.address, chain
+                
+            logger.warning(f"Token {symbol} not found in any chain config")
+            return None, None
+        
+        except Exception:
+            logger.exception(f"Failed to find token address for {symbol}")
+            return None, None
 
     def _make_request(self, endpoint: str, params: Dict = None) -> Dict:
         """Make API request to Cookie.fun
@@ -141,19 +176,34 @@ class CookieFunClient:
         )
         return self._parse_agent_response(response)
 
-    def get_agent_by_contract(self, address: str, interval: Interval) -> AgentMetrics:
-        """Get agent metrics by contract address
+    def get_agent_by_contract(self, address_or_symbol: str, interval: Interval, chain: str = None) -> AgentMetrics:
+        """Get agent metrics by contract address or symbol
         
         Args:
-            address: Contract address of the agent token
+            address_or_symbol: Contract address or token symbol
             interval: Time interval for metrics
+            chain: Optional chain override (not needed for symbols as they are unique per chain)
             
         Returns:
             AgentMetrics: Agent metrics data
             
         Raises:
             ApiException: If API request fails
+            ValueError: If symbol not found in any chain
         """
+        # If input looks like an address, use it directly with provided chain
+        if address_or_symbol.startswith("0x") or address_or_symbol.startswith("1"):
+            address = address_or_symbol
+        else:
+            # Try to look up symbol
+            address, detected_chain = self._get_token_address(address_or_symbol)
+            if not address:
+                raise ValueError(f"Could not find address for token {address_or_symbol} in any chain")
+            
+            # Use detected chain unless explicitly overridden
+            chain = chain or detected_chain
+            logger.info(f"Resolved symbol {address_or_symbol} to address {address} on chain {chain}")
+        
         logger.info(f"Fetching metrics for contract address: {address}")
         
         response = self._make_request(

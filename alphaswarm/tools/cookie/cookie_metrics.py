@@ -39,11 +39,16 @@ class CookieMetricsByTwitter(Tool):
 
 class CookieMetricsByContract(Tool):
     name = "CookieMetricsByContract"
-    description = "Retrieve AI agent metrics such as mindshare, market cap, price, liquidity, volume, holders, average impressions, average engagements, followers, and top tweets by contract address from Cookie.fun"
+    description = "Retrieve AI agent metrics such as mindshare, market cap, price, liquidity, volume, holders, average impressions, average engagements, followers, and top tweets by contract address or token symbol from Cookie.fun"
     inputs = {
-        "address": {
+        "address_or_symbol": {
             "type": "string",
-            "description": "Contract address of the agent token",
+            "description": "Contract address of the agent token or token symbol (e.g. 'COOKIE' or '0xc0041ef357b183448b235a8ea73ce4e4ec8c265f'). For addresses, chain must be specified.",
+        },
+        "chain": {
+            "type": "string",
+            "description": "Chain to look up token on (required only when using contract address)",
+            "nullable": True,
         },
         "interval": {
             "type": "string",
@@ -57,8 +62,8 @@ class CookieMetricsByContract(Tool):
         super().__init__()
         self.client = client or CookieFunClient()
 
-    def forward(self, address: str, interval: str) -> AgentMetrics:
-        return self.client.get_agent_by_contract(address, Interval(interval))
+    def forward(self, address_or_symbol: str, interval: str, chain: Optional[str] = None) -> AgentMetrics:
+        return self.client.get_agent_by_contract(address_or_symbol, Interval(interval), chain)
 
 class CookieMetricsPaged(Tool):
     name = "CookieMetricsPaged"
