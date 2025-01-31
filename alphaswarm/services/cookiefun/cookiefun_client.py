@@ -51,6 +51,14 @@ class AgentMetrics:
     smart_followers_count: int
     top_tweets: List[Tweet]
 
+@dataclass
+class PagedAgentsResponse:
+    """Response from the paged agents endpoint"""
+    data: List[AgentMetrics]
+    current_page: int
+    total_pages: int
+    total_count: int
+
 class CookieFunClient:
     """Client for interacting with the Cookie.fun API"""
     
@@ -145,4 +153,42 @@ class CookieFunClient:
         response = requests.get(url, headers=self.headers, params={"interval": interval})
         response.raise_for_status()
         
-        return self._parse_agent_response(response.json()) 
+        return self._parse_agent_response(response.json())
+
+    def get_agents_paged(self, interval: Interval, page: int, page_size: int) -> PagedAgentsResponse:
+        """Get paged list of agents ordered by mindshare
+        
+        Args:
+            interval: Time interval for metrics
+            page: Page number (starts at 1)
+            page_size: Number of agents per page (between 1 and 25)
+            
+        Returns:
+            PagedAgentsResponse: Paged list of agent metrics
+            
+        Raises:
+            ValueError: If page_size is not between 1 and 25
+            requests.exceptions.RequestException: If API request fails
+        """
+        if not 1 <= page_size <= 25:
+            raise ValueError("page_size must be between 1 and 25")
+        
+        logger.info(f"Fetching agents page {page} with size {page_size}")
+        
+        url = f"{self.BASE_URL}/agentsPaged"
+        params = {
+            "interval": interval,
+            "page": page,
+            "pageSize": page_size
+        }
+        
+        response = requests.get(url, headers=self.headers, params=params)
+        response.raise_for_status()
+        
+        data = response.json()["ok"]
+        return PagedAgentsResponse(
+            data=[self._parse_agent_response({"ok": agent}) for agent in data["data"]],
+            current_page=data["currentPage"],
+            total_pages=data["totalPages"],
+            total_count=data["totalCount"]
+        ) 

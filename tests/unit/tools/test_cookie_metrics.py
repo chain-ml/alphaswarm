@@ -4,11 +4,13 @@ from unittest.mock import Mock, patch
 from alphaswarm.services.cookiefun.cookiefun_client import (
     CookieFunClient,
     AgentMetrics,
-    Interval
+    Interval,
+    PagedAgentsResponse
 )
 from alphaswarm.tools.cookie.cookie_metrics import (
     CookieMetricsByTwitter,
-    CookieMetricsByContract
+    CookieMetricsByContract,
+    CookieMetricsPaged
 )
 
 @pytest.fixture
@@ -93,4 +95,59 @@ def test_invalid_api_key():
 def test_valid_intervals(mock_client, interval):
     tool = CookieMetricsByTwitter(client=mock_client)
     result = tool.forward("test_agent", interval)
-    assert isinstance(result, AgentMetrics) 
+    assert isinstance(result, AgentMetrics)
+
+@pytest.fixture
+def mock_paged_response():
+    return {
+        "ok": {
+            "data": [
+                {
+                    "agentName": "TestAgent1",
+                    "contracts": [{"chain": 8453, "contractAddress": "0x123"}],
+                    "twitterUsernames": ["test_agent1"],
+                    "mindshare": 1.5,
+                    # ... other fields same as mock_response ...
+                },
+                {
+                    "agentName": "TestAgent2",
+                    "contracts": [{"chain": -2, "contractAddress": "0x456"}],
+                    "twitterUsernames": ["test_agent2"],
+                    "mindshare": 1.2,
+                    # ... other fields same as mock_response ...
+                }
+            ],
+            "currentPage": 1,
+            "totalPages": 10,
+            "totalCount": 100
+        },
+        "success": True,
+        "error": None
+    }
+
+def test_cookie_metrics_paged(mock_client, mock_paged_response):
+    mock_client.get_agents_paged = Mock(return_value=mock_client._parse_paged_response(mock_paged_response))
+    
+    tool = CookieMetricsPaged(client=mock_client)
+    result = tool.forward(Interval.SEVEN_DAYS, 1, 2)
+    
+    assert isinstance(result, PagedAgentsResponse)
+    assert len(result.data) == 2
+    assert result.current_page == 1
+    assert result.total_pages == 10
+    assert result.total_count == 100
+    
+    # Test first agent in response
+    agent1 = result.data[0]
+    assert agent1.agent_name == "TestAgent1"
+    assert agent1.mindshare == 1.5
+    
+    # Test second agent in response
+    agent2 = result.data[1]
+    assert agent2.agent_name == "TestAgent2"
+    assert agent2.mindshare == 1.2
+
+def test_invalid_page_size():
+    tool = CookieMetricsPaged()
+    with pytest.raises(ValueError, match="page_size must be between 1 and 25"):
+        tool.forward(Interval.SEVEN_DAYS, 1, 30) 
