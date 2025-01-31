@@ -23,6 +23,8 @@ llm:
 telegram:
   bot_token:
     fromEnvVar: TELEGRAM_BOT_TOKEN
+  chat_id:
+    fromEnvVar: TELEGRAM_CHAT_ID
 
 # Network Environment Configuration
 network_environments:

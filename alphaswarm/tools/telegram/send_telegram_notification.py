@@ -1,6 +1,5 @@
 import asyncio
 import logging
-import os
 from typing import Optional
 
 from alphaswarm.agent.clients.telegram_bot import TelegramApp
@@ -25,11 +24,11 @@ class SendTelegramNotificationTool(Tool):
     }
     output_type = "string"
 
-    def __init__(self) -> None:
+    def __init__(self, telegram_bot_token: str, chat_id: int) -> None:
         super().__init__()
 
-        self.chat_id = self.read_chat_id()
-        self.token = self.read_token()
+        self.token = telegram_bot_token
+        self.chat_id = chat_id
 
         self.app = TelegramApp(bot_token=self.token)
 
@@ -59,28 +58,3 @@ class SendTelegramNotificationTool(Tool):
         if not priority:
             return default
         return {"high": "🔴", "medium": "🟡", "low": "🟢"}.get(priority, default)
-
-    @classmethod
-    def can_be_created(cls) -> bool:
-        try:
-            _ = cls.read_chat_id()
-            _ = cls.read_token()
-            return True
-        except ValueError:
-            return False
-
-    @staticmethod
-    def read_chat_id() -> int:
-        chat_id = os.getenv("TELEGRAM_CHAT_ID")
-        if chat_id is None:
-            raise ValueError("No TELEGRAM_CHAT_ID found")
-
-        return int(chat_id)
-
-    @staticmethod
-    def read_token() -> str:
-        token = os.getenv("TELEGRAM_BOT_TOKEN")
-        if token is None:
-            raise ValueError("No TELEGRAM_BOT_TOKEN found")
-
-        return token

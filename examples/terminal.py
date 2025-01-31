@@ -12,16 +12,20 @@ from alphaswarm.tools.telegram import SendTelegramNotificationTool
 from smolagents import Tool
 
 
-async def main():
+async def main() -> None:
     dotenv.load_dotenv()
     config = Config()
+
+    telegram_config = config.get("telegram", {})
+    telegram_bot_token = telegram_config.get("bot_token")
+    chat_id = int(telegram_config.get("chat_id"))
 
     tools: List[Tool] = [
         PriceTool(),
         GetTokenPriceTool(config),
         AlchemyPriceHistoryByAddress(),
         AlchemyPriceHistoryBySymbol(),
-        SendTelegramNotificationTool(),
+        SendTelegramNotificationTool(telegram_bot_token=telegram_bot_token, chat_id=chat_id),
     ]  # Add your tools here
     agent = AlphaSwarmAgent(tools=tools, model_id="gpt-4o")
 
