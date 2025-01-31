@@ -27,7 +27,8 @@ async def main():
     ]  # Add your tools here
 
     agent = AlphaSwarmAgent(tools=tools, model_id="gpt-4o")
-    tg_bot = TelegramBot(bot_token="Your Key Here", agent=agent)
+    bot_token = config.get("telegram", {}).get("bot_token")
+    tg_bot = TelegramBot(bot_token=bot_token, agent=agent)
 
     await asyncio.gather(
         tg_bot.start(),
