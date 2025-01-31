@@ -8,7 +8,9 @@ from smolagents import CODE_SYSTEM_PROMPT, CodeAgent, LiteLLMModel, Tool
 
 class AlphaSwarmAgent:
 
-    def __init__(self, tools: Sequence[Tool], *, model_id: str, system_prompt: Optional[str] = None, hints: Optional[str] = None) -> None:
+    def __init__(
+        self, tools: Sequence[Tool], *, model_id: str, system_prompt: Optional[str] = None, hints: Optional[str] = None
+    ) -> None:
 
         system_prompt = system_prompt or CODE_SYSTEM_PROMPT
         system_prompt = system_prompt + "\n" + hints if hints else system_prompt

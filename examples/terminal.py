@@ -5,12 +5,11 @@ from typing import List
 import dotenv
 from alphaswarm.agent.agent import AlphaSwarmAgent, AlphaSwarmAgentManager
 from alphaswarm.agent.clients import TerminalClient
-from alphaswarm.config import Config
+from alphaswarm.config import CONFIG_PATH, Config
 from alphaswarm.tools.alchemy import AlchemyPriceHistoryByAddress, AlchemyPriceHistoryBySymbol
 from alphaswarm.tools.exchanges import GetTokenPriceTool
 from alphaswarm.tools.price_tool import PriceTool
 from alphaswarm.utils import read_text_file_to_string
-from alphaswarm.config import CONFIG_PATH
 from smolagents import Tool
 
 
