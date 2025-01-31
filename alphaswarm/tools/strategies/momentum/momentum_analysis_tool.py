@@ -25,10 +25,10 @@ class PriceMomentumStrategyAnalysisTool(Tool):
     and decide if the strategy rules are triggered. Returns a StrategyAnalysis object.
     """
     inputs = {
-        "percent_price_change_24_hour": {
+        "price_changes": {
             "type": "string",
             "required": True,
-            "description": "The percentage price changes for a list of tokens over the last 24 hours.",
+            "description": "A JSON-formatted string containing the percentage price changes for one or more tokens over the last 24 hours.",
         },
     }
     output_type = "object"
@@ -50,10 +50,10 @@ class PriceMomentumStrategyAnalysisTool(Tool):
             ),
         )
 
-    def forward(self, percent_price_change_24_hour: str) -> StrategyAnalysis:
+    def forward(self, price_changes: str) -> StrategyAnalysis:
         response = self._llm_function.execute(
             user_prompt_params={
-                "price_changes": percent_price_change_24_hour,
+                "price_changes": price_changes,
                 "momentum_strategy_rules": self.strategy_config,
             }
         )
