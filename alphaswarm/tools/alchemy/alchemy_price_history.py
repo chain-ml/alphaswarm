@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta, timezone
-from typing import List, Optional
+from typing import Optional
 
-from alphaswarm.services.alchemy import NETWORKS, AlchemyClient, HistoricalPrice
+from alphaswarm.services.alchemy import NETWORKS, AlchemyClient, HistoricalPriceByAddress, HistoricalPriceBySymbol
 from smolagents import Tool
 
 
@@ -15,8 +15,9 @@ class AlchemyPriceHistory(Tool):
     """
     inputs = {
         "address": {
+        "address": {
             "type": "string",
-            "description": "Address of the token to retrieve price history for",
+            "description": "Hex Address of the token to retrieve price history for",
         },
         "network": {
             "type": "string",

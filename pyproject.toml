@@ -5,6 +5,7 @@ description = ""
 authors = [
     {name = "Alex Mark", email = "alexandermarx@chainml.net"},
     {name = "Arnaud Flament", email = "arnaudflament@chainml.net"},
+    {name = "Daniel Kur", email = "danielkur@chainml.net"},
     {name = "David Mueller", email = "davidmueller@chainml.net"},
     {name = "Dmytro Nikolaiev", email = "dmytronikolaiev@chainml.net"},
     {name = "Ethan Jackson", email = "ethanjackson@chainml.net"},
