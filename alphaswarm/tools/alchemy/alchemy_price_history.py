@@ -59,7 +59,7 @@ class AlchemyPriceHistoryByAddress(Tool):
             "type": "integer",
             "description": "Number of days to look back price history for. Max history for each interval: (5m, 7d), (1h, 30d), (1d, 365d).",
             "gt": 0,
-            "le": 2016,
+            "lte": 365,
         },
     }
     output_type = "object"
