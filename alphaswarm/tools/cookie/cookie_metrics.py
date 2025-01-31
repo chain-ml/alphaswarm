@@ -29,7 +29,7 @@ class CookieMetricsByTwitter(Tool):
         self.client = client or CookieFunClient()
 
     def forward(self, username: str, interval: str) -> AgentMetrics:
-        return self.client.get_agent_by_twitter(username, Interval(interval))
+        return self.client.get_agent_metrics_by_twitter(username, Interval(interval))
 
 
 class CookieMetricsByContract(Tool):
@@ -58,7 +58,7 @@ class CookieMetricsByContract(Tool):
         self.client = client or CookieFunClient()
 
     def forward(self, address_or_symbol: str, interval: str, chain: Optional[str] = None) -> AgentMetrics:
-        return self.client.get_agent_by_contract(address_or_symbol, Interval(interval), chain)
+        return self.client.get_agent_metrics_by_contract(address_or_symbol, Interval(interval), chain)
 
 
 class CookieMetricsPaged(Tool):
