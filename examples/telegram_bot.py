@@ -6,7 +6,7 @@ import dotenv
 from alphaswarm.agent.agent import AlphaSwarmAgent
 from alphaswarm.agent.clients.telegram_bot import TelegramBot
 from alphaswarm.config import Config
-from alphaswarm.tools.alchemy import AlchemyPriceHistory
+from alphaswarm.tools.alchemy import AlchemyPriceHistoryByAddress, AlchemyPriceHistoryBySymbol
 from alphaswarm.tools.exchanges import GetTokenPriceTool
 from alphaswarm.tools.price_tool import PriceTool
 from smolagents import Tool
@@ -19,14 +19,15 @@ async def main():
     dotenv.load_dotenv()
     config = Config()
 
-    tools: List[Tool] = [PriceTool(), GetTokenPriceTool(config), AlchemyPriceHistory()]  # Add your tools here
-    agent = AlphaSwarmAgent(tools=tools, model_id="gpt-4o")
+    tools: List[Tool] = [
+        PriceTool(),
+        GetTokenPriceTool(config),
+        AlchemyPriceHistoryByAddress(),
+        AlchemyPriceHistoryBySymbol(),
+    ]  # Add your tools here
 
-    # Create a cron job client that runs every 60 seconds
-    tg_bot = TelegramBot(
-        bot_token="7842550224:AAELVZ6rL_XW4w-VajaShdfBme3D8YXMUYk",
-        agent=agent,
-    )
+    agent = AlphaSwarmAgent(tools=tools, model_id="gpt-4o")
+    tg_bot = TelegramBot(bot_token="Your Key Here", agent=agent)
 
     await asyncio.gather(
         tg_bot.start(),
