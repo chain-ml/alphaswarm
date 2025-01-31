@@ -7,7 +7,7 @@ import dotenv
 from alphaswarm.agent.agent import AlphaSwarmAgent
 from alphaswarm.agent.clients import CronJobClient
 from alphaswarm.config import Config
-from alphaswarm.tools.alchemy import AlchemyPriceHistory
+from alphaswarm.tools.alchemy import AlchemyPriceHistoryBySymbol
 from alphaswarm.tools.exchanges import GetTokenPriceTool
 from alphaswarm.tools.price_tool import PriceTool
 from smolagents import Tool
@@ -15,11 +15,11 @@ from smolagents import Tool
 logging.getLogger("smolagents").setLevel(logging.ERROR)
 
 
-async def main():
+async def main() -> None:
     dotenv.load_dotenv()
     config = Config()
 
-    tools: List[Tool] = [PriceTool(), GetTokenPriceTool(config), AlchemyPriceHistory()]  # Add your tools here
+    tools: List[Tool] = [PriceTool(), GetTokenPriceTool(config), AlchemyPriceHistoryBySymbol()]  # Add your tools here
     agent = AlphaSwarmAgent(tools=tools, model_id="gpt-4o")
 
     def generate_message_cron_job1() -> str:
