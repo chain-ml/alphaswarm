@@ -20,5 +20,4 @@ def alchemy_client(default_config: Config) -> AlchemyClient:
 @pytest.fixture
 def cookiefun_client(default_config: Config) -> CookieFunClient:
     """Create CookieFun client for testing"""
-    # Set test API key if not present
     return CookieFunClient()

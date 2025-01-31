@@ -6,6 +6,7 @@ from typing import Dict, List, Optional
 import requests
 from alphaswarm.config import Config
 from alphaswarm.services.api_exception import ApiException
+from pydantic import Field
 from pydantic.dataclasses import dataclass
 
 # Set up logging
@@ -19,52 +20,55 @@ class Interval(str, Enum):
 
 @dataclass
 class Contract:
-    chain: int
-    contractAddress: str
+    chain: int  # Required field first
+    contract_address: str = Field(alias="contractAddress")  # Field with alias after
 
 
 @dataclass
 class Tweet:
-    tweetUrl: str
-    tweetAuthorProfileImageUrl: str
-    tweetAuthorDisplayName: str
-    smartEngagementPoints: int
-    impressionsCount: int
+    # All fields have aliases, but we still need to maintain a logical order
+    tweet_url: str = Field(alias="tweetUrl")
+    tweet_author_profile_image_url: str = Field(alias="tweetAuthorProfileImageUrl")
+    tweet_author_display_name: str = Field(alias="tweetAuthorDisplayName")
+    smart_engagement_points: int = Field(alias="smartEngagementPoints")
+    impressions_count: int = Field(alias="impressionsCount")
 
 
 @dataclass
 class AgentMetrics:
-    agentName: str
+    # Required fields (no defaults) first
     contracts: List[Contract]
-    twitterUsernames: List[str]
     mindshare: float
-    mindshareDeltaPercent: float
-    marketCap: float
-    marketCapDeltaPercent: float
     price: float
-    priceDeltaPercent: float
     liquidity: float
-    volume24Hours: float
-    volume24HoursDeltaPercent: float
-    holdersCount: int
-    holdersCountDeltaPercent: float
-    averageImpressionsCount: float
-    averageImpressionsCountDeltaPercent: float
-    averageEngagementsCount: float
-    averageEngagementsCountDeltaPercent: float
-    followersCount: int
-    smartFollowersCount: int
-    topTweets: List[Tweet]
+    
+    # Optional/fields with defaults after
+    agent_name: str = Field(alias="agentName")
+    twitter_usernames: List[str] = Field(alias="twitterUsernames")
+    mindshare_delta_percent: float = Field(alias="mindshareDeltaPercent")
+    market_cap: float = Field(alias="marketCap")
+    market_cap_delta_percent: float = Field(alias="marketCapDeltaPercent")
+    price_delta_percent: float = Field(alias="priceDeltaPercent")
+    volume_24_hours: float = Field(alias="volume24Hours")
+    volume_24_hours_delta_percent: float = Field(alias="volume24HoursDeltaPercent")
+    holders_count: int = Field(alias="holdersCount")
+    holders_count_delta_percent: float = Field(alias="holdersCountDeltaPercent")
+    average_impressions_count: float = Field(alias="averageImpressionsCount")
+    average_impressions_count_delta_percent: float = Field(alias="averageImpressionsCountDeltaPercent")
+    average_engagements_count: float = Field(alias="averageEngagementsCount")
+    average_engagements_count_delta_percent: float = Field(alias="averageEngagementsCountDeltaPercent")
+    followers_count: int = Field(alias="followersCount")
+    smart_followers_count: int = Field(alias="smartFollowersCount")
+    top_tweets: List[Tweet] = Field(alias="topTweets")
 
 
 @dataclass
 class PagedAgentsResponse:
     """Response from the paged agents endpoint"""
-
-    data: List[AgentMetrics]
-    currentPage: int
-    totalPages: int
-    totalCount: int
+    data: List[AgentMetrics]  # Required field first
+    current_page: int = Field(alias="currentPage")
+    total_pages: int = Field(alias="totalPages")
+    total_count: int = Field(alias="totalCount")
 
 
 class CookieFunClient:
@@ -101,7 +105,10 @@ class CookieFunClient:
             symbol: Token symbol to look up
 
         Returns:
-            tuple: (token_address, chain) if found, (None, None) otherwise
+            tuple: (token_address, chain) if found, (None, None) if not found
+
+        Raises:
+            Exception: If there's an error during lookup
         """
         try:
             # Get all supported chains from config
@@ -116,11 +123,11 @@ class CookieFunClient:
                     return token_info.address, chain
 
             logger.warning(f"Token {symbol} not found in any chain config")
-            return None, None
+            raise ValueError(f"Token {symbol} not found in any chain config")
 
         except Exception:
             logger.exception(f"Failed to find token address for {symbol}")
-            return None, None
+            raise ValueError(f"Failed to find token address for {symbol}")
 
     def _make_request(self, endpoint: str, params: Dict = None) -> Dict:
         """Make API request to Cookie.fun
@@ -239,10 +246,4 @@ class CookieFunClient:
             "/agentsPaged", params={"interval": interval, "page": page, "pageSize": page_size}
         )
 
-        data = response["ok"]
-        return PagedAgentsResponse(
-            data=[AgentMetrics(**agent) for agent in data["data"]],
-            currentPage=data["currentPage"],
-            totalPages=data["totalPages"],
-            totalCount=data["totalCount"],
-        )
+        return PagedAgentsResponse(**response["ok"])
