@@ -1,7 +1,7 @@
 from datetime import datetime
 from enum import Enum
 from typing import List
-from dataclasses import dataclass
+from pydantic.dataclasses import dataclass
 import logging
 import os
 
