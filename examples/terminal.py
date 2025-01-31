@@ -23,6 +23,10 @@ async def main():
         AlchemyPriceHistoryByAddress(),
         AlchemyPriceHistoryBySymbol(),
         GenericStrategyAnalysisTool(),
+        CookieMetricsByContract(),
+        CookieMetricsBySymbol(),
+        CookieMetricsByTwitter(),
+        CookieMetricsPaged(),
     ]
     hints = """You are a trading agent that uses a set of tools to analyze the market and make trading decisions.
     You are given a set of tools to analyze the market and make trading decisions.
