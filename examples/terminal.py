@@ -4,6 +4,8 @@ from typing import List
 import dotenv
 from alphaswarm.agent.agent import AlphaSwarmAgent
 from alphaswarm.agent.clients import TerminalClient
+
+# from alphaswarm.config import Config
 from alphaswarm.tools.alchemy import AlchemyPriceHistoryByAddress, AlchemyPriceHistoryBySymbol
 from alphaswarm.tools.strategy_analysis.generic.generic_analysis import GenericStrategyAnalysisTool
 from smolagents import Tool
@@ -12,6 +14,7 @@ from smolagents import Tool
 async def main():
     # Initialize the manager with your tools
     dotenv.load_dotenv()
+    # config = Config()  # Uncomment if tools require config
 
     tools: List[Tool] = [
         AlchemyPriceHistoryByAddress(),
