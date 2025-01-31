@@ -19,8 +19,8 @@ async def main():
     dotenv.load_dotenv()
     config = Config()
 
-    tools: List[Tool] = [PriceTool(), GetTokenPriceTool(config), AlchemyPriceHistory()]  # Add you
-    agent = AlphaSwarmAgent(tools=tools, model_id="gpt-4o")  # r tools here
+    tools: List[Tool] = [PriceTool(), GetTokenPriceTool(config), AlchemyPriceHistory()]  # Add your tools here
+    agent = AlphaSwarmAgent(tools=tools, model_id="gpt-4o") 
 
     # Create a cron job client that runs every 60 seconds
     tg_bot = TelegramBot(
