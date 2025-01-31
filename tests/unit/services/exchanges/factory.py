@@ -9,7 +9,7 @@ from alphaswarm.services.exchanges import DEXClient, DEXFactory, SwapResult
 
 class MockDex(DEXClient):
     def swap(
-        self, base_token: TokenInfo, quote_token: TokenInfo, quote_amount: float, slippage_bps: int = 100
+        self, base_token: TokenInfo, quote_token: TokenInfo, quote_amount: Decimal, slippage_bps: int = 100
     ) -> SwapResult:
         raise NotImplementedError("For test only")
 

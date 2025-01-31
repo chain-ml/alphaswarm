@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Sequence, Union
 
 import yaml
+from eth_typing import ChecksumAddress
 from pydantic.dataclasses import dataclass
 from typing_extensions import deprecated
 from web3 import Web3
@@ -38,7 +39,7 @@ class TokenInfo:
         return self.address.removeprefix("0x").zfill(40)
 
     @property
-    def checksum_address(self) -> str:
+    def checksum_address(self) -> ChecksumAddress:
         """Get the checksum address for this token"""
         return Web3.to_checksum_address(self.address)
 

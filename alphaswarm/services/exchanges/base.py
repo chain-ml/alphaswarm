@@ -12,17 +12,17 @@ from hexbytes import HexBytes
 @dataclass
 class SwapResult:
     success: bool
-    base_amount: float
-    quote_amount: float
+    base_amount: Decimal
+    quote_amount: Decimal
     tx_hash: Optional[str] = None
     error: Optional[str] = None
 
     @classmethod
-    def build_error(cls, error: str, base_amount: float) -> SwapResult:
-        return cls(success=False, base_amount=base_amount, quote_amount=0, error=error)
+    def build_error(cls, error: str, base_amount: Decimal) -> SwapResult:
+        return cls(success=False, base_amount=base_amount, quote_amount=Decimal(0), error=error)
 
     @classmethod
-    def build_success(cls, base_amount: float, quote_amount: float, tx_hash: HexBytes) -> SwapResult:
+    def build_success(cls, base_amount: Decimal, quote_amount: Decimal, tx_hash: HexBytes) -> SwapResult:
         return cls(success=True, base_amount=base_amount, quote_amount=quote_amount, tx_hash=tx_hash.hex())
 
 
@@ -68,7 +68,7 @@ class DEXClient(ABC):
         self,
         base_token: TokenInfo,
         quote_token: TokenInfo,
-        quote_amount: float,
+        quote_amount: Decimal,
         slippage_bps: int = 100,
     ) -> SwapResult:
         """Execute a token swap on the DEX

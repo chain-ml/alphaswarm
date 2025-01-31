@@ -66,7 +66,7 @@ class UniswapClient(DEXClient):
     @staticmethod
     def _get_final_swap_amount_received(
         swap_receipt: dict[str, Any], token_address: HexAddress, user_address: str, token_decimals: int
-    ) -> float:
+    ) -> Decimal:
         """Calculate the final amount of tokens received from a swap by parsing Transfer events.
 
         Looks through the transaction receipt logs for Transfer events where the recipient matches
@@ -102,13 +102,13 @@ class UniswapClient(DEXClient):
                     total_received += raw_amount
 
         # Convert to human-readable amount
-        return float(total_received) / (10**token_decimals)
+        return Decimal(total_received) / (10**token_decimals)
 
     def swap(
         self,
         base_token: TokenInfo,
         quote_token: TokenInfo,
-        quote_amount: float,
+        quote_amount: Decimal,
         slippage_bps: int = 100,
     ) -> SwapResult:
         """Execute a token swap on Uniswap.
@@ -137,7 +137,7 @@ class UniswapClient(DEXClient):
         self,
         base_token: TokenInfo,
         quote_token: TokenInfo,
-        quote_amount: float,
+        quote_amount: Decimal,
         wallet_key: str,
         slippage_bps: int = 100,
     ) -> SwapResult:
@@ -192,7 +192,7 @@ class UniswapClient(DEXClient):
             if receipt.get("status") == 0:
                 revert_reason = fetch_transaction_revert_reason(self._web3, completed_tx_hash)
                 logger.error(f"Transaction {completed_tx_hash.hex()} failed because of: {revert_reason}")
-                return SwapResult.build_error(error=revert_reason, base_amount=0)
+                return SwapResult.build_error(error=revert_reason, base_amount=Decimal(0))
 
         # Get the actual amount of base token received from the swap receipt
         swap_receipt = receipts[list(receipts.keys())[1]]

@@ -1,3 +1,4 @@
+from decimal import Decimal
 from typing import Any
 
 import pytest
@@ -50,8 +51,8 @@ def test_get_final_swap_amount_received_usdc(mock_receipt: dict[str, Any]) -> No
     )
 
     # Expected amount: 0x33746a = 3372138 raw amount = 3.372138 USDC
-    expected_usdc = 3.372138
-    assert abs(usdc_amount - expected_usdc) < 0.00001, f"Expected {expected_usdc} USDC but got {usdc_amount}"
+    expected_usdc = Decimal("3.372138")
+    assert abs(usdc_amount - expected_usdc) < Decimal("0.00001"), f"Expected {expected_usdc} USDC but got {usdc_amount}"
 
 
 def test_get_final_swap_amount_received_weth(mock_receipt: dict[str, Any]) -> None:
