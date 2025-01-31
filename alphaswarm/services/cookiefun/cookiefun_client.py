@@ -158,7 +158,7 @@ class CookieFunClient:
             logger.exception("Error fetching data from Cookie.fun")
             raise
 
-    def _parse_agent_response(self, response_data: dict) -> AgentMetrics:
+    def _parse_agent_metrics_response(self, response_data: dict) -> AgentMetrics:
         """Parse API response into AgentMetrics object
 
         Args:
@@ -172,7 +172,7 @@ class CookieFunClient:
         data = response_data["ok"]
         return AgentMetrics(**data)
 
-    def get_agent_by_twitter(self, username: str, interval: Interval) -> AgentMetrics:
+    def get_agent_metrics_by_twitter(self, username: str, interval: Interval) -> AgentMetrics:
         """Get agent metrics by Twitter username
 
         Args:
@@ -188,9 +188,9 @@ class CookieFunClient:
         logger.info(f"Fetching metrics for Twitter username: {username}")
 
         response = self._make_request(f"/twitterUsername/{username}", params={"interval": interval})
-        return self._parse_agent_response(response)
+        return self._parse_agent_metrics_response(response)
 
-    def get_agent_by_contract(
+    def get_agent_metrics_by_contract(
         self, address_or_symbol: str, interval: Interval, chain: Optional[str] = None
     ) -> AgentMetrics:
         """Get agent metrics by contract address or symbol
@@ -230,7 +230,7 @@ class CookieFunClient:
         logger.info(f"Fetching metrics for contract address: {contract_address}")
 
         response = self._make_request(f"/contractAddress/{contract_address}", params={"interval": interval})
-        return self._parse_agent_response(response)
+        return self._parse_agent_metrics_response(response)
 
     def get_agents_paged(self, interval: Interval, page: int, page_size: int) -> PagedAgentsResponse:
         """Get paged list of AI agents ordered by mindshare
@@ -248,7 +248,7 @@ class CookieFunClient:
             ApiException: If API request fails
         """
         if not 1 <= page_size <= 25:
-            raise ValueError("page_size must be between 1 and 25")
+            raise ValueError(f"page_size must be between 1 and 25, got {page_size}")
 
         logger.info(f"Fetching agents page {page} with size {page_size}")
 

@@ -1,5 +1,10 @@
 from alphaswarm.services.cookiefun.cookiefun_client import CookieFunClient, Interval
-from alphaswarm.tools.cookie.cookie_metrics import CookieMetricsByTwitter, CookieMetricsByContract, CookieMetricsPaged
+from alphaswarm.tools.cookie.cookie_metrics import (
+    CookieMetricsByTwitter,
+    CookieMetricsByContract,
+    CookieMetricsBySymbol,
+    CookieMetricsPaged,
+)
 
 
 def test_get_metrics_by_twitter(cookiefun_client: CookieFunClient) -> None:
@@ -13,10 +18,10 @@ def test_get_metrics_by_twitter(cookiefun_client: CookieFunClient) -> None:
     assert len(result.twitter_usernames) > 0
 
 
-def test_get_metrics_by_contract_address(cookiefun_client: CookieFunClient) -> None:
+def test_get_metrics_by_contract(cookiefun_client: CookieFunClient) -> None:
     tool = CookieMetricsByContract(cookiefun_client)
     cookie_address = "0xc0041ef357b183448b235a8ea73ce4e4ec8c265f"  # Cookie token on Base
-    result = tool.forward(address_or_symbol=cookie_address, interval=Interval.SEVEN_DAYS)
+    result = tool.forward(address=cookie_address, chain="base-mainnet", interval=Interval.SEVEN_DAYS)
 
     assert result.agent_name == "Cookie"
     assert result.price > 0
@@ -24,9 +29,9 @@ def test_get_metrics_by_contract_address(cookiefun_client: CookieFunClient) -> N
     assert any(c.contract_address == cookie_address for c in result.contracts)
 
 
-def test_get_metrics_by_contract_symbol(cookiefun_client: CookieFunClient) -> None:
-    tool = CookieMetricsByContract(cookiefun_client)
-    result = tool.forward(address_or_symbol="COOKIE", interval=Interval.SEVEN_DAYS)
+def test_get_metrics_by_symbol(cookiefun_client: CookieFunClient) -> None:
+    tool = CookieMetricsBySymbol(cookiefun_client)
+    result = tool.forward(symbol="COOKIE", interval=Interval.SEVEN_DAYS)
 
     assert result.agent_name == "Cookie"
     assert result.price > 0
