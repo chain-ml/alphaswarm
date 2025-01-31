@@ -21,8 +21,8 @@ from hexbytes import HexBytes
 from web3.middleware.signing import construct_sign_and_send_raw_middleware
 
 from .constants_erc20 import ERC20_ABI
-from .constants_v2 import UNISWAP_V2_FACTORY_ABI, UNISWAP_V2_ROUTER_ABI
-from .constants_v3 import UNISWAP_V3_FACTORY_ABI, UNISWAP_V3_ROUTER2_ABI, UNISWAP_V3_ROUTER_ABI
+from .constants_v2 import UNISWAP_V2_FACTORY_ABI
+from .constants_v3 import UNISWAP_V3_FACTORY_ABI
 
 # Set up logger
 logger = logging.getLogger(__name__)
@@ -130,22 +130,10 @@ class UniswapClient(DEXClient):
             Private key is read from environment variables via config for the specified chain.
         """
         private_key = self._config.get_chain_config(self.chain).private_key
-        swap_result = self._swap(base_token, quote_token, quote_amount, private_key, slippage_bps)
-        return swap_result
-
-    def _swap(
-        self,
-        base_token: TokenInfo,
-        quote_token: TokenInfo,
-        quote_amount: Decimal,
-        wallet_key: str,
-        slippage_bps: int = 100,
-    ) -> SwapResult:
-        """Execute a token swap on Uniswap."""
         logger.info(f"Initiating token swap for {quote_token.symbol} to {base_token.symbol}")
 
         # Set up account
-        account: LocalAccount = Account.from_key(wallet_key)
+        account: LocalAccount = Account.from_key(private_key)
         wallet_address = account.address
         logger.info(f"Wallet address: {wallet_address}")
 
@@ -181,12 +169,8 @@ class UniswapClient(DEXClient):
         # 1) ERC-20.approve()
         # 2) swap (various functions)
 
-        if self.version == "v3":
-            receipts = self._swap_v3(base_token, quote_token, wallet_address, raw_amount, slippage_bps)
-        elif self.version == "v2":
-            receipts = self._swap_v2(base_token, quote_token, wallet_address, raw_amount, slippage_bps)
-        else:
-            raise ValueError(f"Unsupported Uniswap version: {self.version}")
+        receipts = self._swap(base_token, quote_token, wallet_address, raw_amount, slippage_bps)
+
         # Check for transaction failure and display revert reason
         for completed_tx_hash, receipt in receipts.items():
             if receipt.get("status") == 0:
@@ -205,6 +189,12 @@ class UniswapClient(DEXClient):
             quote_amount=quote_amount,
             tx_hash=list(receipts.keys())[1],  # Return the swap tx hash, not the approve tx
         )
+
+    @abstractmethod
+    def _swap(
+        self, base: TokenInfo, quote: TokenInfo, address: str, raw_amount: int, slippage_bps: int
+    ) -> Dict[HexBytes, Dict]:
+        pass
 
     def _get_gas_fees(self) -> tuple[int, int, int, int]:
         """Calculate gas fees for transactions and get gas limit from config.
@@ -291,171 +281,6 @@ class UniswapClient(DEXClient):
         # Get fresh nonce after approval
         nonce = self._web3.eth.get_transaction_count(address)
         return nonce, approval_receipt
-
-    def _swap_v2(
-        self, base: TokenInfo, quote: TokenInfo, address: str, raw_amount: int, slippage_bps: int
-    ) -> Dict[HexBytes, Dict]:
-        """Execute a swap on Uniswap V2."""
-        # Handle token approval and get fresh nonce
-        nonce, approval_receipt = self._approve_token_spend(quote, address, raw_amount)
-
-        # Get price from V2 pair to calculate minimum output
-        price = self._get_v2_price(base_token=base, quote_token=quote)
-        if not price:
-            raise ValueError(f"No V2 price found for {base.symbol}/{quote.symbol}")
-
-        # Calculate expected output
-        input_amount_decimal = Decimal(str(raw_amount)) / (Decimal("10") ** quote.decimals)
-        expected_output_decimal = input_amount_decimal * price
-        logger.info(f"Expected output: {expected_output_decimal} {base.symbol}")
-
-        # Convert expected output to raw integer and apply slippage
-        slippage_multiplier = Decimal("1") - (Decimal(str(slippage_bps)) / Decimal("10000"))
-        min_output_raw = int(expected_output_decimal * (10**base.decimals) * slippage_multiplier)
-        logger.info(f"Minimum output with {slippage_bps} bps slippage (raw): {min_output_raw}")
-
-        # Build swap path
-        path = [self._web3.to_checksum_address(quote.address), self._web3.to_checksum_address(base.address)]
-
-        # Build swap transaction with EIP-1559 parameters
-        router_contract = self._web3.eth.contract(
-            address=self._web3.to_checksum_address(self._router), abi=UNISWAP_V2_ROUTER_ABI
-        )
-        deadline = int(self._web3.eth.get_block("latest")["timestamp"] + 300)  # 5 minutes
-
-        swap = router_contract.functions.swapExactTokensForTokens(
-            raw_amount,  # amount in
-            min_output_raw,  # minimum amount out
-            path,  # swap path
-            address,  # recipient
-            deadline,  # deadline
-        )
-
-        # Get gas fees
-        max_fee_per_gas, _, priority_fee, gas_limit = self._get_gas_fees()
-
-        tx_2 = swap.build_transaction(
-            {
-                "gas": gas_limit,
-                "chainId": self._web3.eth.chain_id,
-                "from": address,
-                "nonce": nonce,
-                "maxFeePerGas": max_fee_per_gas,
-                "maxPriorityFeePerGas": priority_fee,
-            }
-        )
-
-        # Send swap transaction
-        tx_hash_2 = self._web3.eth.send_transaction(tx_2)
-        logger.info(f"Waiting for swap transaction {tx_hash_2.hex()} to be mined...")
-        swap_receipt = wait_transactions_to_complete(
-            self._web3,
-            [tx_hash_2],
-            max_timeout=datetime.timedelta(minutes=2.5),
-            confirmation_block_count=1,
-        )
-
-        return {**approval_receipt, **swap_receipt}
-
-    def _swap_v3(
-        self, base: TokenInfo, quote: TokenInfo, address: str, raw_amount: int, slippage_bps: int
-    ) -> Dict[HexBytes, Dict]:
-        """Execute a swap on Uniswap V3."""
-        # Handle token approval and get fresh nonce
-        nonce, approval_receipt = self._approve_token_spend(quote, address, raw_amount)
-
-        # Build a swap transaction
-        pool_details = self._get_v3_pool(base_token=base, quote_token=quote)
-        if not pool_details:
-            raise ValueError(f"No V3 pool found for {base.symbol}/{quote.symbol}")
-
-        logger.info(f"Using Uniswap V3 pool at address: {pool_details.address} (raw fee tier: {pool_details.raw_fee})")
-
-        # Get the on-chain price from the pool and reverse if necessary
-        reverse = base.address.lower() == pool_details.token0.address.lower()
-        raw_price = get_onchain_price_v3(self._web3, pool_details.address, reverse_token_order=reverse)
-        logger.info(f"Pool raw price: {raw_price} ({quote.symbol} per {base.symbol})")
-
-        # Convert to decimal for calculations
-        price = Decimal(str(raw_price))
-        input_amount_decimal = Decimal(str(raw_amount)) / (Decimal("10") ** quote.decimals)
-        logger.info(f"Actual input amount: {input_amount_decimal} {quote.symbol}")
-
-        # Calculate expected output
-        expected_output_decimal = input_amount_decimal * price
-        logger.info(f"Expected output: {expected_output_decimal} {base.symbol}")
-
-        # Convert expected output to raw integer
-        raw_output = int(expected_output_decimal * Decimal(10**base.decimals))
-        logger.info(f"Expected output amount (raw): {raw_output}")
-
-        # Calculate price impact
-        pool_liquidity = pool_details.pool.functions.liquidity().call()
-        logger.info(f"Pool liquidity: {pool_liquidity}")
-
-        # Estimate price impact (simplified)
-        price_impact = (raw_amount * 10000) / pool_liquidity  # in bps
-        logger.info(f"Estimated price impact: {price_impact:.2f} bps")
-
-        # Check if price impact is too high relative to slippage
-        # Price impact should be significantly lower than slippage to leave room for market moves
-        if price_impact > (slippage_bps * 0.67):  # If price impact is more than 2/3 of slippage
-            logger.warning(
-                f"WARNING: Price impact ({price_impact:.2f} bps) is more than 2/3 of slippage tolerance ({slippage_bps} bps)"
-            )
-            logger.warning(
-                "This leaves little room for market price changes between transaction submission and execution"
-            )
-
-        # Apply slippage
-        slippage_multiplier = Decimal("1") - (Decimal(str(slippage_bps)) / Decimal("10000"))
-        min_output_raw = int(raw_output * slippage_multiplier)
-        logger.info(f"Minimum output with {slippage_bps} bps slippage (raw): {min_output_raw}")
-
-        # Build swap parameters for `exactInputSingle`
-        params = {
-            "tokenIn": self._web3.to_checksum_address(quote.address),
-            "tokenOut": self._web3.to_checksum_address(base.address),
-            "fee": pool_details.raw_fee,
-            "recipient": self._web3.to_checksum_address(address),
-            "deadline": int(self._web3.eth.get_block("latest")["timestamp"] + 300),
-            "amountIn": raw_amount,
-            "amountOutMinimum": min_output_raw,
-            "sqrtPriceLimitX96": 0,
-        }
-        logger.info("Built exactInputSingle parameters:")
-        for k, v in params.items():
-            logger.info(f"  {k}: {v}")
-
-        # Build swap transaction with EIP-1559 parameters
-        router_abi = UNISWAP_V3_ROUTER2_ABI if self.chain in ["base", "ethereum_sepolia"] else UNISWAP_V3_ROUTER_ABI
-        router_contract = self._web3.eth.contract(address=self._web3.to_checksum_address(self._router), abi=router_abi)
-        swap = router_contract.functions.exactInputSingle(params)
-
-        # Get gas fees
-        max_fee_per_gas, _, priority_fee, gas_limit = self._get_gas_fees()
-        tx_2 = swap.build_transaction(
-            {
-                "gas": gas_limit,
-                "chainId": self._web3.eth.chain_id,
-                "from": address,
-                "nonce": nonce,
-                "maxFeePerGas": max_fee_per_gas,
-                "maxPriorityFeePerGas": priority_fee,
-            }
-        )
-
-        # Send swap transaction
-        tx_hash_2 = self._web3.eth.send_transaction(tx_2)
-        logger.info(f"Waiting for swap transaction {tx_hash_2.hex()} to be mined...")
-        swap_receipt = wait_transactions_to_complete(
-            self._web3,
-            [tx_hash_2],
-            max_timeout=datetime.timedelta(minutes=2.5),
-            confirmation_block_count=1,
-        )
-
-        return {**approval_receipt, **swap_receipt}
 
     def _get_v2_price(self, *, base_token: TokenInfo, quote_token: TokenInfo) -> Decimal:
         """Get the current price from a Uniswap V2 pool for a token pair.
