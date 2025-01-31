@@ -1,1 +1,1 @@
-from.generic.generic_analysis import GenericStrategyAnalysisTool
+from .generic.generic_analysis import GenericStrategyAnalysisTool

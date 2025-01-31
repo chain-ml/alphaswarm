@@ -11,7 +11,7 @@ def test_send_trade_alert():
             metadata={"symbol": "WETH", "chain": "ethereum"},
             rule_description="Price increased significantly",
             value=4.0,
-            supporting_data={"time_period": "24h"}
+            supporting_data={"time_period": "24h"},
         )
     ]
 

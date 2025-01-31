@@ -1,8 +1,7 @@
 import os
 from typing import Any, Dict, List
 
-import yaml
-from alphaswarm.config import BASE_PATH, CONFIG_PATH
+from alphaswarm.config import BASE_PATH
 from alphaswarm.utils import LLMFunctionFromPromptFiles, load_strategy_config
 from pydantic import BaseModel, Field
 from smolagents import Tool
@@ -12,26 +11,21 @@ class AlertItem(BaseModel):
     # Core token identification
     metadata: Dict[str, Any] = Field(
         description="Token metadata including symbol, address, chain, and any other relevant token information",
-        default_factory=dict
+        default_factory=dict,
     )
-    
+
     # Alert details
     rule_description: str = Field(description="Description of the rule that was triggered")
     value: float = Field(description="The measured value related to this alert")
     supporting_data: Dict[str, Any] = Field(
         description="Additional context about why this rule was triggered, including relevant metrics or observations",
-        default_factory=dict
+        default_factory=dict,
     )
 
 
 class StrategyAnalysis(BaseModel):
-    summary: str = Field(
-        description="A concise summary of the overall analysis and key findings"
-    )
-    alerts: List[AlertItem] = Field(
-        description="List of triggered rules and their details",
-        default_factory=list
-    )
+    summary: str = Field(description="A concise summary of the overall analysis and key findings")
+    alerts: List[AlertItem] = Field(description="List of triggered rules and their details", default_factory=list)
 
 
 class GenericStrategyAnalysisTool(Tool):

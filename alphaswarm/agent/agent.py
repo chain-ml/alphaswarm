@@ -3,9 +3,9 @@ import os
 from collections import defaultdict
 from typing import Dict, Optional, Sequence
 
+from alphaswarm.utils import load_strategy_config
 from smolagents import CODE_SYSTEM_PROMPT, CodeAgent, LiteLLMModel, Tool
 
-from alphaswarm.utils import load_strategy_config
 
 class AlphaSwarmAgent:
 

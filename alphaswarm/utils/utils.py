@@ -1,4 +1,5 @@
 import os
+
 from alphaswarm.config import CONFIG_PATH
 
 
