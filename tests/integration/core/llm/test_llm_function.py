@@ -43,7 +43,7 @@ def test_llm_function_simple():
 def test_llm_function_messages():
     llm_func = get_llm_function(
         system_message="Output a random number",
-        messages=[Message(role="user", content="Pick between 2 and 5")],
+        messages=[Message.message(role="user", content="Pick between 2 and 5")],
     )
 
     result = llm_func.execute()
@@ -69,3 +69,27 @@ def test_llm_function_with_complex_response_model():
     assert isinstance(result.store, str)
     assert result.category in ["food", "clothing", "electronics", "other"]
     assert all(isinstance(item, ItemPricePair) for item in result.list_of_items)
+
+
+def test_llm_function_with_cache():
+    class Response(BaseModel):
+        content: str = Field(..., description="The content of the response")
+
+    large_content = "Paris is capital of France" * 300  # caching from 2k tokens for haiku
+    llm_func = LLMFunction(
+        model_id="anthropic/claude-3-haiku-20240307",
+        response_model=Response,
+        messages=[Message.system(large_content, cache=True)],
+    )
+
+    result, completion = llm_func.execute_with_completion("What's the capital of France?")
+    assert isinstance(result, Response)
+    assert "Paris" in result.content
+
+    # assert completion.usage.prompt_tokens_details.cached_tokens > 0
+
+    result, completion = llm_func.execute_with_completion("What's the capital of France?")
+    assert isinstance(result, Response)
+    assert "Paris" in result.content
+
+    # assert completion.usage. .. > 0
