@@ -1,7 +1,7 @@
 import logging
 import os
 from enum import Enum
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 import requests
 from alphaswarm.config import Config
@@ -99,17 +99,17 @@ class CookieFunClient:
         self.config = config or Config()
         logger.debug("CookieFun client initialized")
 
-    def _get_token_address(self, symbol: str) -> tuple[Optional[str], Optional[str]]:
+    def _get_token_address(self, symbol: str) -> Tuple[Optional[str], Optional[str]]:
         """Get token address and chain from symbol using config
 
         Args:
             symbol: Token symbol to look up
 
         Returns:
-            tuple: (token_address, chain) if found, (None, None) if not found
+            Tuple[Optional[str], Optional[str]]: (token_address, chain) if found, (None, None) if not found
 
         Raises:
-            Exception: If there's an error during lookup
+            ValueError: If there's an error during lookup
         """
         try:
             # Get all supported chains from config
@@ -130,7 +130,7 @@ class CookieFunClient:
             logger.exception(f"Failed to find token address for {symbol}")
             raise ValueError(f"Failed to find token address for {symbol}")
 
-    def _make_request(self, endpoint: str, params: Dict = None) -> Dict:
+    def _make_request(self, endpoint: str, params: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         """Make API request to Cookie.fun
 
         Args:
@@ -138,7 +138,7 @@ class CookieFunClient:
             params: Query parameters
 
         Returns:
-            Dict: API response data
+            Dict[str, Any]: API response data
 
         Raises:
             ApiException: If API request fails
@@ -147,7 +147,7 @@ class CookieFunClient:
         url = f"{self.BASE_URL}{endpoint}"
 
         try:
-            response = requests.get(url, headers=self.headers, params=params)
+            response = requests.get(url, headers=self.headers, params=params or {})
 
             if response.status_code >= 400:
                 raise ApiException(response)
@@ -190,7 +190,9 @@ class CookieFunClient:
         response = self._make_request(f"/twitterUsername/{username}", params={"interval": interval})
         return self._parse_agent_response(response)
 
-    def get_agent_by_contract(self, address_or_symbol: str, interval: Interval, chain: str = None) -> AgentMetrics:
+    def get_agent_by_contract(
+        self, address_or_symbol: str, interval: Interval, chain: Optional[str] = None
+    ) -> AgentMetrics:
         """Get agent metrics by contract address or symbol
 
         Args:
@@ -203,24 +205,31 @@ class CookieFunClient:
 
         Raises:
             ApiException: If API request fails
-            ValueError: If symbol not found in any chain
+            ValueError: If symbol not found in any chain or if chain is required but not provided
         """
         # If input looks like an address, use it directly with provided chain
         if address_or_symbol.startswith("0x") or address_or_symbol.startswith("1"):
-            address = address_or_symbol
+            if chain is None:
+                raise ValueError("Chain must be specified when using contract address")
+            contract_address: str = address_or_symbol
+            used_chain = chain
         else:
             # Try to look up symbol
-            address, detected_chain = self._get_token_address(address_or_symbol)
-            if not address:
+            found_address, detected_chain = self._get_token_address(address_or_symbol)
+            if found_address is None or detected_chain is None:
                 raise ValueError(f"Could not find address for token {address_or_symbol} in any chain")
 
             # Use detected chain unless explicitly overridden
-            chain = chain or detected_chain
-            logger.info(f"Resolved symbol {address_or_symbol} to address {address} on chain {chain}")
+            used_chain = chain if chain is not None else detected_chain
+            if used_chain is None:  # This should never happen due to the check above, but mypy needs it
+                raise ValueError("Chain resolution failed")
 
-        logger.info(f"Fetching metrics for contract address: {address}")
+            contract_address = found_address  # At this point found_address is guaranteed to be str
+            logger.info(f"Resolved symbol {address_or_symbol} to address {contract_address} on chain {used_chain}")
 
-        response = self._make_request(f"/contractAddress/{address}", params={"interval": interval})
+        logger.info(f"Fetching metrics for contract address: {contract_address}")
+
+        response = self._make_request(f"/contractAddress/{contract_address}", params={"interval": interval})
         return self._parse_agent_response(response)
 
     def get_agents_paged(self, interval: Interval, page: int, page_size: int) -> PagedAgentsResponse:
