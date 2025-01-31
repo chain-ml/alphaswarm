@@ -123,6 +123,7 @@ class AlphaSwarmAgentClient(ABC, Generic[T_Context]):
             while True:
                 context = await self.get_message()
                 if context.message.lower() == "quit":
+                    await self.on_agent_response(context, ChatMessage.create(sender="agent", content="bye"))
                     break
 
                 await self._process_message(context)  # Using default channel_id

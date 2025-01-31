@@ -26,6 +26,7 @@ class TelegramApp:
     async def _stop(self):
         """Stop the bot"""
         await self._app.stop()
+        await self._app.updater.stop()
         await self._app.shutdown()
 
     async def send_message(self, chat_id: int, message: str, parse_mode: str = ParseMode.MARKDOWN) -> None:
