@@ -22,6 +22,7 @@ dependencies = [
 [tool.poetry.group.ai.dependencies]
 transformers = "4.47.1"  # fixed smolagents dependency
 litellm = "1.55.10"  # newer versions via smolagents will not work on windows
+instructor = "1.7.2"
 smolagents = "1.2.2"
 
 [tool.poetry.group.clients.dependencies]
