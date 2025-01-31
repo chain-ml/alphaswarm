@@ -37,8 +37,6 @@ ENV/
 .DS_Store
 
 # Project specific
-config/*.yaml
-!config/default.yaml
 logs/
 *.log
 .coverage
