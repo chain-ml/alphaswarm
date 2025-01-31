@@ -41,7 +41,7 @@ class AgentMetrics:
     mindshare: float
     price: float
     liquidity: float
-    
+
     # Optional/fields with defaults after
     agent_name: str = Field(alias="agentName")
     twitter_usernames: List[str] = Field(alias="twitterUsernames")
@@ -65,6 +65,7 @@ class AgentMetrics:
 @dataclass
 class PagedAgentsResponse:
     """Response from the paged agents endpoint"""
+
     data: List[AgentMetrics]  # Required field first
     current_page: int = Field(alias="currentPage")
     total_pages: int = Field(alias="totalPages")
