@@ -7,7 +7,7 @@ from alphaswarm.agent.clients import TerminalClient
 
 # from alphaswarm.config import Config
 from alphaswarm.tools.alchemy import AlchemyPriceHistoryByAddress, AlchemyPriceHistoryBySymbol
-from alphaswarm.tools.strategy_analysis.generic.generic_analysis import GenericStrategyAnalysisTool
+from alphaswarm.tools.strategy_analysis.generic import GenericStrategyAnalysisTool
 from smolagents import Tool
 
 
