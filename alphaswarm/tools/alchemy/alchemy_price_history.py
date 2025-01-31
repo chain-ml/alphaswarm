@@ -47,7 +47,7 @@ class AlchemyPriceHistoryByAddress(Tool):
         },
         "network": {
             "type": "string",
-            "description": "Name of the network hosting the token",
+            "description": "Name of the network hosting the token.",
             "enum": NETWORKS,
         },
         "interval": {
