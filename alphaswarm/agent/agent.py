@@ -2,6 +2,7 @@ import asyncio
 import os
 from typing import Optional, Sequence
 
+from alphaswarm.utils import load_strategy_config
 from smolagents import CODE_SYSTEM_PROMPT, CodeAgent, LiteLLMModel, Tool
 
 
@@ -15,6 +16,7 @@ class AlphaSwarmAgent:
             tools=list(tools),
             model=LiteLLMModel(model_id=model_id),
             system_prompt=system_prompt,
+            additional_authorized_imports=["json", "decimal"],
         )
 
     async def process_message(self, current_message: str) -> Optional[str]:
@@ -39,10 +41,15 @@ class AlphaSwarmAgent:
 
     def _build_context(self, current_message: str) -> str:
         messages = [
-            "# Base Wallet Address",
+            "# User Context",
+            "## Base Wallet Address",
             str(self._wallet_address),
             "",
-            "# Messages",
+            "## Strategy Config\n\n```strategy_config```\n\n",  # To be replaced by a user context management solution
+            load_strategy_config(),
+            "\n\n```\n",
+            "",
+            "## Messages",
             current_message,
             "",
         ]
