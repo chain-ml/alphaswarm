@@ -1,15 +1,17 @@
 import asyncio
+import logging
 from typing import List
 
 import dotenv
 from alphaswarm.agent.agent import AlphaSwarmAgent
-from alphaswarm.agent.clients import TerminalClient
+from alphaswarm.agent.clients.telegram_bot import TelegramBot
 from alphaswarm.config import Config
 from alphaswarm.tools.alchemy import AlchemyPriceHistoryByAddress, AlchemyPriceHistoryBySymbol
-from alphaswarm.tools.cookie.cookie_metrics import CookieMetricsByContract, CookieMetricsByTwitter, CookieMetricsPaged
 from alphaswarm.tools.exchanges import GetTokenPriceTool
 from alphaswarm.tools.price_tool import PriceTool
 from smolagents import Tool
+
+logging.getLogger("smolagents").setLevel(logging.ERROR)
 
 
 async def main():
@@ -22,15 +24,14 @@ async def main():
         GetTokenPriceTool(config),
         AlchemyPriceHistoryByAddress(),
         AlchemyPriceHistoryBySymbol(),
-        CookieMetricsByTwitter(),
-        CookieMetricsByContract(),
-        CookieMetricsPaged(),
-    ]
-    agent = AlphaSwarmAgent(tools=tools, model_id="gpt-4o")
+    ]  # Add your tools here
 
-    terminal = TerminalClient("AlphaSwarm terminal", agent)
+    agent = AlphaSwarmAgent(tools=tools, model_id="gpt-4o")
+    bot_token = config.get("telegram", {}).get("bot_token")
+    tg_bot = TelegramBot(bot_token=bot_token, agent=agent)
+
     await asyncio.gather(
-        terminal.start(),
+        tg_bot.start(),
     )
 
 
