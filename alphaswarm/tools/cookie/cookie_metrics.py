@@ -62,7 +62,7 @@ class CookieMetricsByContract(Tool):
 
 class CookieMetricsPaged(Tool):
     name = "CookieMetricsPaged"
-    description = "Retrieve paged list of AI agents ordered by mindshare from Cookie.fun. Important for getting a list of trending AI agents."
+    description = "Retrieve paged list of AI agents ordered by mindshare from Cookie.fun. Important for getting a list of trending AI agents. page_size is the number of agents per page. If asked for example for Top 10 agents, page_size should be 10."
     inputs = {
         "interval": {
             "type": "string",

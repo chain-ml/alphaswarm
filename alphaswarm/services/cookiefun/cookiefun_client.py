@@ -1,11 +1,11 @@
-from datetime import datetime
 from enum import Enum
-from typing import List
+from typing import List, Dict, Optional
 from pydantic.dataclasses import dataclass
 import logging
 import os
 
 import requests
+from alphaswarm.services.api_exception import ApiException
 
 # Set up logging
 logger = logging.getLogger(__name__)
@@ -17,65 +17,94 @@ class Interval(str, Enum):
 @dataclass
 class Contract:
     chain: int
-    contract_address: str
+    contractAddress: str
 
 @dataclass
 class Tweet:
-    tweet_url: str
-    tweet_author_profile_image_url: str
-    tweet_author_display_name: str
-    smart_engagement_points: int
-    impressions_count: int
+    tweetUrl: str
+    tweetAuthorProfileImageUrl: str
+    tweetAuthorDisplayName: str
+    smartEngagementPoints: int
+    impressionsCount: int
 
 @dataclass
 class AgentMetrics:
-    agent_name: str
+    agentName: str
     contracts: List[Contract]
-    twitter_usernames: List[str]
+    twitterUsernames: List[str]
     mindshare: float
-    mindshare_delta_percent: float
-    market_cap: float
-    market_cap_delta_percent: float
+    mindshareDeltaPercent: float
+    marketCap: float
+    marketCapDeltaPercent: float
     price: float
-    price_delta_percent: float
+    priceDeltaPercent: float
     liquidity: float
-    volume_24_hours: float
-    volume_24_hours_delta_percent: float
-    holders_count: int
-    holders_count_delta_percent: float
-    average_impressions_count: float
-    average_impressions_count_delta_percent: float
-    average_engagements_count: float
-    average_engagements_count_delta_percent: float
-    followers_count: int
-    smart_followers_count: int
-    top_tweets: List[Tweet]
+    volume24Hours: float
+    volume24HoursDeltaPercent: float
+    holdersCount: int
+    holdersCountDeltaPercent: float
+    averageImpressionsCount: float
+    averageImpressionsCountDeltaPercent: float
+    averageEngagementsCount: float
+    averageEngagementsCountDeltaPercent: float
+    followersCount: int
+    smartFollowersCount: int
+    topTweets: List[Tweet]
 
 @dataclass
 class PagedAgentsResponse:
     """Response from the paged agents endpoint"""
     data: List[AgentMetrics]
-    current_page: int
-    total_pages: int
-    total_count: int
+    currentPage: int
+    totalPages: int
+    totalCount: int
 
 class CookieFunClient:
     """Client for interacting with the Cookie.fun API"""
     
     BASE_URL = "https://api.cookie.fun/v2/agents"
     
-    def __init__(self):
+    def __init__(self, base_url: str = BASE_URL, api_key: Optional[str] = None, **kwargs):
         """Initialize the Cookie.fun API client
         
         Raises:
             ValueError: If COOKIE_FUN_API_KEY environment variable is not set
         """
-        self.api_key = os.getenv("COOKIE_FUN_API_KEY")
+        self.base_url = base_url
+        self.api_key = api_key or os.getenv("COOKIE_FUN_API_KEY")
         if not self.api_key:
             raise ValueError("COOKIE_FUN_API_KEY environment variable not set")
         
         self.headers = {"x-api-key": self.api_key}
         logger.debug("CookieFun client initialized")
+
+    def _make_request(self, endpoint: str, params: Dict = None) -> Dict:
+        """Make API request to Cookie.fun
+        
+        Args:
+            endpoint: API endpoint path
+            params: Query parameters
+            
+        Returns:
+            Dict: API response data
+            
+        Raises:
+            ApiException: If API request fails
+            Exception: For other errors
+        """
+        url = f"{self.BASE_URL}{endpoint}"
+
+        try:
+            response = requests.get(url, headers=self.headers, params=params)
+
+            if response.status_code >= 400:
+                raise ApiException(response)
+
+            return response.json()
+
+        except Exception:
+            logger.exception("Error fetching data from Cookie.fun")
+            raise
 
     def _parse_agent_response(self, response_data: dict) -> AgentMetrics:
         """Parse API response into AgentMetrics object
@@ -89,29 +118,7 @@ class CookieFunClient:
         logger.debug(f"Parsing agent response: {response_data}")
         
         data = response_data["ok"]
-        return AgentMetrics(
-            agent_name=data["agentName"],
-            contracts=[Contract(**c) for c in data["contracts"]],
-            twitter_usernames=data["twitterUsernames"],
-            mindshare=data["mindshare"],
-            mindshare_delta_percent=data["mindshareDeltaPercent"],
-            market_cap=data["marketCap"],
-            market_cap_delta_percent=data["marketCapDeltaPercent"],
-            price=data["price"],
-            price_delta_percent=data["priceDeltaPercent"],
-            liquidity=data["liquidity"],
-            volume_24_hours=data["volume24Hours"],
-            volume_24_hours_delta_percent=data["volume24HoursDeltaPercent"],
-            holders_count=data["holdersCount"],
-            holders_count_delta_percent=data["holdersCountDeltaPercent"],
-            average_impressions_count=data["averageImpressionsCount"],
-            average_impressions_count_delta_percent=data["averageImpressionsCountDeltaPercent"],
-            average_engagements_count=data["averageEngagementsCount"],
-            average_engagements_count_delta_percent=data["averageEngagementsCountDeltaPercent"],
-            followers_count=data["followersCount"],
-            smart_followers_count=data["smartFollowersCount"],
-            top_tweets=[Tweet(**t) for t in data["topTweets"]]
-        )
+        return AgentMetrics(**data)
 
     def get_agent_by_twitter(self, username: str, interval: Interval) -> AgentMetrics:
         """Get agent metrics by Twitter username
@@ -124,15 +131,15 @@ class CookieFunClient:
             AgentMetrics: Agent metrics data
             
         Raises:
-            requests.exceptions.RequestException: If API request fails
+            ApiException: If API request fails
         """
         logger.info(f"Fetching metrics for Twitter username: {username}")
         
-        url = f"{self.BASE_URL}/twitterUsername/{username}"
-        response = requests.get(url, headers=self.headers, params={"interval": interval})
-        response.raise_for_status()
-        
-        return self._parse_agent_response(response.json())
+        response = self._make_request(
+            f"/twitterUsername/{username}",
+            params={"interval": interval}
+        )
+        return self._parse_agent_response(response)
 
     def get_agent_by_contract(self, address: str, interval: Interval) -> AgentMetrics:
         """Get agent metrics by contract address
@@ -145,18 +152,18 @@ class CookieFunClient:
             AgentMetrics: Agent metrics data
             
         Raises:
-            requests.exceptions.RequestException: If API request fails
+            ApiException: If API request fails
         """
         logger.info(f"Fetching metrics for contract address: {address}")
         
-        url = f"{self.BASE_URL}/contractAddress/{address}"
-        response = requests.get(url, headers=self.headers, params={"interval": interval})
-        response.raise_for_status()
-        
-        return self._parse_agent_response(response.json())
+        response = self._make_request(
+            f"/contractAddress/{address}",
+            params={"interval": interval}
+        )
+        return self._parse_agent_response(response)
 
     def get_agents_paged(self, interval: Interval, page: int, page_size: int) -> PagedAgentsResponse:
-        """Get paged list of agents ordered by mindshare
+        """Get paged list of AI agents ordered by mindshare
         
         Args:
             interval: Time interval for metrics
@@ -168,27 +175,26 @@ class CookieFunClient:
             
         Raises:
             ValueError: If page_size is not between 1 and 25
-            requests.exceptions.RequestException: If API request fails
+            ApiException: If API request fails
         """
         if not 1 <= page_size <= 25:
             raise ValueError("page_size must be between 1 and 25")
         
         logger.info(f"Fetching agents page {page} with size {page_size}")
         
-        url = f"{self.BASE_URL}/agentsPaged"
-        params = {
-            "interval": interval,
-            "page": page,
-            "pageSize": page_size
-        }
+        response = self._make_request(
+            "/agentsPaged",
+            params={
+                "interval": interval,
+                "page": page,
+                "pageSize": page_size
+            }
+        )
         
-        response = requests.get(url, headers=self.headers, params=params)
-        response.raise_for_status()
-        
-        data = response.json()["ok"]
+        data = response["ok"]
         return PagedAgentsResponse(
-            data=[self._parse_agent_response({"ok": agent}) for agent in data["data"]],
-            current_page=data["currentPage"],
-            total_pages=data["totalPages"],
-            total_count=data["totalCount"]
+            data=[AgentMetrics(**agent) for agent in data["data"]],
+            currentPage=data["currentPage"],
+            totalPages=data["totalPages"],
+            totalCount=data["totalCount"]
         ) 
