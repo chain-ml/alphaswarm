@@ -34,16 +34,15 @@ class CookieMetricsByTwitter(Tool):
 
 class CookieMetricsByContract(Tool):
     name = "CookieMetricsByContract"
-    description = "Retrieve AI agent metrics such as mindshare, market cap, price, liquidity, volume, holders, average impressions, average engagements, followers, and top tweets by contract address or token symbol from Cookie.fun"
+    description = "Retrieve AI agent metrics such as mindshare, market cap, price, liquidity, volume, holders, average impressions, average engagements, followers, and top tweets by contract address from Cookie.fun"
     inputs = {
-        "address_or_symbol": {
+        "address": {
             "type": "string",
-            "description": "Contract address of the agent token or token symbol (e.g. 'COOKIE' or '0xc0041ef357b183448b235a8ea73ce4e4ec8c265f'). For addresses, chain must be specified.",
+            "description": "Contract address of the agent token (e.g. '0xc0041ef357b183448b235a8ea73ce4e4ec8c265f')",
         },
         "chain": {
             "type": "string",
-            "description": "Chain to look up token on (required only when using contract address)",
-            "nullable": True,
+            "description": "Chain where the contract is deployed (e.g. 'base-mainnet')",
         },
         "interval": {
             "type": "string",
@@ -57,8 +56,32 @@ class CookieMetricsByContract(Tool):
         super().__init__()
         self.client = client or CookieFunClient()
 
-    def forward(self, address_or_symbol: str, interval: str, chain: Optional[str] = None) -> AgentMetrics:
-        return self.client.get_agent_metrics_by_contract(address_or_symbol, Interval(interval), chain)
+    def forward(self, address: str, chain: str, interval: str) -> AgentMetrics:
+        return self.client.get_agent_metrics_by_contract(address, Interval(interval), chain)
+
+
+class CookieMetricsBySymbol(Tool):
+    name = "CookieMetricsBySymbol"
+    description = "Retrieve AI agent metrics such as mindshare, market cap, price, liquidity, volume, holders, average impressions, average engagements, followers, and top tweets by token symbol from Cookie.fun"
+    inputs = {
+        "symbol": {
+            "type": "string",
+            "description": "Token symbol of the agent (e.g. 'COOKIE')",
+        },
+        "interval": {
+            "type": "string",
+            "description": "Time interval for metrics (_3Days or _7Days)",
+            "enum": ["_3Days", "_7Days"],
+        },
+    }
+    output_type = "object"
+
+    def __init__(self, client: Optional[CookieFunClient] = None):
+        super().__init__()
+        self.client = client or CookieFunClient()
+
+    def forward(self, symbol: str, interval: str) -> AgentMetrics:
+        return self.client.get_agent_metrics_by_contract(symbol, Interval(interval))
 
 
 class CookieMetricsPaged(Tool):
