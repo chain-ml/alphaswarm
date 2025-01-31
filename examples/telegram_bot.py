@@ -7,9 +7,9 @@ from alphaswarm.agent.agent import AlphaSwarmAgent
 from alphaswarm.agent.clients.telegram_bot import TelegramBot
 from alphaswarm.config import Config
 from alphaswarm.tools.alchemy import AlchemyPriceHistoryByAddress, AlchemyPriceHistoryBySymbol
-from alphaswarm.tools.strategy_analysis.generic.generic_analysis import GenericStrategyAnalysisTool
 from alphaswarm.tools.exchanges import GetTokenPriceTool
 from alphaswarm.tools.price_tool import PriceTool
+from alphaswarm.tools.strategy_analysis.generic.generic_analysis import GenericStrategyAnalysisTool
 from smolagents import Tool
 
 logging.getLogger("smolagents").setLevel(logging.ERROR)

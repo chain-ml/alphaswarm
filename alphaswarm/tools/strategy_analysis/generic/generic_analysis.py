@@ -2,7 +2,8 @@ import os
 from typing import Any, Dict, List
 
 from alphaswarm.config import BASE_PATH
-from alphaswarm.utils import LLMFunctionFromPromptFiles, load_strategy_config
+from alphaswarm.core.llm.llm_function import LLMFunctionFromPromptFiles
+from alphaswarm.utils import load_strategy_config
 from pydantic import BaseModel, Field
 from smolagents import Tool
 
