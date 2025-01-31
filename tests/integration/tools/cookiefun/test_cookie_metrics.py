@@ -1,12 +1,5 @@
-from alphaswarm.services.cookiefun.cookiefun_client import (
-    CookieFunClient,
-    Interval
-)
-from alphaswarm.tools.cookie.cookie_metrics import (
-    CookieMetricsByTwitter,
-    CookieMetricsByContract,
-    CookieMetricsPaged
-)
+from alphaswarm.services.cookiefun.cookiefun_client import CookieFunClient, Interval
+from alphaswarm.tools.cookie.cookie_metrics import CookieMetricsByTwitter, CookieMetricsByContract, CookieMetricsPaged
 
 
 def test_get_metrics_by_twitter(cookiefun_client: CookieFunClient) -> None:
@@ -49,4 +42,4 @@ def test_get_metrics_paged(cookiefun_client: CookieFunClient) -> None:
     assert result.totalPages > 0
     assert result.totalCount > 0
     assert len(result.data) == 10
-    assert all(agent.price > 0 for agent in result.data) 
+    assert all(agent.price > 0 for agent in result.data)

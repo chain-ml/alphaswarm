@@ -3,12 +3,7 @@ import logging
 
 from smolagents import Tool
 
-from alphaswarm.services.cookiefun.cookiefun_client import (
-    CookieFunClient,
-    AgentMetrics,
-    Interval,
-    PagedAgentsResponse
-)
+from alphaswarm.services.cookiefun.cookiefun_client import CookieFunClient, AgentMetrics, Interval, PagedAgentsResponse
 
 # Set up logging
 logger = logging.getLogger(__name__)
@@ -36,6 +31,7 @@ class CookieMetricsByTwitter(Tool):
 
     def forward(self, username: str, interval: str) -> AgentMetrics:
         return self.client.get_agent_by_twitter(username, Interval(interval))
+
 
 class CookieMetricsByContract(Tool):
     name = "CookieMetricsByContract"
@@ -65,6 +61,7 @@ class CookieMetricsByContract(Tool):
     def forward(self, address_or_symbol: str, interval: str, chain: Optional[str] = None) -> AgentMetrics:
         return self.client.get_agent_by_contract(address_or_symbol, Interval(interval), chain)
 
+
 class CookieMetricsPaged(Tool):
     name = "CookieMetricsPaged"
     description = "Retrieve paged list of AI agents ordered by mindshare from Cookie.fun. Important for getting a list of trending AI agents. page_size is the number of agents per page. If asked for example for Top 10 agents, page_size should be 10."
@@ -93,4 +90,4 @@ class CookieMetricsPaged(Tool):
         self.client = client or CookieFunClient()
 
     def forward(self, interval: str, page: int, page_size: int) -> PagedAgentsResponse:
-        return self.client.get_agents_paged(Interval(interval), page, page_size) 
+        return self.client.get_agents_paged(Interval(interval), page, page_size)

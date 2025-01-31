@@ -1,5 +1,4 @@
 import time
-import os
 from _pytest.fixtures import fixture
 import pytest
 
