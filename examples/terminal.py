@@ -9,6 +9,7 @@ from alphaswarm.tools.alchemy import AlchemyPriceHistoryByAddress, AlchemyPriceH
 from alphaswarm.tools.exchanges import GetTokenPriceTool
 from alphaswarm.tools.price_tool import PriceTool
 from alphaswarm.tools.telegram import SendTelegramNotificationTool
+from alphaswarm.tools.strategy_analysis.generic import GenericStrategyAnalysisTool
 from smolagents import Tool
 
 
@@ -25,9 +26,14 @@ async def main() -> None:
         GetTokenPriceTool(config),
         AlchemyPriceHistoryByAddress(),
         AlchemyPriceHistoryBySymbol(),
+        GenericStrategyAnalysisTool(),
         SendTelegramNotificationTool(telegram_bot_token=telegram_bot_token, chat_id=chat_id),
     ]  # Add your tools here
-    agent = AlphaSwarmAgent(tools=tools, model_id="gpt-4o")
+    hints = """You are a trading agent that uses a set of tools to analyze the market and make trading decisions.
+    You are given a set of tools to analyze the market and make trading decisions.
+    You are also given a strategy config that outlines the rules for the trading strategy.
+    """
+    agent = AlphaSwarmAgent(tools=tools, model_id="anthropic/claude-3-5-sonnet-latest", hints=hints)
 
     terminal = TerminalClient("AlphaSwarm terminal", agent)
     await asyncio.gather(
