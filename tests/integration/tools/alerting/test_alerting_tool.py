@@ -1,16 +1,21 @@
 from alphaswarm.tools.alerting.alerting_tool import SendTradeAlert
-from alphaswarm.tools.strategies.momentum.momentum_analysis_tool import StrategyAnalysis, MomentumItem
+from alphaswarm.tools.strategy_analysis.generic.generic_analysis import StrategyAnalysis, AlertItem
 
 
 def test_send_trade_alert():
     tool = SendTradeAlert()
 
     # Create a mock StrategyAnalysis object
-    momentum_items = [
-        MomentumItem(symbol="WETH", rule="price_momentum", value=4.0),
-        MomentumItem(symbol="VIRTUAL", rule="price_momentum", value=2.1),
+    alert_items = [
+        AlertItem(
+            metadata={"symbol": "WETH", "chain": "ethereum"},
+            rule_description="Price increased significantly",
+            value=4.0,
+            supporting_data={"time_period": "24h"}
+        )
     ]
-    analysis = StrategyAnalysis(momentum_items=momentum_items, analysis="Test analysis for WETH and VIRTUAL tokens")
+
+    analysis = StrategyAnalysis(summary="Test analysis for WETH token", alerts=alert_items)
 
     # Test sending alert
     tool.forward(analysis)

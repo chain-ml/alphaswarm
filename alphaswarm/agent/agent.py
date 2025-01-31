@@ -5,6 +5,7 @@ from typing import Dict, Optional, Sequence
 
 from smolagents import CODE_SYSTEM_PROMPT, CodeAgent, LiteLLMModel, Tool
 
+from alphaswarm.utils import load_strategy_config
 
 class AlphaSwarmAgent:
 
@@ -41,10 +42,15 @@ class AlphaSwarmAgent:
 
     def _build_context(self, current_message: str) -> str:
         messages = [
-            "# Base Wallet Address",
+            "# User Context",
+            "## Base Wallet Address",
             str(self._wallet_address),
             "",
-            "# Messages",
+            "## Strategy Config\n\n```strategy_config```\n\n",  # To be replaced by a user context management solution
+            load_strategy_config(),
+            "\n\n```\n",
+            "",
+            "## Messages",
             current_message,
             "",
         ]
