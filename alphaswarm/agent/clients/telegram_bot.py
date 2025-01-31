@@ -1,6 +1,5 @@
 import asyncio
 import logging
-from typing import Optional
 
 from telegram import Update
 from telegram.constants import ParseMode
@@ -39,23 +38,6 @@ class TelegramApp:
 
 
 class TelegramBot(TelegramApp, AlphaSwarmAgentClient[Update]):
-    async def on_agent_response(self, context: Context[Update], message: ChatMessage) -> None:
-        update = context.context
-        await update.message.reply_text(message.content, parse_mode="Markdown")
-
-    async def on_agent_error(self, context: Context[Update], error: ChatMessage) -> None:
-        update = context.context
-        await update.message.reply_text(error.content, parse_mode="Markdown")
-
-    async def on_start(self) -> None:
-        await self._start()
-
-    async def on_stop(self) -> None:
-        await self._stop()
-
-    async def get_message(self) -> Context[Update]:
-        return await self.message_queue.get()
-
     def __init__(self, agent: AlphaSwarmAgent, bot_token: str):
         TelegramApp.__init__(self, bot_token)
         AlphaSwarmAgentClient.__init__(self, agent=agent, client_id="telegram")
@@ -74,7 +56,8 @@ class TelegramBot(TelegramApp, AlphaSwarmAgentClient[Update]):
 
     async def _start_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         """Handle /start command"""
-        self._ensure_state(update)
+        if update.message is None:
+            raise ValueError("missing message")
         welcome_message = self._build_welcome_message(update)
         await update.message.reply_text(welcome_message, parse_mode="Markdown")
 
@@ -95,18 +78,22 @@ I can help you with:
 
 You can also just chat with me naturally!"""
 
-        self._ensure_state(update)
+        if update.message is None:
+            raise ValueError("missing message")
         await update.message.reply_text(help_message, parse_mode="Markdown")
 
     async def _id_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         """Handle /id command"""
-        self._ensure_state(update)
+        if update.message is None:
+            raise ValueError("missing message")
         chat_id = self._get_chat_id(update)
         await update.message.reply_text(f"Your Chat ID: `{chat_id}`", parse_mode="Markdown")
 
     async def _handle_chat_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
-        self._ensure_state(update, context)
+        if update.message is None:
+            raise ValueError("missing message")
+
         try:
             chat_id = self._get_chat_id(update)
             # Get the message content after the command
@@ -127,7 +114,9 @@ You can also just chat with me naturally!"""
 
     async def _handle_chat_message(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         """Handle non-command messages"""
-        self._ensure_state(update, context)
+        if update.message is None:
+            raise ValueError("missing message")
+
         try:
             chat_id = self._get_chat_id(update)
             if update.message.text is None:
@@ -139,6 +128,27 @@ You can also just chat with me naturally!"""
         except Exception as e:
             logger.error(f"Error processing message: {str(e)}", exc_info=True)
             await update.message.reply_text(f"Sorry, I encountered an error: {str(e)}")
+
+    async def on_agent_response(self, context: Context[Update], message: ChatMessage) -> None:
+        update = context.context
+        if update.message is None:
+            raise ValueError("missing message")
+        await update.message.reply_text(message.content, parse_mode="Markdown")
+
+    async def on_agent_error(self, context: Context[Update], error: ChatMessage) -> None:
+        update = context.context
+        if update.message is None:
+            raise ValueError("missing message")
+        await update.message.reply_text(error.content, parse_mode="Markdown")
+
+    async def on_start(self) -> None:
+        await self._start()
+
+    async def on_stop(self) -> None:
+        await self._stop()
+
+    async def get_message(self) -> Context[Update]:
+        return await self.message_queue.get()
 
     def _get_chat_id(self, update: Update) -> int:
         if update.effective_chat is None:
@@ -159,11 +169,3 @@ Use /help to see available commands, or just chat with me naturally about:
 - Trading strategies
 - Portfolio positions"""
         return welcome_message
-
-    @staticmethod
-    def _ensure_state(update: Update, context: Optional[ContextTypes.DEFAULT_TYPE] = None) -> None:
-        """Handle /chat and /riq commands"""
-        if update.message is None:
-            raise ValueError("missing message")
-        if context and context.chat_data is None:
-            raise ValueError("missing chat data")

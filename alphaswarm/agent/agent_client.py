@@ -89,6 +89,9 @@ class AlphaSwarmAgentClient(ABC, Generic[T_Context]):
 
     async def _process_message(self, context: Context[T_Context]) -> None:
         """Send a message with proper locking"""
+        if self._lock is None:
+            raise RuntimeError("Client not started")
+
         async with self._lock, self._agent_lock:
             channel_id = context.get_id()
             try:
