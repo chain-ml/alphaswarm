@@ -26,9 +26,10 @@ class TelegramApp:
     async def _stop(self):
         """Stop the bot"""
         await self._app.stop()
+        await self._app.updater.stop()
         await self._app.shutdown()
 
-    async def send_message(self, chat_id: int, message: str, parse_mode: str = ParseMode.MARKDOWN) -> None:
+    async def send_message(self, chat_id: int, *, message: str, parse_mode: str = ParseMode.MARKDOWN) -> None:
         """Send a message to a specific chat"""
         try:
             await self._app.bot.send_message(chat_id=chat_id, text=message, parse_mode=parse_mode)
@@ -49,7 +50,7 @@ class TelegramBot(TelegramApp, AlphaSwarmAgentClient[Update]):
         self._app.add_handler(CommandHandler("help", self._help_command))
         self._app.add_handler(CommandHandler("id", self._id_command))
         self._app.add_handler(CommandHandler("chat", self._handle_chat_command))
-        self._app.add_handler(CommandHandler("riq", self._handle_chat_command))  # Use same handler for both
+        self._app.add_handler(CommandHandler("alpha", self._handle_chat_command))  # Use same handler for both
 
         # Add message handler for non-command messages
         self._app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, self._handle_chat_message))
@@ -59,7 +60,7 @@ class TelegramBot(TelegramApp, AlphaSwarmAgentClient[Update]):
         if update.message is None:
             raise ValueError("missing message")
         welcome_message = self._build_welcome_message(update)
-        await update.message.reply_text(welcome_message, parse_mode="Markdown")
+        await update.message.reply_text(welcome_message, parse_mode=ParseMode.MARKDOWN)
 
     async def _help_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         """Handle /help command"""
@@ -80,14 +81,14 @@ You can also just chat with me naturally!"""
 
         if update.message is None:
             raise ValueError("missing message")
-        await update.message.reply_text(help_message, parse_mode="Markdown")
+        await update.message.reply_text(help_message, parse_mode=ParseMode.MARKDOWN)
 
     async def _id_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         """Handle /id command"""
         if update.message is None:
             raise ValueError("missing message")
         chat_id = self._get_chat_id(update)
-        await update.message.reply_text(f"Your Chat ID: `{chat_id}`", parse_mode="Markdown")
+        await update.message.reply_text(f"Your Chat ID: `{chat_id}`", parse_mode=ParseMode.MARKDOWN)
 
     async def _handle_chat_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 

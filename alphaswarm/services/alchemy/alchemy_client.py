@@ -44,7 +44,7 @@ class AlchemyClient:
         base_url: str = DEFAULT_BASE_URL,
         api_key: Optional[str] = None,
         **kwargs,
-    ):
+    ) -> None:
         """Initialize Alchemy data source"""
         self.base_url = base_url
         self.api_key = api_key or os.getenv("ALCHEMY_API_KEY")
