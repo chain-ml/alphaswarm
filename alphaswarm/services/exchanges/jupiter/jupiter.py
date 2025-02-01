@@ -33,7 +33,7 @@ class JupiterClient(DEXClient):
         self,
         base_token: TokenInfo,
         quote_token: TokenInfo,
-        quote_amount: float,
+        quote_amount: Decimal,
         slippage_bps: int = 100,
     ) -> SwapResult:
         """Execute a token swap on Jupiter (Not Implemented)"""

@@ -1,4 +1,5 @@
 import logging
+from decimal import Decimal
 from typing import Optional
 
 from alphaswarm.config import Config
@@ -60,7 +61,7 @@ class ExecuteTokenSwapTool(Tool):
         self,
         token_quote: str,
         token_base: str,
-        amount: float,
+        amount: Decimal,
         chain: str = "ethereum",
         dex_type: str = "uniswap_v3",
         slippage_bps: int = 100,
