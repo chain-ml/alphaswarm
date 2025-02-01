@@ -1,4 +1,3 @@
-
 import pytest
 
 from alphaswarm.config import Config

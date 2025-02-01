@@ -253,7 +253,6 @@ class UniswapClientV3(UniswapClient):
     def _get_markets_for_tokens(self, tokens: List[TokenInfo]) -> List[Tuple[TokenInfo, TokenInfo]]:
         """Get all V3 pools between the provided tokens."""
         markets = []
-        factory = self._web3.eth.contract(address=self._factory, abi=UNISWAP_V3_FACTORY_ABI)
 
         # Get fee tiers from settings
         settings = self.config.get_venue_settings_uniswap_v3()
@@ -265,16 +264,18 @@ class UniswapClientV3(UniswapClient):
                 try:
                     # Check each fee tier
                     for fee in fee_tiers:
-                        pool_address = factory.functions.getPool(token1.address, token2.address, fee).call()
-
-                        if pool_address != ZERO_ADDRESS:
-                            # Order tokens consistently
-                            if token1.address.lower() < token2.address.lower():
-                                markets.append((token1, token2))
-                            else:
-                                markets.append((token2, token1))
-                            # Break after finding first pool for this pair
-                            break
+                        pool_address = self.factory_contract.get_pool_address_or_none(
+                            token1.checksum_address, token2.checksum_address, fee
+                        )
+                        if pool_address is None:
+                            continue
+                        # Order tokens consistently
+                        if token1.address.lower() < token2.address.lower():
+                            markets.append((token1, token2))
+                        else:
+                            markets.append((token2, token1))
+                        # Break after finding first pool for this pair
+                        break
 
                 except Exception as e:
                     logger.error(f"Error checking pool {token1.symbol}/{token2.symbol}: {str(e)}")
