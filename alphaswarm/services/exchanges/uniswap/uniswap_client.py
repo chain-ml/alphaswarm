@@ -1,5 +1,4 @@
 import datetime
-import decimal
 import logging
 from abc import abstractmethod
 from decimal import Decimal
@@ -30,7 +29,6 @@ class UniswapClient(DEXClient):
     def __init__(self, config: Config, chain: str, version: str) -> None:
         super().__init__(config, chain)
         self.version = version
-        self._config = config
         self._router = self._get_router(self.chain)
         self._factory = self._get_factory(self.chain)
         self._blockchain_client = Web3ClientFactory.get_instance().get_client(self.chain, self.config)
@@ -54,7 +52,7 @@ class UniswapClient(DEXClient):
 
     @abstractmethod
     def _swap(
-        self, base: TokenInfo, quote: TokenInfo, address: str, raw_amount: int, slippage_bps: int
+        self, base: TokenInfo, quote: TokenInfo, address: str, quote_wei: int, slippage_bps: int
     ) -> Dict[HexBytes, Dict]:
         pass
 
@@ -146,28 +144,22 @@ class UniswapClient(DEXClient):
         gas_balance = self._web3.eth.get_balance(account.address)
 
         # Log balances
-        base_balance = base_contract.functions.balanceOf(wallet_address).call() / (10**base_token.decimals)
-        quote_balance = quote_contract.functions.balanceOf(wallet_address).call() / (10**quote_token.decimals)
+        base_balance = base_token.convert_from_wei(base_contract.functions.balanceOf(wallet_address).call())
+        quote_balance = quote_token.convert_from_wei(quote_contract.functions.balanceOf(wallet_address).call())
         eth_balance = gas_balance / (10**18)
 
         logger.info(f"Balance of {base_token.symbol}: {base_balance:,.8f}")
         logger.info(f"Balance of {quote_token.symbol}: {quote_balance:,.8f}")
         logger.info(f"ETH balance for gas: {eth_balance:,.6f}")
+        quote_wei = quote_token.convert_to_wei(quote_amount)
 
         assert quote_balance > 0, f"Cannot perform swap, as you have zero {quote_token.symbol} needed to swap"
-
-        try:
-            decimal_amount = Decimal(quote_amount)
-        except (ValueError, decimal.InvalidOperation) as e:
-            raise AssertionError(f"Not a good decimal amount: {quote_amount}") from e
-
-        raw_amount = int(decimal_amount * (10**quote_token.decimals))
 
         # Each DEX trade is two transactions
         # 1) ERC-20.approve()
         # 2) swap (various functions)
 
-        receipts = self._swap(base_token, quote_token, wallet_address, raw_amount, slippage_bps)
+        receipts = self._swap(base_token, quote_token, wallet_address, quote_wei, slippage_bps)
 
         # Check for transaction failure and display revert reason
         for completed_tx_hash, receipt in receipts.items():

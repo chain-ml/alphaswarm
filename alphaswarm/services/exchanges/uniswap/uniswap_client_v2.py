@@ -30,11 +30,11 @@ class UniswapClientV2(UniswapClient):
         return to_checksum_address(UNISWAP_V2_DEPLOYMENTS[chain]["factory"])
 
     def _swap(
-        self, base: TokenInfo, quote: TokenInfo, address: str, raw_amount: int, slippage_bps: int
+        self, base: TokenInfo, quote: TokenInfo, address: str, raw_quote_amount: int, slippage_bps: int
     ) -> Dict[HexBytes, Dict]:
         """Execute a swap on Uniswap V2."""
         # Handle token approval and get fresh nonce
-        nonce, approval_receipt = self._approve_token_spend(quote, address, raw_amount)
+        nonce, approval_receipt = self._approve_token_spend(quote, address, raw_quote_amount)
 
         # Get price from V2 pair to calculate minimum output
         price = self._get_token_price(base_token=base, quote_token=quote)
@@ -42,7 +42,7 @@ class UniswapClientV2(UniswapClient):
             raise ValueError(f"No V2 price found for {base.symbol}/{quote.symbol}")
 
         # Calculate expected output
-        input_amount_decimal = Decimal(raw_amount) / (Decimal(10) ** quote.decimals)
+        input_amount_decimal = Decimal(raw_quote_amount) / (Decimal(10) ** quote.decimals)
         expected_output_decimal = input_amount_decimal * price
         logger.info(f"Expected output: {expected_output_decimal} {base.symbol}")
 
@@ -59,7 +59,7 @@ class UniswapClientV2(UniswapClient):
         deadline = int(self._web3.eth.get_block("latest")["timestamp"] + 300)  # 5 minutes
 
         swap = router_contract.functions.swapExactTokensForTokens(
-            raw_amount,  # amount in
+            raw_quote_amount,  # amount in
             min_output_raw,  # minimum amount out
             path,  # swap path
             address,  # recipient

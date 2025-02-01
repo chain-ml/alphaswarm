@@ -5,7 +5,7 @@ from dataclasses import dataclass
 from decimal import Decimal
 from typing import List, Optional, Tuple
 
-from alphaswarm.config import Config, TokenInfo
+from alphaswarm.config import ChainConfig, Config, TokenInfo
 from hexbytes import HexBytes
 
 
@@ -34,6 +34,7 @@ class DEXClient(ABC):
         """Initialize the DEX client with configuration"""
         self._config = config
         self._chain = chain
+        self._chain_config = config.get_chain_config(chain=self._chain)
 
     @property
     def config(self) -> Config:
@@ -42,6 +43,10 @@ class DEXClient(ABC):
     @property
     def chain(self) -> str:
         return self._chain
+
+    @property
+    def chain_config(self) -> ChainConfig:
+        return self._chain_config
 
     @abstractmethod
     def get_token_price(self, base_token: TokenInfo, quote_token: TokenInfo) -> Decimal:
