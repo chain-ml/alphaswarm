@@ -10,7 +10,7 @@ from alphaswarm.services.exchanges.uniswap.constants_v3 import (
     UNISWAP_V3_ROUTER2_ABI,
     UNISWAP_V3_ROUTER_ABI,
 )
-from alphaswarm.services.exchanges.uniswap.uniswap_client import ZERO_ADDRESS, UniswapClient
+from alphaswarm.services.exchanges.uniswap.uniswap_client import ZERO_ADDRESS, UniswapClientBase
 from cchecksum import to_checksum_address
 from eth_defi.confirmation import wait_transactions_to_complete
 from eth_defi.provider.multi_provider import MultiProviderWeb3
@@ -64,7 +64,7 @@ class PoolContract:
         return result
 
 
-class UniswapClientV3(UniswapClient):
+class UniswapClientV3(UniswapClientBase):
     def __init__(self, config: Config, chain: str):
         super().__init__(config, chain, "v3")
         self._factory_contract: Optional[FactoryContract] = None

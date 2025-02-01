@@ -25,7 +25,7 @@ ZERO_ADDRESS = "0x0000000000000000000000000000000000000000"
 DEFAULT_GAS_LIMIT = 200_000  # Default gas limit for transactions
 
 
-class UniswapClient(DEXClient):
+class UniswapClientBase(DEXClient):
     def __init__(self, config: Config, chain: str, version: str) -> None:
         super().__init__(config, chain)
         self.version = version
@@ -80,7 +80,7 @@ class UniswapClient(DEXClient):
             token_decimals (int): Number of decimals for the token
 
         Returns:
-            float: Total amount of tokens received, normalized by token decimals
+            Decimal: Total amount of tokens received, normalized by token decimals
         """
 
         TRANSFER_SIG = "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef"
