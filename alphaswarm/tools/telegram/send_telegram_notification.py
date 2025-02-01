@@ -54,4 +54,5 @@ class SendTelegramNotificationTool(Tool):
 
     @staticmethod
     def _get_priority_emoji(priority: Optional[str]) -> str:
-        return {"high": "🔴", "medium": "🟡", "low": "🟢"}.get(priority, "⚪")
+        priority_emojis = {"high": "🔴", "medium": "🟡", "low": "🟢"}
+        return priority_emojis.get(priority or "", "⚪")
