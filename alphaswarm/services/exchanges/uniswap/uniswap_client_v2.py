@@ -9,7 +9,7 @@ from alphaswarm.services.exchanges.uniswap.constants_v2 import (
     UNISWAP_V2_FACTORY_ABI,
     UNISWAP_V2_ROUTER_ABI,
 )
-from alphaswarm.services.exchanges.uniswap.uniswap_client import ZERO_ADDRESS, UniswapClientBase
+from alphaswarm.services.exchanges.uniswap.uniswap_client_base import ZERO_ADDRESS, UniswapClientBase
 from eth_defi.confirmation import wait_transactions_to_complete
 from eth_defi.uniswap_v2.pair import fetch_pair_details
 from eth_typing import ChecksumAddress

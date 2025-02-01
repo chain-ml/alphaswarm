@@ -10,7 +10,7 @@ from alphaswarm.services.exchanges.uniswap.constants_v3 import (
     UNISWAP_V3_ROUTER2_ABI,
     UNISWAP_V3_ROUTER_ABI,
 )
-from alphaswarm.services.exchanges.uniswap.uniswap_client import ZERO_ADDRESS, UniswapClientBase
+from alphaswarm.services.exchanges.uniswap.uniswap_client_base import ZERO_ADDRESS, UniswapClientBase
 from cchecksum import to_checksum_address
 from eth_defi.confirmation import wait_transactions_to_complete
 from eth_defi.provider.multi_provider import MultiProviderWeb3
