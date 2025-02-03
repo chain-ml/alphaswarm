@@ -95,12 +95,12 @@ def test_message_with_image_link():
 
 
 def test_message_with_image_path():
-    path = get_data_filename("parrot.jpg")
+    path = get_data_filename("eth_sol_prices.png")
     message = Message.create(role="user", content="user test", image_url=ImageURL.from_path(path))
 
     assert isinstance(message, Message)
     assert message.role == "user"
     assert len(message.content) == 2
     assert message.content[0].type == "image_url"
-    assert message.content[0].image_url.url.startswith("data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEA")
+    assert message.content[0].image_url.url.startswith("data:image/png;base64,iVBORw0KGgoAAAA")
     assert message.content[1].text == "user test"

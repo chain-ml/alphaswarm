@@ -100,10 +100,11 @@ def test_llm_function_with_prompt_caching():
 
 def test_llm_function_with_image():
     message = Message.create(
-        role="user", content="Describe the image", image_url=ImageURL.from_path(get_data_filename("parrot.jpg"))
+        role="user", content="Describe the image", image_url=ImageURL.from_path(get_data_filename("eth_sol_prices.png"))
     )
     llm_func = get_llm_function(response_model=TestResponse, messages=[message])
 
     result = llm_func.execute()
     assert isinstance(result, TestResponse)
-    assert "parrot" in result.content.lower()
+    assert "eth" in result.content.lower()
+    assert "sol" in result.content.lower()
