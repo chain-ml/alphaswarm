@@ -8,12 +8,37 @@ from eth_typing import ChecksumAddress
 from web3 import Web3
 from web3.contract import Contract
 
-from .base import Web3Client
+from ..base import Web3Client
+from .constants_erc20 import ERC20_ABI
 
 logger = logging.getLogger(__name__)
 
 # Define supported chains
-SUPPORTED_CHAINS = {"ethereum", "ethereum_sepolia", "base"}
+SUPPORTED_CHAINS = {"ethereum", "ethereum_sepolia", "base", "base_sepolia"}
+
+
+class EMVContract:
+    def __init__(self, client: Web3, address: ChecksumAddress, abi: list[dict]):
+        self._client = client
+        self._address = address
+        self._abi = abi
+        self._contract = client.eth.contract(address=address, abi=abi)
+
+    @property
+    def contract(self) -> Contract:
+        return self._contract
+
+    @property
+    def address(self) -> ChecksumAddress:
+        return self._address
+
+
+class ERC20Contract(EMVContract):
+    def __init__(self, client: Web3, address: ChecksumAddress) -> None:
+        super().__init__(client, address, ERC20_ABI)
+
+    def get_balance(self, wallet_address: ChecksumAddress) -> Decimal:
+        return self.contract.functions.balanceOf(wallet_address).call()
 
 
 class EVMClient(Web3Client):

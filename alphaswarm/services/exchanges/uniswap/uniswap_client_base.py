@@ -5,6 +5,7 @@ from decimal import Decimal
 from typing import Any, Dict, List, Tuple
 
 from alphaswarm.config import Config, TokenInfo
+from alphaswarm.services.chains.evm.constants_erc20 import ERC20_ABI
 from alphaswarm.services.chains.factory import Web3ClientFactory
 from alphaswarm.services.exchanges.base import DEXClient, SwapResult
 from eth_account import Account
@@ -15,8 +16,6 @@ from eth_defi.revert_reason import fetch_transaction_revert_reason
 from eth_typing import ChecksumAddress, HexAddress
 from hexbytes import HexBytes
 from web3.middleware.signing import construct_sign_and_send_raw_middleware
-
-from .constants_erc20 import ERC20_ABI
 
 # Set up logger
 logger = logging.getLogger(__name__)
