@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from typing import Any, Dict, Generic, List, Literal, Optional, Sequence, Tuple, Type, TypeVar
+from dataclasses import dataclass
+from typing import Any, Dict, Generic, List, Literal, Optional, Sequence, Type, TypeVar
 
 import instructor
 import litellm
@@ -9,9 +10,19 @@ from pydantic import BaseModel
 
 from .message import Message
 
+litellm.modify_params = True  # for calls with system message only for anthropic
+
 T_Response = TypeVar("T_Response", bound=BaseModel)
 
-litellm.modify_params = True  # for calls with system message only for anthropic
+
+@dataclass
+class LLMFunctionResponse(Generic[T_Response]):
+    """
+    A response from the LLM function, containing parsed response and litellm completion object.
+    """
+
+    response: T_Response
+    completion: ModelResponse
 
 
 class LLMFunction(Generic[T_Response]):
@@ -86,7 +97,7 @@ class LLMFunction(Generic[T_Response]):
         user_message: Optional[str] = None,
         messages: Optional[Sequence[Message]] = None,
         **kwargs: Any,
-    ) -> Tuple[T_Response, ModelResponse]:
+    ) -> LLMFunctionResponse[T_Response]:
         """Execute the LLM function with the given messages.
 
         Args:
@@ -100,13 +111,14 @@ class LLMFunction(Generic[T_Response]):
         llm_messages = self.messages + self._validate_messages(user_message, messages, role="user", allow_empty=True)
         llm_messages_dicts: List[Dict[str, Any]] = [message.to_dict() for message in llm_messages]
 
-        return self.client.create_with_completion(
+        response, completion = self.client.create_with_completion(
             model=self.model_id,
             response_model=self.response_model,
             messages=llm_messages_dicts,
             max_retries=self.max_retries,
             **kwargs,
         )
+        return LLMFunctionResponse(response=response, completion=completion)
 
     def execute(
         self,
@@ -124,8 +136,8 @@ class LLMFunction(Generic[T_Response]):
         Returns:
             A structured response matching the provided response_model type
         """
-        response, completion = self.execute_with_completion(user_message=user_message, messages=messages, **kwargs)
-        return response
+        llm_func_response = self.execute_with_completion(user_message=user_message, messages=messages, **kwargs)
+        return llm_func_response.response
 
 
 class LLMFunctionFromPromptFiles(LLMFunction[T_Response]):
@@ -175,7 +187,7 @@ class LLMFunctionFromPromptFiles(LLMFunction[T_Response]):
         messages: Optional[Sequence[Message]] = None,
         user_prompt_params: Optional[Dict[str, Any]] = None,
         **kwargs: Any,
-    ) -> Tuple[T_Response, ModelResponse]:
+    ) -> LLMFunctionResponse[T_Response]:
         """Execute the LLM function using the loaded prompt templates.
 
         Args:
@@ -227,10 +239,10 @@ class LLMFunctionFromPromptFiles(LLMFunction[T_Response]):
             ValueError: If user_message/messages are provided or
                 if user_prompt_params are provided without a user prompt template
         """
-        response, completion = self.execute_with_completion(
+        llm_func_response = self.execute_with_completion(
             user_message=user_message, messages=messages, user_prompt_params=user_prompt_params, **kwargs
         )
-        return response
+        return llm_func_response.response
 
     @staticmethod
     def _format(template: str, params: Optional[Dict[str, Any]] = None) -> str:

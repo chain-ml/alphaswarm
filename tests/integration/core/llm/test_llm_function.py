@@ -77,7 +77,7 @@ def test_llm_function_with_complex_response_model():
     assert all(isinstance(item, ItemPricePair) for item in result.list_of_items)
 
 
-def test_llm_function_with_cache():
+def test_llm_function_with_prompt_caching():
     large_content = "Paris is capital of France" * 300  # caching from 2k tokens for haiku
     llm_func = LLMFunction(
         model_id="anthropic/claude-3-haiku-20240307",
@@ -85,17 +85,17 @@ def test_llm_function_with_cache():
         messages=[Message.system(large_content, cache=True)],
     )
 
-    result, completion = llm_func.execute_with_completion("What's the capital of France?")
-    assert isinstance(result, TestResponse)
-    assert "Paris" in result.content
+    llm_func_response = llm_func.execute_with_completion("What's the capital of France?")
+    assert isinstance(llm_func_response.response, TestResponse)
+    assert "Paris" in llm_func_response.response.content
 
     time.sleep(1)
 
-    result, completion = llm_func.execute_with_completion("What's the capital of France?")
-    assert isinstance(result, TestResponse)
-    assert "Paris" in result.content
+    llm_func_response = llm_func.execute_with_completion("What's the capital of France?")
+    assert isinstance(llm_func_response.response, TestResponse)
+    assert "Paris" in llm_func_response.response.content
 
-    assert completion.usage.prompt_tokens_details.cached_tokens > 0
+    assert llm_func_response.completion.usage.prompt_tokens_details.cached_tokens > 0
 
 
 def test_llm_function_with_image():
