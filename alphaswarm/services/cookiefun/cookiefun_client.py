@@ -20,56 +20,51 @@ class Interval(str, Enum):
 
 @dataclass
 class Contract:
-    chain: int  # Required field first
-    contract_address: str = Field(alias="contractAddress")  # Field with alias after
+    chain: int = Field(default=0)
+    contract_address: str = Field(default="", alias="contractAddress")
 
 
 @dataclass
 class Tweet:
-    # All fields have aliases, but we still need to maintain a logical order
-    tweet_url: str = Field(alias="tweetUrl")
-    tweet_author_profile_image_url: str = Field(alias="tweetAuthorProfileImageUrl")
-    tweet_author_display_name: str = Field(alias="tweetAuthorDisplayName")
-    smart_engagement_points: int = Field(alias="smartEngagementPoints")
-    impressions_count: int = Field(alias="impressionsCount")
+    tweet_url: str = Field(default="", alias="tweetUrl")
+    tweet_author_profile_image_url: str = Field(default="", alias="tweetAuthorProfileImageUrl")
+    tweet_author_display_name: str = Field(default="", alias="tweetAuthorDisplayName")
+    smart_engagement_points: int = Field(default=0, alias="smartEngagementPoints")
+    impressions_count: int = Field(default=0, alias="impressionsCount")
 
 
 @dataclass
 class AgentMetrics:
-    # Required fields (no defaults) first
-    contracts: List[Contract]
-    mindshare: float
-    price: float
-    liquidity: float
-
-    # Optional/fields with defaults after
-    agent_name: str = Field("", alias="agentName")
+    contracts: List[Contract] = Field(default_factory=list)
+    mindshare: float = Field(default=0.0)
+    price: float = Field(default=0.0)
+    liquidity: float = Field(default=0.0)
+    agent_name: str = Field(default="", alias="agentName")
     twitter_usernames: List[str] = Field(default_factory=list, alias="twitterUsernames")
-    mindshare_delta_percent: float = Field(0.0, alias="mindshareDeltaPercent")
-    market_cap: float = Field(0.0, alias="marketCap")
-    market_cap_delta_percent: float = Field(0.0, alias="marketCapDeltaPercent")
-    price_delta_percent: float = Field(0.0, alias="priceDeltaPercent")
-    volume_24_hours: float = Field(0.0, alias="volume24Hours")
-    volume_24_hours_delta_percent: float = Field(0.0, alias="volume24HoursDeltaPercent")
-    holders_count: int = Field(0, alias="holdersCount")
-    holders_count_delta_percent: float = Field(0.0, alias="holdersCountDeltaPercent")
-    average_impressions_count: float = Field(0.0, alias="averageImpressionsCount")
-    average_impressions_count_delta_percent: float = Field(0.0, alias="averageImpressionsCountDeltaPercent")
-    average_engagements_count: float = Field(0.0, alias="averageEngagementsCount")
-    average_engagements_count_delta_percent: float = Field(0.0, alias="averageEngagementsCountDeltaPercent")
-    followers_count: int = Field(0, alias="followersCount")
-    smart_followers_count: int = Field(0, alias="smartFollowersCount")
+    mindshare_delta_percent: float = Field(default=0.0, alias="mindshareDeltaPercent")
+    market_cap: float = Field(default=0.0, alias="marketCap")
+    market_cap_delta_percent: float = Field(default=0.0, alias="marketCapDeltaPercent")
+    price_delta_percent: float = Field(default=0.0, alias="priceDeltaPercent")
+    volume_24_hours: float = Field(default=0.0, alias="volume24Hours")
+    volume_24_hours_delta_percent: float = Field(default=0.0, alias="volume24HoursDeltaPercent")
+    holders_count: int = Field(default=0, alias="holdersCount")
+    holders_count_delta_percent: float = Field(default=0.0, alias="holdersCountDeltaPercent")
+    average_impressions_count: float = Field(default=0.0, alias="averageImpressionsCount")
+    average_impressions_count_delta_percent: float = Field(default=0.0, alias="averageImpressionsCountDeltaPercent")
+    average_engagements_count: float = Field(default=0.0, alias="averageEngagementsCount")
+    average_engagements_count_delta_percent: float = Field(default=0.0, alias="averageEngagementsCountDeltaPercent")
+    followers_count: int = Field(default=0, alias="followersCount")
+    smart_followers_count: int = Field(default=0, alias="smartFollowersCount")
     top_tweets: List[Tweet] = Field(default_factory=list, alias="topTweets")
 
 
 @dataclass
 class PagedAgentsResponse:
     """Response from the paged agents endpoint"""
-
-    data: List[AgentMetrics]  # Required field first
-    current_page: int = Field(alias="currentPage")
-    total_pages: int = Field(alias="totalPages")
-    total_count: int = Field(alias="totalCount")
+    data: List[AgentMetrics] = Field(default_factory=list)
+    current_page: int = Field(default=0, alias="currentPage")
+    total_pages: int = Field(default=0, alias="totalPages")
+    total_count: int = Field(default=0, alias="totalCount")
 
 
 class CookieFunClient:
