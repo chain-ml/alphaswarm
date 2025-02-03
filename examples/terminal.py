@@ -9,8 +9,8 @@ from alphaswarm.tools.alchemy import AlchemyPriceHistoryByAddress, AlchemyPriceH
 from alphaswarm.tools.exchanges import GetTokenPriceTool
 from alphaswarm.tools.price_tool import PriceTool
 from alphaswarm.tools.strategy_analysis.generic import GenericStrategyAnalysisTool
-from alphaswarm.utils import read_text_file_to_string
 from alphaswarm.tools.telegram import SendTelegramNotificationTool
+from alphaswarm.utils import read_text_file_to_string
 from smolagents import Tool
 
 

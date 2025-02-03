@@ -3,6 +3,7 @@ from typing import Union
 
 from alphaswarm.config import CONFIG_PATH
 
+
 def read_text_file_to_string(file_path: Union[str, Path]) -> str:
     "Attempts to read a text file and return its contents as a string."
     try:
@@ -12,7 +13,7 @@ def read_text_file_to_string(file_path: Union[str, Path]) -> str:
         raise FileNotFoundError(f"File not found: {file_path}") from e
     except Exception as e:
         raise Exception(f"Error while reading file: {str(e)}") from e
-    
+
 
 def load_strategy_config() -> str:
     """Loads the trading strategy configuration from the config directory."""
