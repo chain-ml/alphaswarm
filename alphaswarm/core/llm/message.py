@@ -8,34 +8,44 @@ from typing import Any, Dict, List, Literal, Optional, Sequence, Union
 
 @dataclass
 class CacheControl:
+    """Controls Anthropic caching behavior for content blocks."""
+
     type: Literal["ephemeral"]
 
     @classmethod
     def ephemeral(cls) -> CacheControl:
+        """Creates an ephemeral cache control instance."""
         return cls(type="ephemeral")
 
 
 @dataclass
 class TextContentBlock:
+    """Represents a text content block within a message."""
+
     type: Literal["text"]
     text: str
     cache_control: Optional[CacheControl] = None
 
     @classmethod
     def default(cls, text: str):
+        """Creates a default text content block without caching."""
         return cls(type="text", text=text)
 
     @classmethod
     def with_cache(cls, text: str) -> ContentBlock:
+        """Creates a text content block with ephemeral caching enabled."""
         return cls(type="text", text=text, cache_control=CacheControl.ephemeral())
 
 
 @dataclass
 class ImageURL:
+    """Represents an image URL, supporting both web URLs and base64 encoded images."""
+
     url: str
 
     @classmethod
     def from_path(cls, path: str) -> ImageURL:
+        """Creates an ImageURL instance from a local file path by base64 encoding the image."""
         with open(path, "rb") as image_file:
             base64_image = base64.b64encode(image_file.read()).decode("utf-8")
 
@@ -48,6 +58,8 @@ class ImageURL:
 
 @dataclass
 class ImageContentBlock:
+    """Represents an image content block within a message."""
+
     type: Literal["image_url"]
     image_url: ImageURL
 
@@ -57,6 +69,13 @@ ContentBlock = Union[TextContentBlock, ImageContentBlock]
 
 @dataclass
 class Message:
+    """
+    Represents a message in a conversation with an LLM.
+
+    A message consists of a role (system/user/assistant) and
+    a sequence of content blocks that can contain text and images.
+    """
+
     role: Literal["system", "user", "assistant"]
     content: Sequence[ContentBlock]
 
@@ -80,15 +99,19 @@ class Message:
 
     @classmethod
     def system(cls, message: str, cache: bool = False) -> Message:
+        """Creates a system message."""
         return cls.create(role="system", content=message, cache=cache)
 
     @classmethod
     def user(cls, message: str, cache: bool = False) -> Message:
+        """Creates a user message."""
         return cls.create(role="user", content=message, cache=cache)
 
     @classmethod
     def assistant(cls, message: str, cache: bool = False) -> Message:
+        """Creates an assistant message."""
         return cls.create(role="assistant", content=message, cache=cache)
 
     def to_dict(self) -> Dict[str, Any]:
+        """Converts the message to a dictionary representation."""
         return asdict(self, dict_factory=lambda x: {k: v for k, v in x if v is not None})
