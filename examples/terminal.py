@@ -32,8 +32,12 @@ async def main() -> None:
         AlchemyPriceHistoryByAddress(),
         AlchemyPriceHistoryBySymbol(),
         GenericStrategyAnalysisTool(),
+        CookieMetricsByContract(),
+        CookieMetricsBySymbol(),
+        CookieMetricsByTwitter(),
+        CookieMetricsPaged(),
         SendTelegramNotificationTool(telegram_bot_token=telegram_bot_token, chat_id=chat_id),
-    ]  # Add your tools here
+    ]
     hints = """You are a trading agent that uses a set of tools to analyze the market and make trading decisions.
     You are given a set of tools to analyze the market and make trading decisions.
     You are also given a strategy config that outlines the rules for the trading strategy.
