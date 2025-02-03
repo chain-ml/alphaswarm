@@ -61,34 +61,34 @@ class Message:
     content: Sequence[ContentBlock]
 
     @classmethod
-    def message(
+    def create(
         cls,
         role: Literal["system", "user", "assistant"],
         content: str,
         cache: bool = False,
-        image_url: Optional[ImageURL] = None,  # TODO: revisit
+        image_url: Optional[ImageURL] = None,
     ) -> Message:
+        """Helper method to create Message from string content and optional ImageURL."""
+
         content_blocks: List[ContentBlock] = []
         if image_url:
             content_blocks.append(ImageContentBlock(type="image_url", image_url=image_url))
-        if not cache:
-            content_blocks.append(TextContentBlock(type="text", text=content))
-        else:
-            content_blocks.append(TextContentBlock.with_cache(content))
+        text_block = TextContentBlock.default(content) if not cache else TextContentBlock.with_cache(content)
+        content_blocks.append(text_block)
 
         return cls(role=role, content=content_blocks)
 
     @classmethod
     def system(cls, message: str, cache: bool = False) -> Message:
-        return cls.message(role="system", content=message, cache=cache)
+        return cls.create(role="system", content=message, cache=cache)
 
     @classmethod
     def user(cls, message: str, cache: bool = False) -> Message:
-        return cls.message(role="user", content=message, cache=cache)
+        return cls.create(role="user", content=message, cache=cache)
 
     @classmethod
     def assistant(cls, message: str, cache: bool = False) -> Message:
-        return cls.message(role="assistant", content=message, cache=cache)
+        return cls.create(role="assistant", content=message, cache=cache)
 
     def to_dict(self) -> Dict[str, Any]:
         return asdict(self, dict_factory=lambda x: {k: v for k, v in x if v is not None})

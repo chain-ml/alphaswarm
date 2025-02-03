@@ -49,7 +49,7 @@ def test_llm_function_simple():
 def test_llm_function_messages():
     llm_func = get_llm_function(
         system_message="Output a random number",
-        messages=[Message.message(role="user", content="Pick between 2 and 5")],
+        messages=[Message.create(role="user", content="Pick between 2 and 5")],
     )
 
     result = llm_func.execute()
@@ -99,11 +99,10 @@ def test_llm_function_with_cache():
 
 
 def test_llm_function_with_image():
-    image_url = ImageURL.from_path(get_data_filename("parrot.jpg"))
-    llm_func = get_llm_function(
-        response_model=TestResponse,
-        messages=[Message.message(role="user", content="Describe the image", image_url=image_url)],
+    message = Message.create(
+        role="user", content="Describe the image", image_url=ImageURL.from_path(get_data_filename("parrot.jpg"))
     )
+    llm_func = get_llm_function(response_model=TestResponse, messages=[message])
 
     result = llm_func.execute()
     assert isinstance(result, TestResponse)

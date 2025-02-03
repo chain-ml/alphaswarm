@@ -75,7 +75,7 @@ class LLMFunction(Generic[T_Response]):
 
         llm_messages: List[Message] = []
         if str_message is not None:
-            llm_messages.append(Message.message(role=role, content=str_message))
+            llm_messages.append(Message.create(role=role, content=str_message))
         if messages is not None:
             llm_messages.extend(messages)
 

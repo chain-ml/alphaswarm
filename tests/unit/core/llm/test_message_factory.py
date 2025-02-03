@@ -14,6 +14,10 @@ def test_message_basic():
     assert message.content[0].type == "text"
     assert message.content[0].text == "test message"
     assert message.content[0].cache_control is None
+    assert message.to_dict() == {
+        "role": "system",
+        "content": [{"type": "text", "text": "test message"}],
+    }
 
 
 def test_cache_control_dict():
@@ -82,7 +86,7 @@ def test_assistant_message_with_cache():
 
 
 def test_message_with_image_link():
-    message = Message.message(role="user", content="user test", image_url=ImageURL("https://example.com/image.jpg"))
+    message = Message.create(role="user", content="user test", image_url=ImageURL("https://example.com/image.jpg"))
 
     assert isinstance(message, Message)
     assert message.role == "user"
@@ -93,7 +97,7 @@ def test_message_with_image_link():
 
 def test_message_with_image_path():
     path = get_data_filename("parrot.jpg")
-    message = Message.message(role="user", content="user test", image_url=ImageURL.from_path(path))
+    message = Message.create(role="user", content="user test", image_url=ImageURL.from_path(path))
 
     assert isinstance(message, Message)
     assert message.role == "user"
