@@ -1,5 +1,5 @@
 from .factory import DEXFactory
 from .base import DEXClient, SwapResult
-from .uniswap.uniswap import UniswapClient
+from .uniswap import UniswapClientBase
 
-__all__ = ["DEXFactory", "DEXClient", "SwapResult", "UniswapClient"]
+__all__ = ["DEXFactory", "DEXClient", "SwapResult", "UniswapClientBase"]

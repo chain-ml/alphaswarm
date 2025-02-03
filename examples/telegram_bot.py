@@ -15,8 +15,7 @@ from smolagents import Tool
 logging.getLogger("smolagents").setLevel(logging.ERROR)
 
 
-async def main():
-    # Initialize the manager with your tools
+async def main() -> None:
     dotenv.load_dotenv()
     config = Config()
 

@@ -5,7 +5,7 @@ from alphaswarm.config import Config
 
 from .base import DEXClient
 from .jupiter.jupiter import JupiterClient
-from .uniswap.uniswap import UniswapClientV2, UniswapClientV3
+from .uniswap import UniswapClientV2, UniswapClientV3
 
 logger = logging.getLogger(__name__)
 
