@@ -165,13 +165,6 @@ class UniswapClientBase(DEXClient):
 
         receipts = self._swap(base_token, quote_token, wallet_address, quote_wei, slippage_bps)
 
-        # Check for transaction failure and display revert reason
-        # for receipt in receipts:
-        #     if receipt.get("status") == 0:
-        #         revert_reason = fetch_transaction_revert_reason(self._web3, completed_tx_hash)
-        #         logger.error(f"Transaction {completed_tx_hash.hex()} failed because of: {revert_reason}")
-        #         return SwapResult.build_error(error=revert_reason, base_amount=Decimal(0))
-
         # Get the actual amount of base token received from the swap receipt
         swap_receipt = receipts[1]
         base_amount = self._get_final_swap_amount_received(
