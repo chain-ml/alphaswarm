@@ -45,12 +45,12 @@ class AlphaSwarmAgent:
     def _build_context(self, current_message: str) -> str:
         messages = [
             "# User Context",
-            "## Base Wallet Address",
-            str(self._wallet_address),
-            "",
-            "## Strategy Config\n\n```strategy_config```\n\n",  # To be replaced by a user context management solution
-            load_strategy_config(),
-            "\n\n```\n",
+            # "## Base Wallet Address",
+            # str(self._wallet_address),
+            # "",
+            # "## Strategy Config\n\n```strategy_config```\n\n",  # To be replaced by a user context management solution
+            # load_strategy_config(),
+            # "\n\n```\n",
             "",
             "## Messages",
             current_message,
