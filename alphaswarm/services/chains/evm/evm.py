@@ -33,7 +33,7 @@ class EVMSigner:
         latest_block = client.eth.get_block("latest")
         base_fee = latest_block["baseFeePerGas"]
         priority_fee = client.eth.max_priority_fee
-        max_fee_per_gas = base_fee * 2 + priority_fee
+        max_fee_per_gas = client.to_wei(base_fee * 2 + priority_fee, "wei")
         tx: TxParams = function.build_transaction(
             {
                 "gas": self._gas_limit,
@@ -66,7 +66,7 @@ class EVMSigner:
 
         tx_result = result.get(tx_hash, None)
         if tx_result is None:
-            raise RuntimeError(f"Transaction {tx_hash} not found.")
+            raise RuntimeError(f"Transaction {tx_hash!r} not found.")
 
         return tx_result
 
