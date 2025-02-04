@@ -1,4 +1,3 @@
-from dataclasses import asdict
 from decimal import Decimal
 
 import pytest
@@ -94,4 +93,3 @@ def test_get_final_swap_amount_received_weth(mock_receipt: TxReceipt) -> None:
 
     # Expected amount: 0 WETH (since user is sending, not receiving)
     assert weth_amount == 0, f"Expected 0 WETH but got {weth_amount}"
-

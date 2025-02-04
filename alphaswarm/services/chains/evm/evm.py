@@ -2,8 +2,6 @@ import logging
 from decimal import Decimal
 from typing import List
 
-from eth_defi.revert_reason import fetch_transaction_revert_reason
-
 from alphaswarm.config import Config, TokenInfo
 from eth_account import Account
 from eth_account.datastructures import SignedTransaction
@@ -94,8 +92,7 @@ class EVMClient:
 
         # TODO
         # if result["status"] == 0:
-            # self._client.
-            # reason = fetch_transaction_revert_reason(self._client, tx_hash)
+        #     reason = fetch_transaction_revert_reason(self._client, tx_hash)
         #     logger.error(f"Transaction {tx_hash.hex()} failed because of: {reason}")
         return result
 
