@@ -1,7 +1,7 @@
 import datetime
 import logging
 from decimal import Decimal
-from typing import Any, Dict, Optional, Union
+from typing import Any, Optional, Union
 
 from alphaswarm.config import Config, TokenInfo
 from eth_account import Account
@@ -14,7 +14,6 @@ from web3.contract import Contract
 from web3.contract.contract import ContractFunction
 from web3.types import TxParams, TxReceipt, Wei
 
-from ..base import Web3Client
 from .constants_erc20 import ERC20_ABI
 
 logger = logging.getLogger(__name__)
@@ -121,12 +120,14 @@ class ERC20Contract(EMVContract):
         return self.contract.functions.approve(spender, value)
 
 
-class EVMClient(Web3Client):
+class EVMClient:
     """Client for interacting with EVM-compatible chains"""
 
-    def __init__(self, config: Config) -> None:
-        super().__init__(config)
-        self._web3_instances: Dict[str, Web3] = {}  # Initialize dict to store web3 instances per chain
+    def __init__(self, config: Config, chain: str) -> None:
+        self._config = config
+        self._chain = chain
+        self._chain_config = self._config.get_chain_config(chain)
+        self._client = Web3(Web3.HTTPProvider(self._chain_config.rpc_url))
         logger.info("Initialized EVMClient")
 
     @staticmethod
@@ -135,57 +136,31 @@ class EVMClient(Web3Client):
         if chain not in SUPPORTED_CHAINS:
             raise ValueError(f"Chain '{chain}' is not supported by EVMClient. Supported chains: {SUPPORTED_CHAINS}")
 
-    def get_web3(self, chain: str) -> Web3:
-        """Get or create Web3 instance for chain"""
-        self._validate_chain(chain)
-        if chain not in self._web3_instances:
-            # Debug log the config structure
-            logger.debug(f"Config structure for web3: {self.config}")
-
-            # Get provider URL from chain config
-            chain_config = self.config.get_chain_config(chain)
-            rpc_url = chain_config.rpc_url
-            self._web3_instances[chain] = Web3(Web3.HTTPProvider(rpc_url))
-
-        return self._web3_instances[chain]
-
-    def get_contract(self, address: str, abi: Any, chain: str) -> Contract:
-        """Get contract instance"""
-        self._validate_chain(chain)
-        web3 = self.get_web3(chain)
-        return web3.eth.contract(address=self.to_checksum_address(address, chain), abi=abi)
-
     @classmethod
     def _to_checksum_address(cls, address: str) -> ChecksumAddress:
         """Convert address to checksum format"""
         return Web3.to_checksum_address(address)
 
-    def to_checksum_address(self, address: str, chain: str) -> ChecksumAddress:
-        self._validate_chain(chain)
-        return self._to_checksum_address(address)
+    def _get_token_details(self, token_address: str) -> TokenDetails:
+        return fetch_erc20_details(self._client, token_address, chain_id=self._client.eth.chain_id)
 
-    def _get_token_details(self, token_address: str, chain: str) -> TokenDetails:
-        self._validate_chain(chain)
-        web3 = self.get_web3(chain)
-        return fetch_erc20_details(web3, token_address, chain_id=web3.eth.chain_id)
-
-    def get_token_info(self, token_address: str, chain: str) -> TokenInfo:
+    def get_token_info(self, token_address: str) -> TokenInfo:
         """Get token info by token contract address"""
-        self._validate_chain(chain)
-        token_details: TokenDetails = self._get_token_details(token_address, chain)
+        token_details: TokenDetails = self._get_token_details(token_address)
         symbol = token_details.symbol
         decimals = token_details.decimals
-        return TokenInfo(symbol=symbol, address=token_address, decimals=decimals, chain=chain, is_native=False)
+        return TokenInfo(symbol=symbol, address=token_address, decimals=decimals, chain=self._chain, is_native=False)
 
-    def get_token_balance(self, token: str, wallet_address: str, chain: str) -> Decimal:
+    def get_native_token_balance(self, wallet_address: ChecksumAddress) -> Decimal:
+        return Decimal(self._client.eth.get_balance(self._to_checksum_address(wallet_address)))
+
+    def get_token_balance(self, token: str, wallet_address: ChecksumAddress) -> Decimal:
         """Get balance for token symbol (resolved via Config) for a wallet address"""
-        self._validate_chain(chain)
         if token == "ETH":
-            return Decimal(self.get_web3(chain).eth.get_balance(self.to_checksum_address(wallet_address, chain)))
+            return self.get_native_token_balance(wallet_address)
 
-        chain_config = self.config.get_chain_config(chain)
-        token_info = chain_config.get_token_info(token)
-
+        token_info = self._chain_config.get_token_info(token)
         token_address = token_info.address
-        token_details: TokenDetails = self._get_token_details(token_address, chain)
-        return token_details.fetch_balance_of(self.to_checksum_address(wallet_address, chain))
+        token_details = self._get_token_details(token_address)
+        # TODO this should be using ERC20Contract which would introduce a circular dependency
+        return token_details.fetch_balance_of(self._to_checksum_address(wallet_address))

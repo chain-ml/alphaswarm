@@ -7,7 +7,6 @@ from alphaswarm.config import Config
 
 from .base import Web3Client
 from .evm import SUPPORTED_CHAINS as EVM_CHAINS
-from .evm import EVMClient
 from .sol import SUPPORTED_CHAINS as SOLANA_CHAINS
 from .sol import SolanaClient
 
@@ -40,9 +39,9 @@ class Web3ClientFactory:
         """
         client = self._clients.get(chain)
         if client is None:
-            if chain in EVM_CHAINS:
-                client = EVMClient(config)
-            elif chain in SOLANA_CHAINS:
+            # if chain in EVM_CHAINS:
+            #     client = EVMClient(config)
+            if chain in SOLANA_CHAINS:
                 client = SolanaClient(config)
             else:
                 supported_chains = EVM_CHAINS.union(SOLANA_CHAINS)
