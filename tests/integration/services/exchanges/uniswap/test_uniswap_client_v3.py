@@ -62,9 +62,9 @@ def test_get_markets_for_tokens(eth_client: UniswapClientV3) -> None:
     usdc_address = "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48"  # Ethereum USDC
     weth_address = "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"  # Ethereum WETH
 
-    web3_client = eth_client._blockchain_client
-    usdc = web3_client.get_token_info(usdc_address, eth_client.chain)
-    weth = web3_client.get_token_info(weth_address, eth_client.chain)
+    evm_client = eth_client._evm_client
+    usdc = evm_client.get_token_info(usdc_address)
+    weth = evm_client.get_token_info(weth_address)
 
     tokens = [usdc, weth]
     markets = eth_client.get_markets_for_tokens(tokens)

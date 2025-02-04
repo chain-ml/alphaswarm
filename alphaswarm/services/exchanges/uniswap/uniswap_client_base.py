@@ -8,7 +8,6 @@ from alphaswarm.services.chains import EVMClient
 from alphaswarm.services.chains.evm import ERC20Contract, EVMSigner
 from alphaswarm.services.chains.evm.constants_erc20 import ERC20_ABI
 from alphaswarm.services.chains.evm.evm import DEFAULT_GAS_LIMIT
-from alphaswarm.services.chains.factory import Web3ClientFactory
 from alphaswarm.services.exchanges.base import DEXClient, SwapResult
 from eth_account import Account
 from eth_account.signers.local import LocalAccount
@@ -27,8 +26,8 @@ class UniswapClientBase(DEXClient):
         self.version = version
         self._router = self._get_router(self.chain)
         self._factory = self._get_factory(self.chain)
-        self._blockchain_client = Web3ClientFactory.get_instance().get_client(self.chain, self.config)
         self._evm_client = EVMClient(self.config, self.chain)
+        # TODO Eventually remove this Web3 client in favor of EVMClient
         self._web3: MultiProviderWeb3 = self._create_multi_provider_web3(
             self.config.get_chain_config(self.chain).rpc_url
         )
