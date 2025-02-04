@@ -119,6 +119,8 @@ These are the tokens I am monitoring:
 {{my_tokens}}
 
 # Specialization
+Your specilization area and instructions are as follows:
+
 {{specialization}}
 
 # Final Instructions
