@@ -1,27 +1,24 @@
-import datetime
 import logging
 from abc import abstractmethod
 from decimal import Decimal
-from typing import Any, Dict, List, Tuple
+from typing import List, Tuple
 
 from alphaswarm.config import Config, TokenInfo
+from alphaswarm.services.chains import EVMClient
+from alphaswarm.services.chains.evm import ERC20Contract, EVMSigner
 from alphaswarm.services.chains.evm.constants_erc20 import ERC20_ABI
+from alphaswarm.services.chains.evm.evm import DEFAULT_GAS_LIMIT
 from alphaswarm.services.chains.factory import Web3ClientFactory
 from alphaswarm.services.exchanges.base import DEXClient, SwapResult
 from eth_account import Account
 from eth_account.signers.local import LocalAccount
-from eth_defi.confirmation import wait_transactions_to_complete
 from eth_defi.provider.multi_provider import MultiProviderWeb3, create_multi_provider_web3
-from eth_defi.revert_reason import fetch_transaction_revert_reason
 from eth_typing import ChecksumAddress, HexAddress
-from hexbytes import HexBytes
 from web3.middleware.signing import construct_sign_and_send_raw_middleware
+from web3.types import TxReceipt
 
 # Set up logger
 logger = logging.getLogger(__name__)
-
-ZERO_ADDRESS = "0x0000000000000000000000000000000000000000"
-DEFAULT_GAS_LIMIT = 200_000  # Default gas limit for transactions
 
 
 class UniswapClientBase(DEXClient):
@@ -31,11 +28,20 @@ class UniswapClientBase(DEXClient):
         self._router = self._get_router(self.chain)
         self._factory = self._get_factory(self.chain)
         self._blockchain_client = Web3ClientFactory.get_instance().get_client(self.chain, self.config)
+        self._evm_client = EVMClient(self.config, self.chain)
         self._web3: MultiProviderWeb3 = self._create_multi_provider_web3(
             self.config.get_chain_config(self.chain).rpc_url
         )
 
         logger.info(f"Created {self.__class__.__name__} instance for chain {self.chain}")
+
+    @property
+    def evm_client(self) -> EVMClient:
+        return self._evm_client
+
+    # TODO this would need to become an input parameter for relevant functions
+    def get_signer(self) -> EVMSigner:
+        return EVMSigner(self.chain_config.private_key)
 
     @staticmethod
     def _create_multi_provider_web3(rpc_url: str) -> MultiProviderWeb3:
@@ -52,7 +58,7 @@ class UniswapClientBase(DEXClient):
     @abstractmethod
     def _swap(
         self, base: TokenInfo, quote: TokenInfo, address: str, quote_wei: int, slippage_bps: int
-    ) -> Dict[HexBytes, Dict]:
+    ) -> List[TxReceipt]:
         pass
 
     @abstractmethod
@@ -65,7 +71,7 @@ class UniswapClientBase(DEXClient):
 
     @staticmethod
     def _get_final_swap_amount_received(
-        swap_receipt: dict[str, Any], token_address: HexAddress, user_address: str, token_decimals: int
+        swap_receipt: TxReceipt, token_address: HexAddress, user_address: str, token_decimals: int
     ) -> Decimal:
         """Calculate the final amount of tokens received from a swap by parsing Transfer events.
 
@@ -161,15 +167,14 @@ class UniswapClientBase(DEXClient):
         receipts = self._swap(base_token, quote_token, wallet_address, quote_wei, slippage_bps)
 
         # Check for transaction failure and display revert reason
-        for completed_tx_hash, receipt in receipts.items():
-            if receipt.get("status") == 0:
-                revert_reason = fetch_transaction_revert_reason(self._web3, completed_tx_hash)
-                logger.error(f"Transaction {completed_tx_hash.hex()} failed because of: {revert_reason}")
-                return SwapResult.build_error(error=revert_reason, base_amount=Decimal(0))
+        # for receipt in receipts:
+        #     if receipt.get("status") == 0:
+        #         revert_reason = fetch_transaction_revert_reason(self._web3, completed_tx_hash)
+        #         logger.error(f"Transaction {completed_tx_hash.hex()} failed because of: {revert_reason}")
+        #         return SwapResult.build_error(error=revert_reason, base_amount=Decimal(0))
 
         # Get the actual amount of base token received from the swap receipt
-        swap_tx_hash = list(receipts.keys())[1]
-        swap_receipt = receipts[swap_tx_hash]
+        swap_receipt = receipts[1]
         base_amount = self._get_final_swap_amount_received(
             swap_receipt, base_token.checksum_address, wallet_address, base_token.decimals
         )
@@ -177,7 +182,7 @@ class UniswapClientBase(DEXClient):
         return SwapResult.build_success(
             base_amount=base_amount,
             quote_amount=quote_amount,
-            tx_hash=swap_tx_hash,  # Return the swap tx hash, not the approve tx
+            tx_hash=swap_receipt["transactionHash"],  # Return the swap tx hash, not the approve tx
         )
 
     def _get_gas_fees(self) -> tuple[int, int, int, int]:
@@ -215,7 +220,7 @@ class UniswapClientBase(DEXClient):
 
         return max_fee_per_gas, base_fee, priority_fee, gas_limit
 
-    def _approve_token_spend(self, quote: TokenInfo, address: str, raw_amount: int) -> tuple[int, Dict[HexBytes, Dict]]:
+    def _approve_token_spend(self, quote: TokenInfo, address: str, raw_amount: int) -> tuple[int, TxReceipt]:
         """Handle token approval and return fresh nonce and approval receipt.
 
         Args:
@@ -224,47 +229,19 @@ class UniswapClientBase(DEXClient):
             raw_amount: Raw amount to approve
 
         Returns:
-            tuple[int, Dict[HexBytes, Dict]]: (nonce, approval_receipt)
+            tuple[int, TxReceipt]: (nonce, approval_receipt)
 
         Raises:
             ValueError: If approval transaction fails
         """
-        # Create quote token contract instance
-        quote_contract = self._web3.eth.contract(address=quote.checksum_address, abi=ERC20_ABI)
+        quote_contract = ERC20Contract(self._evm_client, quote.checksum_address)
 
         # Uniswap router must be allowed to spend our quote token
-        approve = quote_contract.functions.approve(self._router, raw_amount)
-
-        # Get gas fees
-        max_fee_per_gas, _, priority_fee, gas_limit = self._get_gas_fees()
-
-        # Build approval transaction with EIP-1559 parameters
-        tx_1 = approve.build_transaction(
-            {
-                "gas": gas_limit,
-                "chainId": self._web3.eth.chain_id,
-                "from": address,
-                "maxFeePerGas": max_fee_per_gas,
-                "maxPriorityFeePerGas": priority_fee,
-            }
-        )
-
-        # Send approval and wait for it to be mined
-        tx_hash_1 = self._web3.eth.send_transaction(tx_1)
-        logger.info(f"Waiting for approval transaction {tx_hash_1.hex()} to be mined...")
-        approval_receipt = wait_transactions_to_complete(
-            self._web3,
-            [tx_hash_1],
-            max_timeout=datetime.timedelta(minutes=2.5),
-            confirmation_block_count=2,
-        )
-
-        if approval_receipt[tx_hash_1]["status"] == 0:
-            raise ValueError("Approval transaction failed")
+        tx_receipt = quote_contract.approve(self.get_signer(), self._router, raw_amount)
 
         # Get fresh nonce after approval
-        nonce = self._web3.eth.get_transaction_count(address)
-        return nonce, approval_receipt
+        nonce = self._web3.eth.get_transaction_count(self._evm_client.to_checksum_address(address))
+        return nonce, tx_receipt
 
     def get_token_price(self, base_token: TokenInfo, quote_token: TokenInfo) -> Decimal:
         """Get token price using the appropriate Uniswap version.

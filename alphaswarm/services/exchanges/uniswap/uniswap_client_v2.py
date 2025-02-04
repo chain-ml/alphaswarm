@@ -1,20 +1,19 @@
 import logging
-from datetime import timedelta
 from decimal import Decimal
-from typing import Dict, List, Tuple
+from typing import List, Tuple
 
 from alphaswarm.config import Config, TokenInfo
+from alphaswarm.services.chains.evm import ZERO_ADDRESS
 from alphaswarm.services.exchanges.uniswap.constants_v2 import (
     UNISWAP_V2_DEPLOYMENTS,
     UNISWAP_V2_FACTORY_ABI,
     UNISWAP_V2_ROUTER_ABI,
 )
-from alphaswarm.services.exchanges.uniswap.uniswap_client_base import ZERO_ADDRESS, UniswapClientBase
-from eth_defi.confirmation import wait_transactions_to_complete
+from alphaswarm.services.exchanges.uniswap.uniswap_client_base import UniswapClientBase
 from eth_defi.uniswap_v2.pair import fetch_pair_details
 from eth_typing import ChecksumAddress
 from eth_utils import to_checksum_address
-from hexbytes import HexBytes
+from web3.types import TxReceipt
 
 logger = logging.getLogger(__name__)
 
@@ -31,7 +30,7 @@ class UniswapClientV2(UniswapClientBase):
 
     def _swap(
         self, base: TokenInfo, quote: TokenInfo, address: str, raw_quote_amount: int, slippage_bps: int
-    ) -> Dict[HexBytes, Dict]:
+    ) -> List[TxReceipt]:
         """Execute a swap on Uniswap V2."""
         # Handle token approval and get fresh nonce
         nonce, approval_receipt = self._approve_token_spend(quote, address, raw_quote_amount)
@@ -83,14 +82,8 @@ class UniswapClientV2(UniswapClientBase):
         # Send swap transaction
         tx_hash_2 = self._web3.eth.send_transaction(tx_2)
         logger.info(f"Waiting for swap transaction {tx_hash_2.hex()} to be mined...")
-        swap_receipt = wait_transactions_to_complete(
-            self._web3,
-            [tx_hash_2],
-            max_timeout=timedelta(minutes=2.5),
-            confirmation_block_count=1,
-        )
-
-        return {**approval_receipt, **swap_receipt}
+        swap_receipt = self._evm_client.wait_for_transaction(tx_hash_2)
+        return [approval_receipt, swap_receipt]
 
     def _get_token_price(self, base_token: TokenInfo, quote_token: TokenInfo) -> Decimal:
         """Get the current price from a Uniswap V2 pool for a token pair.

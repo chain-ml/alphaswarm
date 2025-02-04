@@ -1,11 +1,12 @@
-import datetime
 import logging
 from decimal import Decimal
-from typing import Any, List
+from typing import List
+
+from eth_defi.revert_reason import fetch_transaction_revert_reason
 
 from alphaswarm.config import Config, TokenInfo
 from eth_account import Account
-from eth_defi.confirmation import wait_transactions_to_complete
+from eth_account.datastructures import SignedTransaction
 from eth_defi.token import TokenDetails, fetch_erc20_details
 from eth_typing import ChecksumAddress
 from hexbytes import HexBytes
@@ -18,6 +19,9 @@ logger = logging.getLogger(__name__)
 
 # Define supported chains
 SUPPORTED_CHAINS = {"ethereum", "ethereum_sepolia", "base", "base_sepolia"}
+ZERO_ADDRESS = "0x0000000000000000000000000000000000000000"
+ZERO_CHECKSUM_ADDRESS = Web3.to_checksum_address(ZERO_ADDRESS)
+DEFAULT_GAS_LIMIT = 200_000  # Default gas limit for transactions
 
 
 class EVMSigner:
@@ -28,7 +32,7 @@ class EVMSigner:
     def address(self) -> ChecksumAddress:
         return self._account.address
 
-    def sign_transaction(self, transaction: TxParams) -> Any:
+    def sign_transaction(self, transaction: TxParams) -> SignedTransaction:
         return self._account.sign_transaction(transaction)
 
 
@@ -54,7 +58,7 @@ class EVMClient:
             raise ValueError(f"Chain '{chain}' is not supported by EVMClient. Supported chains: {SUPPORTED_CHAINS}")
 
     @classmethod
-    def _to_checksum_address(cls, address: str) -> ChecksumAddress:
+    def to_checksum_address(cls, address: str) -> ChecksumAddress:
         """Convert address to checksum format"""
         return Web3.to_checksum_address(address)
 
@@ -69,7 +73,7 @@ class EVMClient:
         return TokenInfo(symbol=symbol, address=token_address, decimals=decimals, chain=self._chain, is_native=False)
 
     def get_native_token_balance(self, wallet_address: ChecksumAddress) -> Decimal:
-        return Decimal(self._client.eth.get_balance(self._to_checksum_address(wallet_address)))
+        return Decimal(self._client.eth.get_balance(self.to_checksum_address(wallet_address)))
 
     def get_token_balance(self, token: str, wallet_address: ChecksumAddress) -> Decimal:
         """Get balance for token symbol (resolved via Config) for a wallet address"""
@@ -80,13 +84,20 @@ class EVMClient:
         token_address = token_info.address
         token_details = self.get_token_details(token_address)
         # TODO this should be using ERC20Contract which would introduce a circular dependency
-        return token_details.fetch_balance_of(self._to_checksum_address(wallet_address))
+        return token_details.fetch_balance_of(self.to_checksum_address(wallet_address))
 
     def process(self, function: ContractFunction, signer: EVMSigner) -> TxReceipt:
         tx = self._build_transaction(function, signer.address)
         signed_tx = signer.sign_transaction(tx)
         tx_hash = self._client.eth.send_raw_transaction(signed_tx.rawTransaction)
-        return self._wait_for_transaction(tx_hash)
+        result: TxReceipt = self.wait_for_transaction(tx_hash)
+
+        # TODO
+        # if result["status"] == 0:
+            # self._client.
+            # reason = fetch_transaction_revert_reason(self._client, tx_hash)
+        #     logger.error(f"Transaction {tx_hash.hex()} failed because of: {reason}")
+        return result
 
     def get_contract(self, address: ChecksumAddress, abi: List[dict]) -> Contract:
         return self._client.eth.contract(address=address, abi=abi)
@@ -109,16 +120,5 @@ class EVMClient:
 
         return tx
 
-    def _wait_for_transaction(self, tx_hash: HexBytes) -> TxReceipt:
-        result = wait_transactions_to_complete(
-            self._client,
-            [tx_hash],
-            max_timeout=datetime.timedelta(minutes=2.5),
-            # confirmation_block_count=2
-        )
-
-        tx_result = result.get(tx_hash, None)
-        if tx_result is None:
-            raise RuntimeError(f"Transaction {tx_hash!r} not found.")
-
-        return tx_result
+    def wait_for_transaction(self, tx_hash: HexBytes, timeout: int = 120, poll_latency: float = 1) -> TxReceipt:
+        return self._client.eth.wait_for_transaction_receipt(tx_hash, timeout, poll_latency)
