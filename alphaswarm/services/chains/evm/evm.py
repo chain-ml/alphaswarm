@@ -1,12 +1,18 @@
+import datetime
 import logging
 from decimal import Decimal
-from typing import Any, Dict
+from typing import Any, Dict, Optional, Union
 
 from alphaswarm.config import Config, TokenInfo
+from eth_account import Account
+from eth_defi.confirmation import wait_transactions_to_complete
 from eth_defi.token import TokenDetails, fetch_erc20_details
 from eth_typing import ChecksumAddress
+from hexbytes import HexBytes
 from web3 import Web3
 from web3.contract import Contract
+from web3.contract.contract import ContractFunction
+from web3.types import TxParams, TxReceipt, Wei
 
 from ..base import Web3Client
 from .constants_erc20 import ERC20_ABI
@@ -15,6 +21,54 @@ logger = logging.getLogger(__name__)
 
 # Define supported chains
 SUPPORTED_CHAINS = {"ethereum", "ethereum_sepolia", "base", "base_sepolia"}
+
+
+class EVMSigner:
+    def __init__(self, private_key: str, gas_limit: int = 200_000) -> None:
+        self._private_key = private_key
+        self._gas_limit = gas_limit
+        self._account = Account.from_key(self._private_key)
+
+    def _build_transaction(self, client: Web3, function: ContractFunction) -> TxParams:
+        latest_block = client.eth.get_block("latest")
+        base_fee = latest_block["baseFeePerGas"]
+        priority_fee = client.eth.max_priority_fee
+        max_fee_per_gas = base_fee * 2 + priority_fee
+        tx: TxParams = function.build_transaction(
+            {
+                "gas": self._gas_limit,
+                "chainId": client.eth.chain_id,
+                "from": self._account.address,
+                "maxFeePerGas": max_fee_per_gas,
+                "maxPriorityFeePerGas": priority_fee,
+                "nonce": client.eth.get_transaction_count(client.to_checksum_address(self._account.address)),
+            }
+        )
+
+        return tx
+
+    def _sign_transaction(self, transaction: TxParams) -> Any:
+        return self._account.sign_transaction(transaction)
+
+    def process(self, client: Web3, function: ContractFunction) -> TxReceipt:
+        tx = self._build_transaction(client, function)
+        signed_tx = self._account.sign_transaction(tx)
+        tx_hash = client.eth.send_raw_transaction(signed_tx.rawTransaction)
+        return self.wait_for_transaction(client, tx_hash)
+
+    def wait_for_transaction(self, client: Web3, tx_hash: HexBytes) -> TxReceipt:
+        result = wait_transactions_to_complete(
+            client,
+            [tx_hash],
+            max_timeout=datetime.timedelta(minutes=2.5),
+            # confirmation_block_count=2
+        )
+
+        tx_result = result.get(tx_hash, None)
+        if tx_result is None:
+            raise RuntimeError(f"Transaction {tx_hash} not found.")
+
+        return tx_result
 
 
 class EMVContract:
@@ -36,9 +90,35 @@ class EMVContract:
 class ERC20Contract(EMVContract):
     def __init__(self, client: Web3, address: ChecksumAddress) -> None:
         super().__init__(client, address, ERC20_ABI)
+        self._details: Optional[TokenInfo] = None
 
-    def get_balance(self, wallet_address: ChecksumAddress) -> Decimal:
-        return self.contract.functions.balanceOf(wallet_address).call()
+    @property
+    def details(self) -> TokenInfo:
+        if self._details is None:
+            details = fetch_erc20_details(self._client, self._address)
+            self._details = TokenInfo(
+                symbol=details.symbol,
+                decimals=details.decimals,
+                address=details.address,
+                chain="changeme",
+                is_native=False,
+            )
+        return self._details
+
+    def get_balance(self, owner: ChecksumAddress) -> Decimal:
+        return self.contract.functions.balanceOf(owner).call()
+
+    def get_allowance(self, owner: ChecksumAddress, spender: ChecksumAddress) -> Wei:
+        return self.contract.functions.allowance(owner, spender).call()
+
+    def get_allowance_token(self, owner: ChecksumAddress, spender: ChecksumAddress) -> Decimal:
+        return self.details.convert_from_wei(self.get_allowance(owner, spender))
+
+    def approve_token(self, spender: ChecksumAddress, value: Decimal) -> ContractFunction:
+        return self.approve(spender, self.details.convert_to_wei(value))
+
+    def approve(self, spender: ChecksumAddress, value: Union[Wei, int]) -> ContractFunction:
+        return self.contract.functions.approve(spender, value)
 
 
 class EVMClient(Web3Client):
