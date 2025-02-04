@@ -1,11 +1,17 @@
+import time
 from typing import List, Literal, Type
 
 import dotenv
+import requests
+from alphaswarm.core.llm import ImageURL, LLMFunction, Message
 from pydantic import BaseModel, Field
-
-from alphaswarm.core.llm import LLMFunction, Message
+from tests import get_data_filename
 
 dotenv.load_dotenv()
+
+
+class TestResponse(BaseModel):
+    content: str = Field(..., description="The content of the response")
 
 
 class SimpleResponse(BaseModel):
@@ -43,7 +49,7 @@ def test_llm_function_simple():
 def test_llm_function_messages():
     llm_func = get_llm_function(
         system_message="Output a random number",
-        messages=[Message(role="user", content="Pick between 2 and 5")],
+        messages=[Message.create(role="user", content="Pick between 2 and 5")],
     )
 
     result = llm_func.execute()
@@ -69,3 +75,43 @@ def test_llm_function_with_complex_response_model():
     assert isinstance(result.store, str)
     assert result.category in ["food", "clothing", "electronics", "other"]
     assert all(isinstance(item, ItemPricePair) for item in result.list_of_items)
+
+
+def test_llm_function_with_prompt_caching():
+    url = "https://raw.githubusercontent.com/dhimmel/bitcoin-whitepaper/main/content/02.body.md"
+    response = requests.get(url)
+
+    if response.status_code != 200:
+        raise RuntimeError(f"Failed to fetch the whitepaper. Status code: {response.status_code}")
+
+    large_content = response.text  # caching from 2k tokens for haiku
+
+    llm_func = LLMFunction(
+        model_id="anthropic/claude-3-haiku-20240307",
+        response_model=TestResponse,
+        messages=[Message.system(large_content, cache=True)],
+    )
+
+    llm_func_response = llm_func.execute_with_completion("Summarize the core ideas in two sentences.")
+    assert isinstance(llm_func_response.response, TestResponse)
+    assert "peer" in llm_func_response.response.content.lower()
+
+    time.sleep(1)
+
+    llm_func_response = llm_func.execute_with_completion("Summarize the core ideas in two sentences.")
+    assert isinstance(llm_func_response.response, TestResponse)
+    assert "peer" in llm_func_response.response.content.lower()
+
+    assert llm_func_response.completion.usage.prompt_tokens_details.cached_tokens > 0
+
+
+def test_llm_function_with_image():
+    message = Message.create(
+        role="user", content="Describe the image", image_url=ImageURL.from_path(get_data_filename("eth_sol_prices.png"))
+    )
+    llm_func = get_llm_function(response_model=TestResponse, messages=[message])
+
+    result = llm_func.execute()
+    assert isinstance(result, TestResponse)
+    assert "eth" in result.content.lower()
+    assert "sol" in result.content.lower()
