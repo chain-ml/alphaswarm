@@ -54,7 +54,7 @@ class PriceForecastingTool(Tool):
 
         # Init the LLMFunction
         self._llm_function = LLMFunctionFromPromptFiles(
-            model_id="anthropic/claude-3-5-sonnet-latest",
+            model_id="anthropic/claude-3-5-sonnet-20241022",
             response_model=PriceForecastResponse,
             system_prompt_path=os.path.join(BASE_PATH, "lab", "forecasting_agent", "prompts", "system_prompt.md"),
             user_prompt_path=os.path.join(BASE_PATH, "lab", "forecasting_agent", "prompts", "user_prompt.md"),

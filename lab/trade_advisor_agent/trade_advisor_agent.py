@@ -90,13 +90,13 @@ async def main() -> None:
 
     # Optional step to provide a custom system prompt.
     # If no custom system prompt is provided, a default one will be used.
-    with open(BASE_PATH / "lab/momentum_strategy_agent/research_agent_system_prompt.txt", "r") as f:
+    with open(BASE_PATH / "lab/research_agent_system_prompt.txt", "r") as f:
         system_prompt = f.read()
 
     system_prompt = system_prompt.replace("{{my_tokens}}", json.dumps(my_tokens))
     system_prompt = system_prompt.replace("{{specialization}}", specialization)
 
-    agent = AlphaSwarmAgent(model_id="anthropic/claude-3-5-sonnet-20240620", tools=tools, system_prompt=system_prompt)
+    agent = AlphaSwarmAgent(model_id="anthropic/claude-3-5-sonnet-20241022", tools=tools, system_prompt=system_prompt)
 
     terminal = TerminalClient("AlphaSwarm terminal", agent)
     await asyncio.gather(
