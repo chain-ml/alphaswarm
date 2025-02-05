@@ -108,7 +108,7 @@ class UniswapClientV3(UniswapClientBase):
     ) -> List[TxReceipt]:
         """Execute a swap on Uniswap V3."""
         # Handle token approval and get fresh nonce
-        approval_receipt = self._approve_token_spend(quote, address, quote_wei)
+        approval_receipt = self._approve_token_spend(quote, quote_wei)
 
         # Build a swap transaction
         pool_details = self._get_pool(base, quote)

@@ -175,12 +175,11 @@ class UniswapClientBase(DEXClient):
             tx_hash=swap_receipt["transactionHash"],  # Return the swap tx hash, not the approve tx
         )
 
-    def _approve_token_spend(self, quote: TokenInfo, address: str, raw_amount: int) -> TxReceipt:
+    def _approve_token_spend(self, quote: TokenInfo, raw_amount: int) -> TxReceipt:
         """Handle token approval and return fresh nonce and approval receipt.
 
         Args:
             quote: Quote token info
-            address: Wallet address
             raw_amount: Raw amount to approve
 
         Returns:

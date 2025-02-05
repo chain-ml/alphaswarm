@@ -33,7 +33,7 @@ class UniswapClientV2(UniswapClientBase):
     ) -> List[TxReceipt]:
         """Execute a swap on Uniswap V2."""
         # Handle token approval and get fresh nonce
-        approval_receipt = self._approve_token_spend(quote, address, raw_quote_amount)
+        approval_receipt = self._approve_token_spend(quote, raw_quote_amount)
 
         # Get price from V2 pair to calculate minimum output
         price = self._get_token_price(base_token=base, quote_token=quote)
