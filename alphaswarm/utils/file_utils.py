@@ -15,10 +15,10 @@ def read_text_file_to_string(file_path: Union[str, Path]) -> str:
         raise Exception(f"Error while reading file: {str(e)}") from e
 
 
-def load_strategy_config() -> str:
+def load_strategy_config(filename: str) -> str:
     """Loads the trading strategy configuration from the config directory."""
-    strategy_path = CONFIG_PATH / "momentum_strategy_config.md"
+    strategy_path = CONFIG_PATH / filename
     try:
         return read_text_file_to_string(strategy_path)
-    except FileNotFoundError:
-        raise Exception("No trading strategy exists. Please configure a strategy.")
+    except FileNotFoundError as e:
+        raise RuntimeError("No trading strategy exists. Please configure a strategy.") from e

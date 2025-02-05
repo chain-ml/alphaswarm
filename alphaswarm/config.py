@@ -3,10 +3,10 @@ from __future__ import annotations
 import logging
 import os
 from decimal import Decimal
-from pathlib import Path
 from typing import Any, Dict, List, Optional, Sequence, Union
 
 import yaml
+from alphaswarm import BASE_PATH
 from eth_typing import ChecksumAddress
 from pydantic.dataclasses import dataclass
 from typing_extensions import deprecated
@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 
 NATIVE_TOKENS = {"ethereum": ["ETH"], "ethereum_sepolia": ["ETH"], "base": ["ETH"], "solana": ["SOL"]}
 
-BASE_PATH = Path(__file__).parent.parent
+
 CONFIG_PATH = BASE_PATH / "config"
 
 
