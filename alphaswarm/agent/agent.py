@@ -1,5 +1,4 @@
 import asyncio
-import os
 from typing import Optional, Sequence
 
 from alphaswarm.tools.strategy_analysis.strategy import Strategy
@@ -19,7 +18,6 @@ class AlphaSwarmAgent:
         system_prompt = system_prompt or CODE_SYSTEM_PROMPT
         system_prompt = system_prompt + "\n" + hints if hints else system_prompt
 
-        self._wallet_address = os.getenv("BASE_WALLET_ADDRESS")
         self._strategy_rules = strategy.rules
         self._agent = CodeAgent(
             tools=list(tools),
@@ -51,9 +49,6 @@ class AlphaSwarmAgent:
     def _build_context(self, current_message: str) -> str:
         messages = [
             "# User Context",
-            "## Base Wallet Address",
-            str(self._wallet_address),
-            "",
             "## Strategy Rules\n\n```",
             self._strategy_rules,
             "\n\n```\n",
