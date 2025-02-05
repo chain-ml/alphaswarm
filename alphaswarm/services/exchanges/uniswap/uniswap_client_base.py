@@ -4,8 +4,7 @@ from decimal import Decimal
 from typing import List, Tuple
 
 from alphaswarm.config import Config, TokenInfo
-from alphaswarm.services.chains import EVMClient
-from alphaswarm.services.chains.evm import ERC20Contract, EVMSigner
+from alphaswarm.services.chains.evm import ERC20Contract, EVMClient, EVMSigner
 from alphaswarm.services.exchanges.base import DEXClient, SwapResult
 from eth_account import Account
 from eth_account.signers.local import LocalAccount

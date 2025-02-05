@@ -23,7 +23,7 @@ DEFAULT_GAS_LIMIT = 200_000  # Default gas limit for transactions
 
 
 class EVMSigner:
-    def __init__(self, private_key: str, gas_limit: int = 200_000) -> None:
+    def __init__(self, private_key: str) -> None:
         self._account = Account.from_key(private_key)
 
     @property
@@ -42,7 +42,9 @@ class EVMClient:
         self._chain = chain
         self._chain_config = self._config.get_chain_config(chain)
         self._client = Web3(Web3.HTTPProvider(self._chain_config.rpc_url))
-        self._gas_limit = self._chain_config.gas_settings.gas_limit if self._chain_config.gas_settings else 200_000
+        self._gas_limit = (
+            self._chain_config.gas_settings.gas_limit if self._chain_config.gas_settings else DEFAULT_GAS_LIMIT
+        )
         logger.info("Initialized EVMClient")
 
     @property
