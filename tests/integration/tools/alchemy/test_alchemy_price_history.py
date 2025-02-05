@@ -1,5 +1,8 @@
 from alphaswarm.services.alchemy import AlchemyClient
-from alphaswarm.tools.alchemy.alchemy_price_history import AlchemyPriceHistoryBySymbol, AlchemyPriceHistoryByAddress
+from alphaswarm.tools.alchemy.alchemy_price_history import (
+    AlchemyPriceHistoryBySymbol,
+    AlchemyPriceHistoryByAddress,
+)
 
 
 def test_get_price_history_by_symbol(alchemy_client: AlchemyClient) -> None:
