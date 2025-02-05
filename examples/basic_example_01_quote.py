@@ -2,6 +2,7 @@ import dotenv
 from alphaswarm.agent.agent import AlphaSwarmAgent
 from alphaswarm.config import Config
 from alphaswarm.tools.exchanges.get_token_price_tool import GetTokenPriceTool
+from alphaswarm.tools.strategy_analysis.strategy import Strategy
 
 dotenv.load_dotenv()
 config = Config()
@@ -12,7 +13,7 @@ tools = [
 ]
 
 # Create the agent
-agent = AlphaSwarmAgent(tools=tools, model_id="anthropic/claude-3-5-sonnet-latest")
+agent = AlphaSwarmAgent(tools=tools, strategy=Strategy(rules="", model_id="anthropic/claude-3-5-sonnet-20241022"))
 
 
 # Interact with the agent
