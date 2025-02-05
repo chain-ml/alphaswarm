@@ -20,7 +20,7 @@ tools = [
 ]
 
 # Create the agent
-agent = AlphaSwarmAgent(tools=tools, strategy=strategy)
+agent = AlphaSwarmAgent(tools=tools, model_id="anthropic/claude-3-5-sonnet-20241022")
 
 
 # Interact with the agent
