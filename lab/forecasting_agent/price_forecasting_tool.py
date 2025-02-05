@@ -66,7 +66,7 @@ class PriceForecastingTool(Tool):
     def forward(self, historical_price_data: str, forecast_horizon: str, market_context: Optional[str] = None) -> PriceForecastResponse:
         response = self._llm_function.execute(
             user_prompt_params={
-                "market_context": market_context,
+                "market_context": market_context if market_context is not None else "No additional context provided",
                 "historical_price_data": historical_price_data,
                 "forecast_horizon": forecast_horizon,
             }

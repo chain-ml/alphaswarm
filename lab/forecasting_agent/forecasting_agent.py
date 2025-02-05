@@ -31,6 +31,7 @@ async def main() -> None:
     2. Use additional tools to get market context that is relevant to predicting the price of a token
     3. Use may use more than one tool to get additional market context if needed and if available
     4. Use the forecasting tool to generate a price forecast
+    5. Your final response must include the reasoning behind the forecast
     """
 
     system_prompt = system_prompt.replace("{{specialization}}", specialization)
