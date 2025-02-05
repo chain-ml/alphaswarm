@@ -9,6 +9,7 @@ from alphaswarm.tools.alchemy import AlchemyPriceHistoryByAddress, AlchemyPriceH
 from alphaswarm.tools.exchanges import GetTokenPriceTool
 from alphaswarm.tools.price_tool import PriceTool
 from alphaswarm.tools.strategy_analysis.generic import GenericStrategyAnalysisTool
+from alphaswarm.tools.strategy_analysis.strategy import Strategy
 from alphaswarm.tools.telegram import SendTelegramNotificationTool
 from alphaswarm.utils import read_text_file_to_string
 from smolagents import Tool
@@ -21,13 +22,14 @@ async def main() -> None:
     telegram_config = config.get("telegram", {})
     telegram_bot_token = telegram_config.get("bot_token")
     chat_id = int(telegram_config.get("chat_id"))
+    strategy = Strategy.from_file("momentum_strategy_config.md")
 
     tools: List[Tool] = [
         PriceTool(),
         GetTokenPriceTool(config),
         AlchemyPriceHistoryByAddress(),
         AlchemyPriceHistoryBySymbol(),
-        GenericStrategyAnalysisTool(),
+        GenericStrategyAnalysisTool(strategy=strategy),
         SendTelegramNotificationTool(telegram_bot_token=telegram_bot_token, chat_id=chat_id),
     ]  # Add your tools here
 
@@ -39,9 +41,7 @@ async def main() -> None:
     If you don't have access to certain data through the tools, acknowledge the limitation rather than making assumptions.
     """
 
-    agent = AlphaSwarmAgent(
-        tools=tools, model_id="anthropic/claude-3-5-sonnet-latest", system_prompt=system_prompt, hints=hints
-    )
+    agent = AlphaSwarmAgent(tools=tools, strategy=strategy, system_prompt=system_prompt, hints=hints)
 
     terminal = TerminalClient("AlphaSwarm terminal", agent)
     await asyncio.gather(
