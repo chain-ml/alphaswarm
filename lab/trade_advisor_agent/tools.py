@@ -42,7 +42,10 @@ class CallForecastingAgentTool(Tool):
         forecast_horizon: str = "1h", 
         forecast_frequency: str = "5m",
     ) -> str:
-        return """```csv
+        return f"""
+        The following is a *mock forecast* for the token {token_address_or_symbol} on the {network} network.
+        
+        ```csv
         timestamp, price, confidence_lower, confidence_upper
         2025-01-01 00:00:00, 100.00, 90.00, 110.00
         2025-01-01 00:05:00, 101.00, 91.00, 111.00

@@ -8,6 +8,7 @@ from alphaswarm.agent.clients import TerminalClient
 from alphaswarm.config import Config, BASE_PATH
 from alphaswarm.tools.alchemy import AlchemyPriceHistoryByAddress, AlchemyPriceHistoryBySymbol
 from alphaswarm.tools.telegram import SendTelegramNotificationTool
+from alphaswarm.tools.strategy_analysis.strategy import Strategy
 
 from smolagents import Tool
 
@@ -39,34 +40,39 @@ async def main() -> None:
         # "GRIFFAIN": "8x5VqbHA8D7NkD52uNuS5nnt3PwA8pLD34ymskeSo2Wn",
     }
 
-    specialization = """
-    ## Strategy Analysis
+    specialization = "You are specialized in analyzing price changes of tokens."
 
-    When applicable, you are responsible for analyzing trading strategies against token data.
+    strategy = Strategy(
+        model_id="anthropic/claude-3-5-sonnet-20240620",
+        rules="""
+            ## Strategy Analysis
 
-    When doing this:
-    1. Analyze the provided data against the strategy rules (below)
-    2. Identify which rules are triggered for which tokens
-    3. Provide supporting evidence and context for each alert
-    4. Create a brief summary of your overall findings
+            When applicable, you are responsible for analyzing trading strategies against token data.
 
-    For each triggered rule, provide:
-    - Complete token metadata
-    - A clear description of the triggered rule
-    - The relevant measured value
-    - Supporting data that justifies the alert
+            When doing this:
+            1. Analyze the provided data against the strategy rules (below)
+            2. Identify which rules are triggered for which tokens
+            3. Provide supporting evidence and context for each alert
+            4. Create a brief summary of your overall findings
 
-    Please apply the rules as explicitly as possible and provide quantitative evidence where available.
-    If you are planning to use another tool following your analysis, please ensure to format your analysis accordingly.
+            For each triggered rule, provide:
+            - Complete token metadata
+            - A clear description of the triggered rule
+            - The relevant measured value
+            - Supporting data that justifies the alert
 
-    ### Trading Strategy
+            Please apply the rules as explicitly as possible and provide quantitative evidence where available.
+            If you are planning to use another tool following your analysis, please ensure to format your analysis accordingly.
 
-    #### Price Changes
-    I want to be alerted when any of these price changes are detected:
-    - +/- 1.5% in 5 minute timeframe
-    - +/- 3% in 1 hour timeframe
-    - +/- 10% in 24 hour timeframe
-    """
+            ### Trading Strategy
+
+            #### Price Changes
+            I want to be alerted when any of these price changes are detected:
+            - +/- 1.5% in 5 minute timeframe
+            - +/- 3% in 1 hour timeframe
+            - +/- 10% in 24 hour timeframe
+            """,
+    )
 
     # Optional step to provide a custom system prompt.
     # If no custom system prompt is provided, a default one will be used.
@@ -76,7 +82,9 @@ async def main() -> None:
     system_prompt = system_prompt.replace("{{my_tokens}}", json.dumps(my_tokens))
     system_prompt = system_prompt.replace("{{specialization}}", specialization)
 
-    agent = AlphaSwarmAgent(tools=tools, model_id="anthropic/claude-3-5-sonnet-20240620", system_prompt=system_prompt)
+    agent = AlphaSwarmAgent(
+        tools=tools, system_prompt=system_prompt, strategy=strategy
+    )
 
     terminal = TerminalClient("AlphaSwarm terminal", agent)
     await asyncio.gather(

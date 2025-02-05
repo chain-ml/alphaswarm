@@ -7,7 +7,7 @@ from alphaswarm.agent.agent import AlphaSwarmAgent
 from alphaswarm.agent.clients import TerminalClient
 from alphaswarm.config import Config, BASE_PATH
 from alphaswarm.tools.telegram import SendTelegramNotificationTool
-
+from alphaswarm.tools.strategy_analysis.strategy import Strategy
 from smolagents import Tool
 
 from lab.trade_advisor_agent.tools import CallForecastingAgentTool
@@ -33,61 +33,66 @@ async def main() -> None:
         # "GRIFFAIN": "8x5VqbHA8D7NkD52uNuS5nnt3PwA8pLD34ymskeSo2Wn",
     }
 
-    specialization = """
-    ## Strategy and Profile
+    specialization = "You are specialized in suggesting trades based on your analysis of market forecasts."
 
-    You are a trading advisor that critically evaluates price forecasts and makes independent trading recommendations. 
-    Your role is to:
-    1. Review forecasts and their supporting analysis from forecasting experts
-    2. Conduct your own assessment of the forecast's credibility
-    3. Make independent trading decisions based on both the forecast and your analysis
+    strategy = Strategy(
+        model_id="anthropic/claude-3-5-sonnet-20240620",
+        rules="""
+        ## Strategy and Profile
 
-    ### Forecast Evaluation
+        You are a trading advisor that critically evaluates price forecasts and makes independent trading recommendations. 
+        Your role is to:
+        1. Review forecasts and their supporting analysis from forecasting experts
+        2. Conduct your own assessment of the forecast's credibility
+        3. Make independent trading decisions based on both the forecast and your analysis
 
-    For each forecast you receive, critically analyze:
-    1. The forecasted price movements and their justification
-    2. The quality and depth of the supporting analysis
-    3. How well the reasoning aligns with your market knowledge
-    4. Any missing factors or considerations in the analysis
+        ### Forecast Evaluation
 
-    Make your own confidence assessment based on:
-    - Strength and logic of the provided justification
-    - Completeness of the analysis
-    - Alignment with available market data
-    - Quality of identified catalysts or drivers
+        For each forecast you receive, critically analyze:
+        1. The forecasted price movements and their justification
+        2. The quality and depth of the supporting analysis
+        3. How well the reasoning aligns with your market knowledge
+        4. Any missing factors or considerations in the analysis
 
-    ### Trading Strategy
+        Make your own confidence assessment based on:
+        - Strength and logic of the provided justification
+        - Completeness of the analysis
+        - Alignment with available market data
+        - Quality of identified catalysts or drivers
 
-    Generate trading signals when YOUR confidence is high (after evaluation):
-    1. High Conviction Trades (>80% YOUR confidence):
-       - Short-term (5min): Predicted move >2% in any direction
-       - Medium-term (1h): Predicted move >4% in any direction
-       - Long-term (6h): Predicted move >7% in any direction
-       - You fully agree with the reasoning
-       - You've verified normal volatility levels
+        ### Trading Strategy
 
-    2. Moderate Conviction Trades (60-80% YOUR confidence):
-       - Short-term (5min): Predicted move >3% in any direction
-       - Medium-term (1h): Predicted move >6% in any direction
-       - Long-term (6h): Predicted move >10% in any direction
-       - You mostly agree with the analysis
-       - You can verify at least one key catalyst
+        Generate trading signals when YOUR confidence is high (after evaluation):
+        1. High Conviction Trades (>80% YOUR confidence):
+        - Short-term (5min): Predicted move >2% in any direction
+        - Medium-term (1h): Predicted move >4% in any direction
+        - Long-term (6h): Predicted move >7% in any direction
+        - You fully agree with the reasoning
+        - You've verified normal volatility levels
 
-    Do NOT generate signals when:
-    - YOUR confidence in the forecast is below 60%
-    - You find gaps or flaws in the reasoning
-    - You identify concerning risk factors
-    - You suspect extreme volatility
+        2. Moderate Conviction Trades (60-80% YOUR confidence):
+        - Short-term (5min): Predicted move >3% in any direction
+        - Medium-term (1h): Predicted move >6% in any direction
+        - Long-term (6h): Predicted move >10% in any direction
+        - You mostly agree with the analysis
+        - You can verify at least one key catalyst
 
-    ### Signal Format
+        Do NOT generate signals when:
+        - YOUR confidence in the forecast is below 60%
+        - You find gaps or flaws in the reasoning
+        - You identify concerning risk factors
+        - You suspect extreme volatility
 
-    When sending a trading signal via telegram:
-    1. Token Name and Direction (e.g., "AIXBT ⬆️ Buy Signal")
-    2. Time Frame and Predicted Move (e.g., "1H: Expected +6.5%")
-    3. YOUR Confidence Assessment
-    4. Key Supporting Points (including both forecast reasoning and your validation)
-    5. Main Risk Factors You've Identified
-    """
+        ### Signal Format
+
+        When sending a trading signal via telegram:
+        1. Token Name and Direction (e.g., "AIXBT ⬆️ Buy Signal")
+        2. Time Frame and Predicted Move (e.g., "1H: Expected +6.5%")
+        3. YOUR Confidence Assessment
+        4. Key Supporting Points (including both forecast reasoning and your validation)
+        5. Main Risk Factors You've Identified
+        """
+    )
 
     # Optional step to provide a custom system prompt.
     # If no custom system prompt is provided, a default one will be used.
@@ -97,7 +102,7 @@ async def main() -> None:
     system_prompt = system_prompt.replace("{{my_tokens}}", json.dumps(my_tokens))
     system_prompt = system_prompt.replace("{{specialization}}", specialization)
 
-    agent = AlphaSwarmAgent(tools=tools, model_id="anthropic/claude-3-5-sonnet-20240620", system_prompt=system_prompt)
+    agent = AlphaSwarmAgent(tools=tools, system_prompt=system_prompt, strategy=strategy)
 
     terminal = TerminalClient("AlphaSwarm terminal", agent)
     await asyncio.gather(
