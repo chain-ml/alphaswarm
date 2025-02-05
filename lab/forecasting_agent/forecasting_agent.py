@@ -5,20 +5,21 @@ import dotenv
 from alphaswarm.agent.agent import AlphaSwarmAgent
 from alphaswarm.agent.clients import TerminalClient
 from alphaswarm.config import BASE_PATH
-from alphaswarm.tools.alchemy import AlchemyPriceHistoryBySymbol
 from alphaswarm.tools.cookie.cookie_metrics import CookieMetricsBySymbol
 from alphaswarm.utils.file_utils import read_text_file_to_string
+from lab.forecasting_agent.alchemy_context_tool import AlchemyContextTool
+from lab.forecasting_agent.duck_duck_go_search import DuckDuckGoSearchTool
 from lab.forecasting_agent.price_forecasting_tool import PriceForecastingTool
 from smolagents import Tool
 
 
 class ForecastingAgent(AlphaSwarmAgent):
-
     def __init__(self):
         tools: List[Tool] = [
-            AlchemyPriceHistoryBySymbol(),
+            AlchemyContextTool(),
             CookieMetricsBySymbol(),
             PriceForecastingTool(),
+            DuckDuckGoSearchTool(),
         ]
 
         system_prompt = read_text_file_to_string(
@@ -35,6 +36,8 @@ class ForecastingAgent(AlphaSwarmAgent):
         3. Use may use more than one tool to get additional market context if needed and if available
         4. Use the forecasting tool to generate a price forecast
         5. Your final response must include the reasoning behind the forecast
+        6. Use web search to gather any information that could be relevant for the context, 
+        but be mindful about information relevance and recency.
         """
 
         system_prompt = system_prompt.replace("{{specialization}}", specialization)
