@@ -1,14 +1,15 @@
 import asyncio
+import os
 from typing import List
 
 import dotenv
 from alphaswarm.agent.agent import AlphaSwarmAgent
 from alphaswarm.agent.clients import TerminalClient
 from alphaswarm.config import BASE_PATH
-from alphaswarm.tools.cookie.cookie_metrics import CookieMetricsBySymbol
+from alphaswarm.tools.alchemy import AlchemyPriceHistoryBySymbol
+from alphaswarm.tools.telegram import SendTelegramNotificationTool
 from alphaswarm.utils.file_utils import read_text_file_to_string
-from lab.forecasting_agent.alchemy_context_tool import AlchemyContextTool
-from lab.forecasting_agent.duck_duck_go_search import DuckDuckGoSearchTool
+from lab.forecasting_agent.create_image_tool import CreateImageTool
 from lab.forecasting_agent.price_forecasting_tool import PriceForecastingTool
 from smolagents import Tool
 
@@ -16,10 +17,15 @@ from smolagents import Tool
 class ForecastingAgent(AlphaSwarmAgent):
     def __init__(self):
         tools: List[Tool] = [
-            AlchemyContextTool(),
-            CookieMetricsBySymbol(),
+            # AlchemyContextTool(),
+            AlchemyPriceHistoryBySymbol(),
+            # CookieMetricsBySymbol(),
             PriceForecastingTool(),
-            DuckDuckGoSearchTool(),
+            # DuckDuckGoSearchTool(),
+            CreateImageTool(),
+            SendTelegramNotificationTool(
+                telegram_bot_token=os.getenv("TELEGRAM_BOT_TOKEN"), chat_id=int(os.getenv("TELEGRAM_CHAT_ID"))
+            ),
         ]
 
         system_prompt = read_text_file_to_string(
@@ -58,3 +64,4 @@ async def main() -> None:
 
 if __name__ == "__main__":
     asyncio.run(main())
+    # Forecast the price of ETH for the next 2 days based on the historical data for the last 7 days and send me a Telegram message with the image

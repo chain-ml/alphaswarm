@@ -1,4 +1,5 @@
 import os
+from datetime import datetime
 from decimal import Decimal
 from typing import List, Optional
 
@@ -9,7 +10,8 @@ from smolagents import Tool
 
 
 class PriceForecast(BaseModel):
-    timestamp: str = Field(description="The timestamp of the forecast")
+    # TODO: investigate
+    timestamp: datetime = Field(description="The timestamp of the forecast")
     price: Decimal = Field(description="The forecasted median price of the token")
     lower_confidence_bound: Decimal = Field(description="The lower confidence bound of the forecast")
     upper_confidence_bound: Decimal = Field(description="The upper confidence bound of the forecast")
