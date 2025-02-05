@@ -19,16 +19,12 @@ class UniswapClientBase(DEXClient):
     def __init__(self, config: Config, chain: str, version: str) -> None:
         super().__init__(config, chain)
         self.version = version
-        self._router = self._get_router(self.chain)
-        self._factory = self._get_factory(self.chain)
         self._evm_client = EVMClient(self.config, self.chain)
         self._web3 = self._evm_client.client
+        self._router = self._get_router(self.chain)
+        self._factory = self._get_factory(self.chain)
 
         logger.info(f"Created {self.__class__.__name__} instance for chain {self.chain}")
-
-    @property
-    def evm_client(self) -> EVMClient:
-        return self._evm_client
 
     # TODO this would need to become an input parameter for relevant functions
     def get_signer(self) -> EVMSigner:
