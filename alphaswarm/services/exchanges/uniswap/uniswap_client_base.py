@@ -8,7 +8,6 @@ from alphaswarm.services.chains.evm import ERC20Contract, EVMClient, EVMSigner
 from alphaswarm.services.exchanges.base import DEXClient, SwapResult
 from eth_account import Account
 from eth_account.signers.local import LocalAccount
-from eth_defi.provider.multi_provider import MultiProviderWeb3, create_multi_provider_web3
 from eth_typing import ChecksumAddress, HexAddress
 from web3.types import TxReceipt
 
@@ -34,10 +33,6 @@ class UniswapClientBase(DEXClient):
     # TODO this would need to become an input parameter for relevant functions
     def get_signer(self) -> EVMSigner:
         return EVMSigner(self.chain_config.private_key)
-
-    @staticmethod
-    def _create_multi_provider_web3(rpc_url: str) -> MultiProviderWeb3:
-        return create_multi_provider_web3(rpc_url)
 
     @abstractmethod
     def _get_router(self, chain: str) -> ChecksumAddress:

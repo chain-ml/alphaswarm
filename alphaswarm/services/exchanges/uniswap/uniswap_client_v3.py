@@ -3,8 +3,7 @@ from decimal import Decimal
 from typing import Any, Dict, List, Optional, Self, Tuple, Union
 
 from alphaswarm.config import Config, TokenInfo
-from alphaswarm.services.chains import EVMClient
-from alphaswarm.services.chains.evm import ZERO_ADDRESS, EMVContract, EVMSigner
+from alphaswarm.services.chains.evm import ZERO_ADDRESS, EMVContract, EVMClient, EVMSigner
 from alphaswarm.services.exchanges.uniswap.constants_v3 import (
     UNISWAP_V3_DEPLOYMENTS,
     UNISWAP_V3_FACTORY_ABI,
@@ -12,7 +11,6 @@ from alphaswarm.services.exchanges.uniswap.constants_v3 import (
     UNISWAP_V3_ROUTER_ABI,
 )
 from alphaswarm.services.exchanges.uniswap.uniswap_client_base import UniswapClientBase
-from cchecksum import to_checksum_address
 from eth_defi.uniswap_v3.pool import PoolDetails, fetch_pool_details
 from eth_defi.uniswap_v3.price import get_onchain_price
 from eth_typing import ChecksumAddress, HexAddress
@@ -102,10 +100,10 @@ class UniswapClientV3(UniswapClientBase):
         return self._factory_contract
 
     def _get_router(self, chain: str) -> ChecksumAddress:
-        return to_checksum_address(UNISWAP_V3_DEPLOYMENTS[chain]["router"])
+        return self._evm_client.to_checksum_address(UNISWAP_V3_DEPLOYMENTS[chain]["router"])
 
     def _get_factory(self, chain: str) -> ChecksumAddress:
-        return to_checksum_address(UNISWAP_V3_DEPLOYMENTS[chain]["factory"])
+        return self._evm_client.to_checksum_address(UNISWAP_V3_DEPLOYMENTS[chain]["factory"])
 
     def _swap(
         self, base: TokenInfo, quote: TokenInfo, address: str, quote_wei: int, slippage_bps: int

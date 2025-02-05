@@ -12,7 +12,6 @@ from alphaswarm.services.exchanges.uniswap.constants_v2 import (
 from alphaswarm.services.exchanges.uniswap.uniswap_client_base import UniswapClientBase
 from eth_defi.uniswap_v2.pair import fetch_pair_details
 from eth_typing import ChecksumAddress
-from eth_utils import to_checksum_address
 from web3.types import TxReceipt
 
 logger = logging.getLogger(__name__)
@@ -23,10 +22,10 @@ class UniswapClientV2(UniswapClientBase):
         super().__init__(config, chain, "v2")
 
     def _get_router(self, chain: str) -> ChecksumAddress:
-        return to_checksum_address(UNISWAP_V2_DEPLOYMENTS[chain]["router"])
+        return self._evm_client.to_checksum_address(UNISWAP_V2_DEPLOYMENTS[chain]["router"])
 
     def _get_factory(self, chain: str) -> ChecksumAddress:
-        return to_checksum_address(UNISWAP_V2_DEPLOYMENTS[chain]["factory"])
+        return self._evm_client.to_checksum_address(UNISWAP_V2_DEPLOYMENTS[chain]["factory"])
 
     def _swap(
         self, base: TokenInfo, quote: TokenInfo, address: str, raw_quote_amount: int, slippage_bps: int
