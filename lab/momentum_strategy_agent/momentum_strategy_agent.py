@@ -1,18 +1,15 @@
 import asyncio
-import dotenv
 import json
 from typing import List
 
+import dotenv
 from alphaswarm.agent.agent import AlphaSwarmAgent
 from alphaswarm.agent.clients import TerminalClient
-from alphaswarm.config import Config, BASE_PATH
-from alphaswarm.tools.alchemy import AlchemyPriceHistoryByAddress, AlchemyPriceHistoryBySymbol
+from alphaswarm.config import BASE_PATH, Config
 from alphaswarm.tools.telegram import SendTelegramNotificationTool
 from alphaswarm.tools.strategy_analysis.strategy import Strategy
-
-from smolagents import Tool
-
 from lab.momentum_strategy_agent.price_change_tool import TokenPriceChangeCalculator
+from smolagents import Tool
 
 
 async def main() -> None:
@@ -39,11 +36,8 @@ async def main() -> None:
         # "AI16Z": "HeLp6NuQkmYB4pYWo2zYs22mESHXPQYzXbB8n4V98jwC",
         # "GRIFFAIN": "8x5VqbHA8D7NkD52uNuS5nnt3PwA8pLD34ymskeSo2Wn",
     }
-
-    specialization = "You are specialized in analyzing price changes of tokens."
-
+    
     strategy = Strategy(
-        model_id="anthropic/claude-3-5-sonnet-20240620",
         rules="""
             ## Strategy Analysis
 
@@ -76,15 +70,13 @@ async def main() -> None:
 
     # Optional step to provide a custom system prompt.
     # If no custom system prompt is provided, a default one will be used.
-    with open(BASE_PATH / "lab/momentum_strategy_agent/research_agent_system_prompt.txt", "r") as f:
+    with open(BASE_PATH / "lab/momentum_strategy_agent/trading_strategy_agent_system_prompt.txt", "r") as f:
         system_prompt = f.read()
 
-    system_prompt = system_prompt.replace("{{my_tokens}}", json.dumps(my_tokens))
-    system_prompt = system_prompt.replace("{{specialization}}", specialization)
+    system_prompt = system_prompt.replace("{{token_set}}", json.dumps(my_tokens))
+    system_prompt = system_prompt.replace("{{trading_strategy}}", strategy.rules)
 
-    agent = AlphaSwarmAgent(
-        tools=tools, system_prompt=system_prompt, strategy=strategy
-    )
+    agent = AlphaSwarmAgent(model_id="anthropic/claude-3-5-sonnet-20240620", tools=tools, system_prompt=system_prompt)
 
     terminal = TerminalClient("AlphaSwarm terminal", agent)
     await asyncio.gather(

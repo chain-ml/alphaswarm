@@ -1,6 +1,5 @@
 from datetime import datetime, timedelta, timezone
 from typing import Optional
-from decimal import Decimal
 
 from alphaswarm.services.alchemy import NETWORKS, AlchemyClient, HistoricalPriceByAddress, HistoricalPriceBySymbol
 from smolagents import Tool
@@ -73,5 +72,3 @@ class AlchemyPriceHistoryByAddress(Tool):
         end_time = datetime.now(timezone.utc)
         start_time = end_time - timedelta(days=history)
         return self.client.get_historical_prices_by_address(address, network, start_time, end_time, interval)
-
-
