@@ -1,6 +1,6 @@
 import logging
 from decimal import Decimal
-from typing import Dict, List, Optional, Self, Tuple, Union
+from typing import Any, Dict, List, Optional, Self, Tuple, Union
 
 from alphaswarm.config import Config, TokenInfo
 from alphaswarm.services.chains import EVMClient
@@ -17,6 +17,7 @@ from eth_defi.uniswap_v3.pool import PoolDetails, fetch_pool_details
 from eth_defi.uniswap_v3.price import get_onchain_price
 from eth_typing import ChecksumAddress, HexAddress
 from pydantic import BaseModel, Field
+from typing_extensions import Annotated
 from web3 import Web3
 from web3.types import TxReceipt
 
@@ -63,14 +64,17 @@ class PoolContract:
 
 
 class ExactInputSingleParams(BaseModel):
+    token_in: Annotated[ChecksumAddress, Field(serialization_alias="tokenIn")]
+    token_out: Annotated[ChecksumAddress, Field(serialization_alias="tokenOut")]
     fee: int
     recipient: ChecksumAddress
     deadline: int
-    token_in: ChecksumAddress = Field(alias="tokenIn")
-    token_out: ChecksumAddress = Field(alias="tokenOut")
-    amount_in: int = Field(alias="amountIn")
-    amount_out: int = Field(alias="amountOut")
-    sqrt_price_limit_x96: int = Field(alias="sqrtPriceLimitX96")
+    amount_in: Annotated[int, Field(serialization_alias="amountIn")]
+    amount_out_minimum: Annotated[int, Field(serialization_alias="amountOutMinimum")]
+    sqrt_price_limit_x96: Annotated[int, Field(serialization_alias="sqrtPriceLimitX96")]
+
+    def to_dict(self) -> Dict[str, Any]:
+        return self.model_dump(by_alias=True)
 
 
 class RouterContract(EMVContract):
@@ -83,7 +87,7 @@ class RouterContract(EMVContract):
         return cls(client, address, router_abi)
 
     def exact_input_single(self, signer: EVMSigner, params: ExactInputSingleParams) -> TxReceipt:
-        return self._client.process(self._contract.functions.exactInputSingle(params.model_dump(by_alias=True)), signer)
+        return self._client.process(self._contract.functions.exactInputSingle(params.to_dict()), signer)
 
 
 class UniswapClientV3(UniswapClientBase):
@@ -154,23 +158,20 @@ class UniswapClientV3(UniswapClientBase):
         logger.info(f"Minimum output with {slippage_bps} bps slippage (raw): {min_output_raw}")
 
         # Build swap parameters for `exactInputSingle`
-        params = {
-            "tokenIn": quote.checksum_address,
-            "tokenOut": base.checksum_address,
-            "fee": pool_details.raw_fee,
-            "recipient": self._web3.to_checksum_address(address),
-            "deadline": int(self._web3.eth.get_block("latest")["timestamp"] + 300),
-            "amountIn": quote_wei,
-            "amountOutMinimum": min_output_raw,
-            "sqrtPriceLimitX96": 0,
-        }
-        logger.info("Built exactInputSingle parameters:")
-        for k, v in params.items():
-            logger.info(f"  {k}: {v}")
+        params = ExactInputSingleParams(
+            token_in=quote.checksum_address,
+            token_out=base.checksum_address,
+            fee=pool_details.raw_fee,
+            recipient=self._evm_client.to_checksum_address(address),
+            deadline=int(self._web3.eth.get_block("latest")["timestamp"] + 300),
+            amount_in=quote_wei,
+            amount_out_minimum=min_output_raw,
+            sqrt_price_limit_x96=0,
+        )
 
         # Build swap transaction with EIP-1559 parameters
         router_contract = RouterContract.from_chain(self._evm_client, self._router, self.chain)
-        swap_receipt = router_contract.exact_input_single(self.get_signer(), ExactInputSingleParams(**params))
+        swap_receipt = router_contract.exact_input_single(self.get_signer(), params)
 
         return [approval_receipt, swap_receipt]
 
