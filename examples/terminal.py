@@ -1,6 +1,6 @@
 import asyncio
 import json
-from typing import List
+from typing import List, Mapping
 
 import dotenv
 from alphaswarm.agent.agent import AlphaSwarmAgent
@@ -48,9 +48,8 @@ async def main() -> None:
     system_prompt = system_prompt.replace("{{trading_strategy}}", strategy.rules)
     system_prompt = system_prompt.replace("{{token_set}}", json.dumps(token_set))
 
-    hints = """You must only use real data obtained through the available tools - never make up, synthesize, or assume any market data.
-    If you don't have access to certain data through the tools, acknowledge the limitation rather than making assumptions.
-    """
+    # Optional hints
+    hints = read_text_file_to_string(CONFIG_PATH / "trading_strategy_agent_hints.txt")
 
     agent = AlphaSwarmAgent(
         model_id="anthropic/claude-3-5-sonnet-20240620", tools=tools, system_prompt=system_prompt, hints=hints
