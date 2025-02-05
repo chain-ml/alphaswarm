@@ -47,7 +47,7 @@ class PriceForecastingTool(Tool):
         },
         "market_context": {
             "type": "string",
-            "description": "Relevant market context for the token",
+            "description": "Relevant market context for the token. For every piece of information, include source and timeframe. If those are not available, state that or do not include them.",
             "nullable": True,
         },
     }
