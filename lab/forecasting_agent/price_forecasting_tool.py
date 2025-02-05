@@ -10,7 +10,9 @@ from smolagents import Tool
 
 class PriceForecast(BaseModel):
     timestamp: str = Field(description="The timestamp of the forecast")
-    price: Decimal = Field(description="The forecasted price of the token")
+    price: Decimal = Field(description="The forecasted median price of the token")
+    lower_confidence_bound: Decimal = Field(description="The lower confidence bound of the forecast")
+    upper_confidence_bound: Decimal = Field(description="The upper confidence bound of the forecast")
 
 
 class PriceForecastResponse(BaseModel):
@@ -30,7 +32,9 @@ class PriceForecastingTool(Tool):
 
     A `PriceForecast` object has the following fields:
     - timestamp: The timestamp of the forecast
-    - price: The forecasted price of the token
+    - price: The forecasted median price of the token
+    - lower_confidence_bound: The lower confidence bound of the forecast
+    - upper_confidence_bound: The upper confidence bound of the forecast
     """
     inputs = {
         "historical_price_data": {
