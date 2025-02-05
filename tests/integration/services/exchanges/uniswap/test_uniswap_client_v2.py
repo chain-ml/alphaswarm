@@ -13,8 +13,8 @@ def test_get_markets_for_tokens_v2(default_config: Config):
     weth_address = "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"  # Ethereum WETH
 
     evm_client = client._evm_client
-    usdc = evm_client.get_token_info(usdc_address)
-    weth = evm_client.get_token_info(weth_address)
+    usdc = evm_client.get_token_info(evm_client.to_checksum_address(usdc_address))
+    weth = evm_client.get_token_info(evm_client.to_checksum_address(weth_address))
 
     tokens = [usdc, weth]
     markets = client.get_markets_for_tokens(tokens)

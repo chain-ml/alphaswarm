@@ -28,6 +28,7 @@ def eth_sepolia_usdc_contract(eth_sepolia_client) -> ERC20Contract:
 
 def test_ecr_20_get_balance(eth_sepolia_usdc_contract: ERC20Contract) -> None:
     result = eth_sepolia_usdc_contract.get_balance(ZERO_CHECKSUM_ADDRESS)
+
     assert result == 0
 
 

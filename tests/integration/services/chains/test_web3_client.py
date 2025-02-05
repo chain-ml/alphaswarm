@@ -1,3 +1,5 @@
+import pytest
+
 from alphaswarm.services.chains import EVMClient, SolanaClient
 from alphaswarm.config import Config
 
@@ -6,7 +8,7 @@ def test_get_token_info(default_config: Config):
     """Test getting token info for USDC on ethereum."""
     chain = "ethereum"
     client = EVMClient(default_config, chain)
-    usdc_address = "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48"
+    usdc_address = EVMClient.to_checksum_address("0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48")
 
     token_info = client.get_token_info(usdc_address)
     print(token_info)
@@ -59,3 +61,13 @@ def test_get_eth_balance(default_config: Config):
     assert balance is not None
     assert balance > 0
     print(f"Wallet balance: {balance}")
+
+
+def test_get_native_token_vs_get_token(default_config: Config):
+    client = EVMClient(default_config, "ethereum")
+    wallet = client.to_checksum_address("0xF977814e90dA44bFA03b6295A0616a897441aceC")
+    token_info = client.get_token_info_by_name("ETH")
+    balance_native = client.get_native_balance(wallet)
+    balance_token = client.get_token_balance("ETH", wallet)
+
+    assert pytest.approx(balance_native, rel=0.1) == token_info.convert_to_wei(balance_token)

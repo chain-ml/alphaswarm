@@ -11,7 +11,6 @@ from eth_account import Account
 from eth_account.signers.local import LocalAccount
 from eth_defi.provider.multi_provider import MultiProviderWeb3, create_multi_provider_web3
 from eth_typing import ChecksumAddress, HexAddress
-from web3.middleware.signing import construct_sign_and_send_raw_middleware
 from web3.types import TxReceipt
 
 # Set up logger
@@ -25,10 +24,7 @@ class UniswapClientBase(DEXClient):
         self._router = self._get_router(self.chain)
         self._factory = self._get_factory(self.chain)
         self._evm_client = EVMClient(self.config, self.chain)
-        # TODO Eventually remove this Web3 client in favor of EVMClient
-        self._web3: MultiProviderWeb3 = self._create_multi_provider_web3(
-            self.config.get_chain_config(self.chain).rpc_url
-        )
+        self._web3 = self._evm_client.client
 
         logger.info(f"Created {self.__class__.__name__} instance for chain {self.chain}")
 
@@ -135,20 +131,17 @@ class UniswapClientBase(DEXClient):
         wallet_address = account.address
         logger.info(f"Wallet address: {wallet_address}")
 
-        # Enable eth_sendTransaction using this private key
-        self._web3.middleware_onion.add(construct_sign_and_send_raw_middleware(account))
-
         # Create contract instances
         base_contract = ERC20Contract(self._evm_client, base_token.checksum_address)
         quote_contract = ERC20Contract(self._evm_client, quote_token.checksum_address)
 
         # Gas balance
-        gas_balance = self._web3.eth.get_balance(account.address)
+        gas_balance = self._evm_client.get_native_balance(account.address)
 
         # Log balances
         base_balance = base_token.convert_from_wei(base_contract.get_balance(wallet_address))
         quote_balance = quote_token.convert_from_wei(quote_contract.get_balance(wallet_address))
-        eth_balance = gas_balance / (10**18)
+        eth_balance = Decimal(gas_balance) / (10**18)
 
         logger.info(f"Balance of {base_token.symbol}: {base_balance:,.8f}")
         logger.info(f"Balance of {quote_token.symbol}: {quote_balance:,.8f}")

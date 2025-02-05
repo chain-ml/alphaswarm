@@ -11,7 +11,7 @@ from hexbytes import HexBytes
 from web3 import Web3
 from web3.contract import Contract
 from web3.contract.contract import ContractFunction
-from web3.types import TxParams, TxReceipt
+from web3.types import TxParams, TxReceipt, Wei
 
 logger = logging.getLogger(__name__)
 
@@ -49,6 +49,10 @@ class EVMClient:
     def chain(self) -> str:
         return self._chain
 
+    @property
+    def client(self) -> Web3:
+        return self._client
+
     @staticmethod
     def _validate_chain(chain: str) -> None:
         """Validate that the chain is supported by EVMClient"""
@@ -60,27 +64,29 @@ class EVMClient:
         """Convert address to checksum format"""
         return Web3.to_checksum_address(address)
 
-    def get_token_details(self, token_address: str) -> TokenDetails:
+    def get_token_details(self, token_address: ChecksumAddress) -> TokenDetails:
         return fetch_erc20_details(self._client, token_address, chain_id=self._client.eth.chain_id)
 
-    def get_token_info(self, token_address: str) -> TokenInfo:
+    def get_token_info(self, token_address: ChecksumAddress) -> TokenInfo:
         """Get token info by token contract address"""
         token_details: TokenDetails = self.get_token_details(token_address)
         symbol = token_details.symbol
         decimals = token_details.decimals
         return TokenInfo(symbol=symbol, address=token_address, decimals=decimals, chain=self._chain, is_native=False)
 
-    def get_native_token_balance(self, wallet_address: ChecksumAddress) -> Decimal:
-        return Decimal(self._client.eth.get_balance(self.to_checksum_address(wallet_address)))
+    def get_token_info_by_name(self, name: str) -> TokenInfo:
+        return self._chain_config.get_token_info(name)
+
+    def get_native_balance(self, wallet_address: ChecksumAddress) -> Wei:
+        return Wei(self._client.eth.get_balance(self.to_checksum_address(wallet_address)))
 
     def get_token_balance(self, token: str, wallet_address: ChecksumAddress) -> Decimal:
         """Get balance for token symbol (resolved via Config) for a wallet address"""
-        if token == "ETH":
-            return self.get_native_token_balance(wallet_address)
+        token_info = self.get_token_info_by_name(token)
+        if token_info.is_native:
+            return token_info.convert_from_wei(self.get_native_balance(wallet_address))
 
-        token_info = self._chain_config.get_token_info(token)
-        token_address = token_info.address
-        token_details = self.get_token_details(token_address)
+        token_details = self.get_token_details(token_info.checksum_address)
         # TODO this should be using ERC20Contract which would introduce a circular dependency
         return token_details.fetch_balance_of(self.to_checksum_address(wallet_address))
 
