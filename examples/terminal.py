@@ -39,14 +39,14 @@ async def main() -> None:
     # If no custom system prompt is provided, a default one will be used.
     system_prompt = read_text_file_to_string(CONFIG_PATH / "trading_strategy_agent_system_prompt.txt")
 
-    token_set = {
+    token_name_to_address: Mapping[str, str] = {
         "AIXBT (base)": "0x4F9Fd6Be4a90f2620860d680c0d4d5Fb53d1A825",
         "VIRTUAL (base)": "0x0b3e328455c4059EEb9e3f84b5543F74E24e7E1b",
         "VADER (base)": "0x731814e491571A2e9eE3c5b1F7f3b962eE8f4870",
     }
 
     system_prompt = system_prompt.replace("{{trading_strategy}}", strategy.rules)
-    system_prompt = system_prompt.replace("{{token_set}}", json.dumps(token_set))
+    system_prompt = system_prompt.replace("{{token_name_to_address}}", json.dumps(token_name_to_address))
 
     # Optional hints
     hints = read_text_file_to_string(CONFIG_PATH / "trading_strategy_agent_hints.txt")
