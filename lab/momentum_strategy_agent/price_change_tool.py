@@ -1,10 +1,9 @@
 from decimal import Decimal
 from typing import Optional
 
-from smolagents import Tool
-
 from alphaswarm.services.alchemy import AlchemyClient
 from alphaswarm.tools.alchemy import AlchemyPriceHistoryByAddress
+from smolagents import Tool
 
 
 class TokenPriceChangeCalculator(Tool):
@@ -30,7 +29,7 @@ class TokenPriceChangeCalculator(Tool):
             "description": "Network where the token exists (e.g. eth-mainnet, base-mainnet)",
             "default": "eth-mainnet",
             "nullable": True,
-        }
+        },
     }
     output_type = "object"
 
@@ -49,10 +48,7 @@ class TokenPriceChangeCalculator(Tool):
 
         # Use the existing price history tool
         price_history = self.price_history_tool.forward(
-            address=token_address,
-            network=network,
-            interval=frequency,
-            history=days_needed
+            address=token_address, network=network, interval=frequency, history=days_needed
         )
 
         # Ensure we have enough data points
@@ -74,5 +70,5 @@ class TokenPriceChangeCalculator(Tool):
             "end_price": float(end_price),
             "percent_change": percent_change,
             "n_samples": n_samples,
-            "frequency": frequency
+            "frequency": frequency,
         }

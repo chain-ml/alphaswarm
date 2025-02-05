@@ -1,7 +1,7 @@
 import asyncio
+from datetime import datetime
 from typing import Optional, Sequence
 
-from alphaswarm.tools.strategy_analysis.strategy import Strategy
 from smolagents import CODE_SYSTEM_PROMPT, CodeAgent, LiteLLMModel, Tool
 
 
@@ -10,7 +10,7 @@ class AlphaSwarmAgent:
     def __init__(
         self,
         tools: Sequence[Tool],
-        strategy: Strategy,
+        model_id: str,
         system_prompt: Optional[str] = None,
         hints: Optional[str] = None,
     ) -> None:
@@ -18,10 +18,9 @@ class AlphaSwarmAgent:
         system_prompt = system_prompt or CODE_SYSTEM_PROMPT
         system_prompt = system_prompt + "\n" + hints if hints else system_prompt
 
-        self._strategy_rules = strategy.rules
         self._agent = CodeAgent(
             tools=list(tools),
-            model=LiteLLMModel(model_id=strategy.model_id),
+            model=LiteLLMModel(model_id=model_id),
             system_prompt=system_prompt,
             additional_authorized_imports=["json", "decimal"],
         )
@@ -49,9 +48,9 @@ class AlphaSwarmAgent:
     def _build_context(self, current_message: str) -> str:
         messages = [
             "# User Context",
-            "## Strategy Rules\n\n```",
-            self._strategy_rules,
-            "\n\n```\n",
+            "",
+            "## Current Date and Time",
+            datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
             "",
             "## Messages",
             current_message,
