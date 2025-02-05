@@ -100,7 +100,7 @@ async def main() -> None:
         system_prompt = f.read()
 
     system_prompt = system_prompt.replace("{{my_tokens}}", json.dumps(my_tokens))
-    system_prompt = system_prompt.replace("{{specialization}}", specialization)
+    system_prompt = system_prompt.replace("{{specialization}}", specialization)    
 
     agent = AlphaSwarmAgent(tools=tools, system_prompt=system_prompt, strategy=strategy)
 
