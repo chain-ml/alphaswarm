@@ -21,6 +21,11 @@ class SendTelegramNotificationTool(Tool):
             "description": "The priority of the alert, one of 'high', 'medium', 'low'.",
             "required": True,
         },
+        "image_path": {
+            "type": "string",
+            "description": "Path to the image to send, if any",
+            "nullable": True,
+        },
     }
     output_type = "string"
 
@@ -32,9 +37,11 @@ class SendTelegramNotificationTool(Tool):
 
         self._telegram_app = TelegramApp(bot_token=self.token)
 
-    def forward(self, message: str, confidence: float, priority: str) -> str:
+    def forward(self, message: str, confidence: float, priority: str, image_path: Optional[str] = None) -> str:
         message_to_send = self.format_alert_message(message=message, confidence=confidence, priority=priority)
         asyncio.run(self._telegram_app.send_message(chat_id=self.chat_id, message=message_to_send))
+        if image_path:
+            asyncio.run(self._telegram_app.send_image(chat_id=self.chat_id, image_path=image_path))
         return "Message sent successfully"
 
     @classmethod
