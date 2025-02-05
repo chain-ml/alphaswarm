@@ -161,6 +161,7 @@ Note: Always verify contract addresses from official sources.
 #### Basic Example
 
 In a first "hello world" example we are going to get the price of a token pair from available DEXes on Base.
+Set your Anthropic API key in the `.env` file or change the model ID to an OpenAI model if using openAI.
 
 Create a new file or reference existing one `examples/basic_example_01_quote.py` in your project directory:
 
@@ -169,7 +170,6 @@ import dotenv
 from alphaswarm.agent.agent import AlphaSwarmAgent
 from alphaswarm.config import Config
 from alphaswarm.tools.exchanges.get_token_price_tool import GetTokenPriceTool
-from alphaswarm.tools.strategy_analysis.strategy import Strategy
 
 dotenv.load_dotenv()
 config = Config()
@@ -180,7 +180,7 @@ tools = [
 ]
 
 # Create the agent
-agent = AlphaSwarmAgent(tools=tools, strategy=Strategy(rules="", model_id="anthropic/claude-3-5-sonnet-20241022"))
+agent = AlphaSwarmAgent(tools=tools, model_id="anthropic/claude-3-5-sonnet-20241022")
 
 
 # Interact with the agent
@@ -204,6 +204,7 @@ python examples/basic_example_01_quote.py
 #### Follow-up Example: Execute a token swap
 
 In a follow-up example we are going to execute a token swap on a supported DEX on Ethereum Sepolia.
+Set your Anthropic API key in the `.env` file or change the model ID to an OpenAI model if using openAI.
 
 Create a new file or reference existing one `examples/basic_example_02_swap.py`:
 
@@ -212,7 +213,6 @@ import dotenv
 from alphaswarm.agent.agent import AlphaSwarmAgent
 from alphaswarm.config import Config
 from alphaswarm.tools.exchanges.execute_token_swap_tool import ExecuteTokenSwapTool
-from alphaswarm.tools.strategy_analysis.strategy import Strategy
 
 dotenv.load_dotenv()
 config = Config(network_env="test")  # Use a testnet environment (as defined in config/default.yaml)
@@ -223,7 +223,7 @@ tools = [
 ]
 
 # Create the agent
-agent = AlphaSwarmAgent(tools=tools, strategy=Strategy(rules="", model_id="anthropic/claude-3-5-sonnet-20241022"))
+agent = AlphaSwarmAgent(tools=tools, model_id="anthropic/claude-3-5-sonnet-20241022")
 
 
 # Interact with the agent
@@ -247,6 +247,7 @@ python examples/basic_example_02_swap.py
 ### Strategy Example: Check a trading strategy and optionally execute it
 
 In a follow-up example we are going to check a trading strategy and optionally execute it.
+Set your Anthropic API key in the `.env` file or change the model ID to an OpenAI model if using openAI.
 
 Create a new file or reference existing one `examples/basic_example_03_strategy.py`:
 
@@ -270,7 +271,7 @@ tools = [
 ]
 
 # Create the agent
-agent = AlphaSwarmAgent(tools=tools, strategy=strategy)
+agent = AlphaSwarmAgent(tools=tools, model_id="anthropic/claude-3-5-sonnet-20241022")
 
 
 # Interact with the agent
@@ -315,6 +316,11 @@ poetry run isort .
 # Run linters
 poetry run ruff check .
 poetry run mypy .
+```
+
+or use Makefile shortcuts:
+```bash
+make dev-lint
 ```
 
 ## Security
