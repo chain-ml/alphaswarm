@@ -38,8 +38,9 @@ class ForecastingAgent(AlphaSwarmAgent):
         """
 
         system_prompt = system_prompt.replace("{{specialization}}", specialization)
-        
+
         super().__init__(tools=tools, model_id="anthropic/claude-3-5-sonnet-20241022", system_prompt=system_prompt)
+
 
 async def main() -> None:
     dotenv.load_dotenv()

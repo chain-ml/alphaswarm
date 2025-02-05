@@ -1,7 +1,8 @@
-from smolagents import Tool
 import asyncio
 
 from lab.forecasting_agent.forecasting_agent import ForecastingAgent
+from smolagents import Tool
+
 
 class CallForecastingAgentTool(Tool):
     name = "CallForecastingAgentTool"
@@ -21,11 +22,9 @@ class CallForecastingAgentTool(Tool):
 
         # Initialize the forecasting agent
         self.forecasting_agent = ForecastingAgent()
-        
+
     def forward(
         self,
         task_for_forecasting_agent: str,
     ) -> str:
-        # Use asyncio.run to handle all the event loop setup/cleanup automatically
-        result = asyncio.run(self.forecasting_agent.process_message(task_for_forecasting_agent))
-        return str(result)
+        return str(asyncio.run(self.forecasting_agent.process_message(task_for_forecasting_agent)))
