@@ -6,7 +6,6 @@ from typing import List, Tuple
 from alphaswarm.config import Config, TokenInfo
 from alphaswarm.services.chains import EVMClient
 from alphaswarm.services.chains.evm import ERC20Contract, EVMSigner
-from alphaswarm.services.chains.evm.evm import DEFAULT_GAS_LIMIT
 from alphaswarm.services.exchanges.base import DEXClient, SwapResult
 from eth_account import Account
 from eth_account.signers.local import LocalAccount
@@ -176,42 +175,7 @@ class UniswapClientBase(DEXClient):
             tx_hash=swap_receipt["transactionHash"],  # Return the swap tx hash, not the approve tx
         )
 
-    def _get_gas_fees(self) -> tuple[int, int, int, int]:
-        """Calculate gas fees for transactions and get gas limit from config.
-
-        Returns:
-            tuple[int, int, int, int]: (max_fee_per_gas, base_fee, priority_fee, gas_limit)
-        """
-        # Get current base fee and priority fee
-        latest_block = self._web3.eth.get_block("latest")
-        base_fee = latest_block.get("baseFeePerGas", 0)  # Use get() with default value
-        if base_fee == 0:
-            logger.warning(
-                "BaseFeePerGas set to 0 - this may indicate an issue with the RPC endpoint or chain configuration"
-            )
-        # Max priority fee is computed and set to likely include transaction in next block
-        # TODO: Could read from config for advanced users (e.g. cheap/slow vs expensive/fast)
-        priority_fee = self._web3.eth.max_priority_fee
-
-        logger.info(f"Current base fee: {base_fee} wei")
-        logger.info(f"Current priority fee: {priority_fee} wei")
-
-        # Set max fees (base_fee * 2 to allow for base fee increase)
-        max_fee_per_gas = base_fee * 2 + priority_fee
-        logger.info(f"Setting max fee per gas to: {max_fee_per_gas} wei")
-
-        # Get gas limit from chain config
-        chain_config = self.config.get_chain_config(self.chain)
-        if chain_config.gas_settings:
-            gas_limit = chain_config.gas_settings.gas_limit
-            logger.info(f"Using gas limit from config: {gas_limit}")
-        else:
-            gas_limit = DEFAULT_GAS_LIMIT
-            logger.info(f"No gas settings in config, using default gas limit: {gas_limit}")
-
-        return max_fee_per_gas, base_fee, priority_fee, gas_limit
-
-    def _approve_token_spend(self, quote: TokenInfo, address: str, raw_amount: int) -> tuple[int, TxReceipt]:
+    def _approve_token_spend(self, quote: TokenInfo, address: str, raw_amount: int) -> TxReceipt:
         """Handle token approval and return fresh nonce and approval receipt.
 
         Args:
@@ -220,19 +184,14 @@ class UniswapClientBase(DEXClient):
             raw_amount: Raw amount to approve
 
         Returns:
-            tuple[int, TxReceipt]: (nonce, approval_receipt)
+            TxReceipt: approval_receipt
 
         Raises:
             ValueError: If approval transaction fails
         """
         quote_contract = ERC20Contract(self._evm_client, quote.checksum_address)
-
-        # Uniswap router must be allowed to spend our quote token
         tx_receipt = quote_contract.approve(self.get_signer(), self._router, raw_amount)
-
-        # Get fresh nonce after approval
-        nonce = self._web3.eth.get_transaction_count(self._evm_client.to_checksum_address(address))
-        return nonce, tx_receipt
+        return tx_receipt
 
     def get_token_price(self, base_token: TokenInfo, quote_token: TokenInfo) -> Decimal:
         """Get token price using the appropriate Uniswap version.

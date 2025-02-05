@@ -33,7 +33,7 @@ class UniswapClientV2(UniswapClientBase):
     ) -> List[TxReceipt]:
         """Execute a swap on Uniswap V2."""
         # Handle token approval and get fresh nonce
-        nonce, approval_receipt = self._approve_token_spend(quote, address, raw_quote_amount)
+        approval_receipt = self._approve_token_spend(quote, address, raw_quote_amount)
 
         # Get price from V2 pair to calculate minimum output
         price = self._get_token_price(base_token=base, quote_token=quote)
@@ -66,23 +66,7 @@ class UniswapClientV2(UniswapClientBase):
         )
 
         # Get gas fees
-        max_fee_per_gas, _, priority_fee, gas_limit = self._get_gas_fees()
-
-        tx_2 = swap.build_transaction(
-            {
-                "gas": gas_limit,
-                "chainId": self._web3.eth.chain_id,
-                "from": address,
-                "nonce": nonce,
-                "maxFeePerGas": max_fee_per_gas,
-                "maxPriorityFeePerGas": priority_fee,
-            }
-        )
-
-        # Send swap transaction
-        tx_hash_2 = self._web3.eth.send_transaction(tx_2)
-        logger.info(f"Waiting for swap transaction {tx_hash_2.hex()} to be mined...")
-        swap_receipt = self._evm_client.wait_for_transaction(tx_hash_2)
+        swap_receipt = self._evm_client.process(swap, self.get_signer())
         return [approval_receipt, swap_receipt]
 
     def _get_token_price(self, base_token: TokenInfo, quote_token: TokenInfo) -> Decimal:
