@@ -6,7 +6,6 @@ from typing import List, Tuple
 from alphaswarm.config import Config, TokenInfo
 from alphaswarm.services.chains import EVMClient
 from alphaswarm.services.chains.evm import ERC20Contract, EVMSigner
-from alphaswarm.services.chains.evm.constants_erc20 import ERC20_ABI
 from alphaswarm.services.chains.evm.evm import DEFAULT_GAS_LIMIT
 from alphaswarm.services.exchanges.base import DEXClient, SwapResult
 from eth_account import Account
@@ -141,15 +140,15 @@ class UniswapClientBase(DEXClient):
         self._web3.middleware_onion.add(construct_sign_and_send_raw_middleware(account))
 
         # Create contract instances
-        base_contract = self._web3.eth.contract(address=base_token.checksum_address, abi=ERC20_ABI)
-        quote_contract = self._web3.eth.contract(address=quote_token.checksum_address, abi=ERC20_ABI)
+        base_contract = ERC20Contract(self._evm_client, base_token.checksum_address)
+        quote_contract = ERC20Contract(self._evm_client, quote_token.checksum_address)
 
         # Gas balance
         gas_balance = self._web3.eth.get_balance(account.address)
 
         # Log balances
-        base_balance = base_token.convert_from_wei(base_contract.functions.balanceOf(wallet_address).call())
-        quote_balance = quote_token.convert_from_wei(quote_contract.functions.balanceOf(wallet_address).call())
+        base_balance = base_token.convert_from_wei(base_contract.get_balance(wallet_address))
+        quote_balance = quote_token.convert_from_wei(quote_contract.get_balance(wallet_address))
         eth_balance = gas_balance / (10**18)
 
         logger.info(f"Balance of {base_token.symbol}: {base_balance:,.8f}")
