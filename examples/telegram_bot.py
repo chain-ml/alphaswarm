@@ -10,6 +10,7 @@ from alphaswarm.tools.alchemy import AlchemyPriceHistoryByAddress, AlchemyPriceH
 from alphaswarm.tools.exchanges import GetTokenPriceTool
 from alphaswarm.tools.price_tool import PriceTool
 from alphaswarm.tools.strategy_analysis.generic import GenericStrategyAnalysisTool
+from alphaswarm.tools.strategy_analysis.strategy import Strategy
 from smolagents import Tool
 
 logging.getLogger("smolagents").setLevel(logging.ERROR)
@@ -19,15 +20,16 @@ async def main() -> None:
     dotenv.load_dotenv()
     config = Config()
 
+    strategy = Strategy.from_file("momentum_strategy_config.md")
     tools: List[Tool] = [
         PriceTool(),
         GetTokenPriceTool(config),
         AlchemyPriceHistoryByAddress(),
         AlchemyPriceHistoryBySymbol(),
-        GenericStrategyAnalysisTool(),
+        GenericStrategyAnalysisTool(strategy=strategy),
     ]  # Add your tools here
 
-    agent = AlphaSwarmAgent(tools=tools, model_id="gpt-4o")
+    agent = AlphaSwarmAgent(tools=tools, strategy=strategy)
     bot_token = config.get("telegram", {}).get("bot_token")
     tg_bot = TelegramBot(bot_token=bot_token, agent=agent)
 
