@@ -1,16 +1,28 @@
 from __future__ import annotations
 
+from dataclasses import dataclass
 from typing import Any, Dict, Generic, List, Literal, Optional, Sequence, Type, TypeVar
 
 import instructor
 import litellm
+from litellm.types.utils import ModelResponse
 from pydantic import BaseModel
 
 from .message import Message
 
+litellm.modify_params = True  # for calls with system message only for anthropic
+
 T_Response = TypeVar("T_Response", bound=BaseModel)
 
-litellm.modify_params = True  # for calls with system message only for anthropic
+
+@dataclass
+class LLMFunctionResponse(Generic[T_Response]):
+    """
+    A response from the LLM function, containing parsed response and litellm completion object.
+    """
+
+    response: T_Response
+    completion: ModelResponse
 
 
 class LLMFunction(Generic[T_Response]):
@@ -74,11 +86,39 @@ class LLMFunction(Generic[T_Response]):
 
         llm_messages: List[Message] = []
         if str_message is not None:
-            llm_messages.append(Message(role=role, content=str_message))
+            llm_messages.append(Message.create(role=role, content=str_message))
         if messages is not None:
             llm_messages.extend(messages)
 
         return llm_messages
+
+    def execute_with_completion(
+        self,
+        user_message: Optional[str] = None,
+        messages: Optional[Sequence[Message]] = None,
+        **kwargs: Any,
+    ) -> LLMFunctionResponse[T_Response]:
+        """Execute the LLM function with the given messages.
+
+        Args:
+            user_message (Optional[str]): Optional string message from the user
+            messages (Optional[Sequence[Message]]): Optional sequence of pre-formatted messages
+            **kwargs: Additional keyword arguments to pass to the LLM client
+
+        Returns:
+            A structured response matching the provided response_model type and the completion object
+        """
+        llm_messages = self.messages + self._validate_messages(user_message, messages, role="user", allow_empty=True)
+        llm_messages_dicts: List[Dict[str, Any]] = [message.to_dict() for message in llm_messages]
+
+        response, completion = self.client.create_with_completion(
+            model=self.model_id,
+            response_model=self.response_model,
+            messages=llm_messages_dicts,
+            max_retries=self.max_retries,
+            **kwargs,
+        )
+        return LLMFunctionResponse(response=response, completion=completion)
 
     def execute(
         self,
@@ -96,16 +136,8 @@ class LLMFunction(Generic[T_Response]):
         Returns:
             A structured response matching the provided response_model type
         """
-        llm_messages = self.messages + self._validate_messages(user_message, messages, role="user", allow_empty=True)
-        llm_messages_dicts: List[Dict[str, Any]] = [message.to_dict() for message in llm_messages]
-
-        return self.client.create(
-            model=self.model_id,
-            response_model=self.response_model,
-            messages=llm_messages_dicts,
-            max_retries=self.max_retries,
-            **kwargs,
-        )
+        llm_func_response = self.execute_with_completion(user_message=user_message, messages=messages, **kwargs)
+        return llm_func_response.response
 
 
 class LLMFunctionFromPromptFiles(LLMFunction[T_Response]):
@@ -149,6 +181,42 @@ class LLMFunctionFromPromptFiles(LLMFunction[T_Response]):
             max_retries=max_retries,
         )
 
+    def execute_with_completion(
+        self,
+        user_message: Optional[str] = None,
+        messages: Optional[Sequence[Message]] = None,
+        user_prompt_params: Optional[Dict[str, Any]] = None,
+        **kwargs: Any,
+    ) -> LLMFunctionResponse[T_Response]:
+        """Execute the LLM function using the loaded prompt templates.
+
+        Args:
+            user_message (Optional[str]): Must be None - direct messages not supported
+            messages (Optional[Sequence[Message]]): Must be None - direct messages not supported
+            user_prompt_params (Optional[Dict[str, Any]]): Optional parameters to format the user prompt template
+            **kwargs: Additional keyword arguments to pass to the LLM client
+
+        Returns:
+            A structured response matching the provided response_model type and the completion object
+
+        Raises:
+            ValueError: If user_message/messages are provided or
+                if user_prompt_params are provided without a user prompt template
+        """
+        if user_message is not None or messages is not None:
+            raise ValueError(
+                "Both `user_message` and `messages` are expected to be None for LLMFunctionFromPromptFiles.execute "
+                "since they are ignored"
+            )
+
+        if self.user_prompt_template is None:
+            if user_prompt_params is not None:
+                raise ValueError("User prompt params provided but no user prompt template exists")
+            return super().execute_with_completion(**kwargs)
+
+        user_prompt = self._format(self.user_prompt_template, user_prompt_params)
+        return super().execute_with_completion(user_message=user_prompt, **kwargs)
+
     def execute(
         self,
         user_message: Optional[str] = None,
@@ -171,19 +239,10 @@ class LLMFunctionFromPromptFiles(LLMFunction[T_Response]):
             ValueError: If user_message/messages are provided or
                 if user_prompt_params are provided without a user prompt template
         """
-        if user_message is not None or messages is not None:
-            raise ValueError(
-                "Both `user_message` and `messages` are expected to be None for LLMFunctionFromPromptFiles.execute "
-                "since they are ignored"
-            )
-
-        if self.user_prompt_template is None:
-            if user_prompt_params is not None:
-                raise ValueError("User prompt params provided but no user prompt template exists")
-            return super().execute(**kwargs)
-
-        user_prompt = self._format(self.user_prompt_template, user_prompt_params)
-        return super().execute(user_message=user_prompt, **kwargs)
+        llm_func_response = self.execute_with_completion(
+            user_message=user_message, messages=messages, user_prompt_params=user_prompt_params, **kwargs
+        )
+        return llm_func_response.response
 
     @staticmethod
     def _format(template: str, params: Optional[Dict[str, Any]] = None) -> str:
