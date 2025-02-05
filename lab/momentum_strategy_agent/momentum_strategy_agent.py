@@ -1,17 +1,14 @@
 import asyncio
-import dotenv
 import json
 from typing import List
 
+import dotenv
 from alphaswarm.agent.agent import AlphaSwarmAgent
 from alphaswarm.agent.clients import TerminalClient
-from alphaswarm.config import Config, BASE_PATH
-from alphaswarm.tools.alchemy import AlchemyPriceHistoryByAddress, AlchemyPriceHistoryBySymbol
+from alphaswarm.config import BASE_PATH, Config
 from alphaswarm.tools.telegram import SendTelegramNotificationTool
-
-from smolagents import Tool
-
 from lab.momentum_strategy_agent.price_change_tool import TokenPriceChangeCalculator
+from smolagents import Tool
 
 
 async def main() -> None:
