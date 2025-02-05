@@ -1,16 +1,17 @@
-from typing import List, Optional
 import os
+from decimal import Decimal
+from typing import List, Optional
 
 from alphaswarm.config import BASE_PATH
 from alphaswarm.core.llm.llm_function import LLMFunctionFromPromptFiles
 from pydantic import BaseModel, Field
-from decimal import Decimal
 from smolagents import Tool
 
 
 class PriceForecast(BaseModel):
     timestamp: str = Field(description="The timestamp of the forecast")
     price: Decimal = Field(description="The forecasted price of the token")
+
 
 class PriceForecastResponse(BaseModel):
     reason: str = Field(description="The reasoning behind the forecast")
@@ -55,15 +56,13 @@ class PriceForecastingTool(Tool):
         self._llm_function = LLMFunctionFromPromptFiles(
             model_id="anthropic/claude-3-5-sonnet-latest",
             response_model=PriceForecastResponse,
-            system_prompt_path=os.path.join(
-                BASE_PATH, "lab", "forecasting_agent", "prompts", "system_prompt.md"
-            ),
-            user_prompt_path=os.path.join(
-                BASE_PATH, "lab", "forecasting_agent", "prompts", "user_prompt.md"
-            ),
+            system_prompt_path=os.path.join(BASE_PATH, "lab", "forecasting_agent", "prompts", "system_prompt.md"),
+            user_prompt_path=os.path.join(BASE_PATH, "lab", "forecasting_agent", "prompts", "user_prompt.md"),
         )
 
-    def forward(self, historical_price_data: str, forecast_horizon: str, market_context: Optional[str] = None) -> PriceForecastResponse:
+    def forward(
+        self, historical_price_data: str, forecast_horizon: str, market_context: Optional[str] = None
+    ) -> PriceForecastResponse:
         response = self._llm_function.execute(
             user_prompt_params={
                 "market_context": market_context if market_context is not None else "No additional context provided",

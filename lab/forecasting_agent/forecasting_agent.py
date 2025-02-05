@@ -1,15 +1,16 @@
-from typing import List
 import asyncio
-import dotenv
+from typing import List
 
+import dotenv
 from alphaswarm.agent.agent import AlphaSwarmAgent
 from alphaswarm.agent.clients import TerminalClient
-from alphaswarm.tools.alchemy import AlchemyPriceHistoryByAddress, AlchemyPriceHistoryBySymbol
+from alphaswarm.config import BASE_PATH
+from alphaswarm.tools.alchemy import AlchemyPriceHistoryBySymbol
 from alphaswarm.tools.cookie.cookie_metrics import CookieMetricsBySymbol
-from alphaswarm.config import Config, BASE_PATH
 from alphaswarm.utils.file_utils import read_text_file_to_string
 from lab.forecasting_agent.price_forecasting_tool import PriceForecastingTool
 from smolagents import Tool
+
 
 async def main() -> None:
     dotenv.load_dotenv()
@@ -20,7 +21,9 @@ async def main() -> None:
         PriceForecastingTool(),
     ]
 
-    system_prompt = read_text_file_to_string(BASE_PATH / "lab/forecasting_agent/prompts/forecasting_agent_system_prompt.txt")
+    system_prompt = read_text_file_to_string(
+        BASE_PATH / "lab/forecasting_agent/prompts/forecasting_agent_system_prompt.txt"
+    )
 
     specialization = """
     ## Specialization

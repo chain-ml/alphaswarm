@@ -61,6 +61,7 @@ class AgentMetrics:
 @dataclass
 class PagedAgentsResponse:
     """Response from the paged agents endpoint"""
+
     data: List[AgentMetrics] = Field(default_factory=list)
     current_page: int = Field(default=0, alias="currentPage")
     total_pages: int = Field(default=0, alias="totalPages")
