@@ -10,6 +10,7 @@ from alphaswarm.tools.telegram import SendTelegramNotificationTool
 
 from smolagents import Tool
 
+from lab.trade_advisor_agent.tools import CallForecastingAgentTool
 
 async def main() -> None:
     dotenv.load_dotenv()
@@ -21,6 +22,7 @@ async def main() -> None:
 
     tools: List[Tool] = [
         SendTelegramNotificationTool(telegram_bot_token=telegram_bot_token, chat_id=chat_id),
+        CallForecastingAgentTool(),
     ]  # Add your tools here
 
     my_tokens = {
