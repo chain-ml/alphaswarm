@@ -5,9 +5,8 @@ from typing import List
 import dotenv
 from alphaswarm.agent.agent import AlphaSwarmAgent
 from alphaswarm.agent.clients import TerminalClient
-from alphaswarm.config import BASE_PATH, CONFIG_PATH,Config
+from alphaswarm.config import CONFIG_PATH, Config
 from alphaswarm.tools.telegram import SendTelegramNotificationTool
-from alphaswarm.tools.strategy_analysis.strategy import Strategy
 from lab.momentum_strategy_agent.price_change_tool import TokenPriceChangeCalculator
 from smolagents import Tool
 

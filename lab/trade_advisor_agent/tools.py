@@ -1,5 +1,6 @@
 from smolagents import Tool
 
+
 class CallForecastingAgentTool(Tool):
     name = "CallForecastingAgentTool"
     description = """Call the forecasting agent to get a detailed price forecast for a token. 
@@ -34,12 +35,12 @@ class CallForecastingAgentTool(Tool):
         super().__init__()
 
         # Initialize the forecasting agent
-        
+
     def forward(
-        self, 
-        token_address_or_symbol: str, 
-        network: str = "eth-mainnet", 
-        forecast_horizon: str = "1h", 
+        self,
+        token_address_or_symbol: str,
+        network: str = "eth-mainnet",
+        forecast_horizon: str = "1h",
         forecast_frequency: str = "5m",
     ) -> str:
         return f"""

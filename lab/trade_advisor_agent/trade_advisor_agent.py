@@ -1,16 +1,15 @@
 import asyncio
-import dotenv
 import json
 from typing import List
 
+import dotenv
 from alphaswarm.agent.agent import AlphaSwarmAgent
 from alphaswarm.agent.clients import TerminalClient
-from alphaswarm.config import Config, BASE_PATH
+from alphaswarm.config import BASE_PATH, Config
 from alphaswarm.tools.telegram import SendTelegramNotificationTool
-from alphaswarm.tools.strategy_analysis.strategy import Strategy
+from lab.trade_advisor_agent.tools import CallForecastingAgentTool
 from smolagents import Tool
 
-from lab.trade_advisor_agent.tools import CallForecastingAgentTool
 
 async def main() -> None:
     dotenv.load_dotenv()
@@ -33,11 +32,7 @@ async def main() -> None:
         # "GRIFFAIN": "8x5VqbHA8D7NkD52uNuS5nnt3PwA8pLD34ymskeSo2Wn",
     }
 
-    specialization = "You are specialized in suggesting trades based on your analysis of market forecasts."
-
-    strategy = Strategy(
-        model_id="anthropic/claude-3-5-sonnet-20240620",
-        rules="""
+    specialization = """You are specialized in suggesting trades based on your analysis of market forecasts.
         ## Strategy and Profile
 
         You are a trading advisor that critically evaluates price forecasts and makes independent trading recommendations. 
@@ -92,7 +87,6 @@ async def main() -> None:
         4. Key Supporting Points (including both forecast reasoning and your validation)
         5. Main Risk Factors You've Identified
         """
-    )
 
     # Optional step to provide a custom system prompt.
     # If no custom system prompt is provided, a default one will be used.
@@ -100,9 +94,9 @@ async def main() -> None:
         system_prompt = f.read()
 
     system_prompt = system_prompt.replace("{{my_tokens}}", json.dumps(my_tokens))
-    system_prompt = system_prompt.replace("{{specialization}}", specialization)    
+    system_prompt = system_prompt.replace("{{specialization}}", specialization)
 
-    agent = AlphaSwarmAgent(tools=tools, system_prompt=system_prompt, strategy=strategy)
+    agent = AlphaSwarmAgent(model_id="anthropic/claude-3-5-sonnet-20240620", tools=tools, system_prompt=system_prompt)
 
     terminal = TerminalClient("AlphaSwarm terminal", agent)
     await asyncio.gather(
