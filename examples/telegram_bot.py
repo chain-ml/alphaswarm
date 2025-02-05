@@ -25,7 +25,7 @@ async def main() -> None:
         AlchemyPriceHistoryBySymbol(),
     ]  # Add your tools here
 
-    agent = AlphaSwarmAgent(model_id="anthropic/claude-3-5-sonnet-20240620", tools=tools)
+    agent = AlphaSwarmAgent(model_id="anthropic/claude-3-5-sonnet-20241022", tools=tools)
     bot_token = config.get("telegram", {}).get("bot_token")
     tg_bot = TelegramBot(bot_token=bot_token, agent=agent)
 

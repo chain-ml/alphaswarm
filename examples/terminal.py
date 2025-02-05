@@ -52,7 +52,7 @@ async def main() -> None:
     hints = read_text_file_to_string(CONFIG_PATH / "trading_strategy_agent_hints.txt")
 
     agent = AlphaSwarmAgent(
-        model_id="anthropic/claude-3-5-sonnet-20240620", tools=tools, system_prompt=system_prompt, hints=hints
+        model_id="anthropic/claude-3-5-sonnet-20241022", tools=tools, system_prompt=system_prompt, hints=hints
     )
 
     terminal = TerminalClient("AlphaSwarm terminal", agent)

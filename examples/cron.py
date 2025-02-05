@@ -20,7 +20,7 @@ async def main() -> None:
     config = Config()
 
     tools: List[Tool] = [PriceTool(), GetTokenPriceTool(config), AlchemyPriceHistoryBySymbol()]  # Add your tools here
-    agent = AlphaSwarmAgent(tools=tools, model_id="gpt-4o")
+    agent = AlphaSwarmAgent(tools=tools, model_id="anthropic/claude-3-5-sonnet-20241022")
 
     def generate_message_cron_job1() -> str:
         c = random.choice(["ETH", "BTC", "bitcoin", "weth", "quit"])
