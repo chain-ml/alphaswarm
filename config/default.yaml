@@ -76,9 +76,9 @@ chain_config:
   
   ethereum_sepolia:
     wallet_address:
-      fromEnvVar: ETH_WALLET_ADDRESS
+      fromEnvVar: ETH_SEPOLIA_WALLET_ADDRESS
     private_key:
-      fromEnvVar: ETH_PRIVATE_KEY
+      fromEnvVar: ETH_SEPOLIA_PRIVATE_KEY
     gas_settings:
       max_priority_fee: 10000000000  # 10 gwei, currently not used
       gas_limit: 300000
@@ -91,7 +91,10 @@ chain_config:
       USDC:
         address: "0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238"
         decimals: 6
-  
+      EURC:
+        address: "0x08210F9170F89Ab7658F0B5E3fF39b0E03C594D4"
+        decimals: 6
+
   base:
     wallet_address:
       fromEnvVar: BASE_WALLET_ADDRESS

@@ -7,7 +7,7 @@ from alphaswarm.agent.agent import AlphaSwarmAgent
 from alphaswarm.agent.clients import TerminalClient
 from alphaswarm.config import CONFIG_PATH, Config
 from alphaswarm.tools.alchemy import AlchemyPriceHistoryByAddress, AlchemyPriceHistoryBySymbol
-from alphaswarm.tools.exchanges import GetTokenPriceTool
+from alphaswarm.tools.exchanges import ExecuteTokenSwapTool, GetTokenPriceTool
 from alphaswarm.tools.price_tool import PriceTool
 from alphaswarm.tools.strategy_analysis.generic import GenericStrategyAnalysisTool
 from alphaswarm.tools.strategy_analysis.strategy import Strategy
@@ -33,6 +33,7 @@ async def main() -> None:
         AlchemyPriceHistoryBySymbol(),
         GenericStrategyAnalysisTool(strategy=strategy),
         SendTelegramNotificationTool(telegram_bot_token=telegram_bot_token, chat_id=chat_id),
+        ExecuteTokenSwapTool(config),
     ]  # Add your tools here
 
     # Optional step to provide a custom system prompt.
