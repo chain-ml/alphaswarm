@@ -35,10 +35,20 @@ class SendTelegramNotificationTool(Tool):
         self.chat_id = chat_id
 
         self._telegram_app = TelegramApp(bot_token=self.token)
+        self._loop = asyncio.new_event_loop()
+
+    def __del__(self) -> None:
+        if self._loop and self._loop.is_running():
+            self._loop.close()
 
     def forward(self, message: str, confidence: float, priority: str) -> str:
         message_to_send = self.format_alert_message(message=message, confidence=confidence, priority=priority)
-        asyncio.run(self._telegram_app.send_message(chat_id=self.chat_id, message=message_to_send))
+
+        async def send_message():
+            await self._telegram_app.send_message(chat_id=self.chat_id, message=message_to_send)
+
+        self._loop.run_until_complete(send_message())
+
         return "Message sent successfully"
 
     @classmethod
