@@ -11,3 +11,5 @@ Your output must include:
 - Each prediction must include a timestamp and a price with lower and upper confidence bounds
 
 Your reasoning must be detailed and include all relevant factors that influence the forecast.
+For the first forecast data point, use the last timestamp in the historical data 
+so there is no gap between the historical data and the forecast (keep lower and upper confidence bounds the same as the last historical data point).

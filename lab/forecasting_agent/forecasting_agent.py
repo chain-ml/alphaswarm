@@ -9,7 +9,6 @@ from alphaswarm.config import BASE_PATH
 from alphaswarm.tools.alchemy import AlchemyPriceHistoryBySymbol
 from alphaswarm.tools.telegram import SendTelegramNotificationTool
 from alphaswarm.utils.file_utils import read_text_file_to_string
-from lab.forecasting_agent.create_image_tool import CreateImageTool
 from lab.forecasting_agent.price_forecasting_tool import PriceForecastingTool
 from smolagents import Tool
 
@@ -22,7 +21,6 @@ class ForecastingAgent(AlphaSwarmAgent):
             # CookieMetricsBySymbol(),
             PriceForecastingTool(),
             # DuckDuckGoSearchTool(),
-            CreateImageTool(),
             SendTelegramNotificationTool(
                 telegram_bot_token=os.getenv("TELEGRAM_BOT_TOKEN"), chat_id=int(os.getenv("TELEGRAM_CHAT_ID"))
             ),
@@ -64,4 +62,3 @@ async def main() -> None:
 
 if __name__ == "__main__":
     asyncio.run(main())
-    # Forecast the price of ETH for the next 2 days based on the historical data for the last 7 days and send me a Telegram message with the image
