@@ -1,7 +1,7 @@
 import logging
 from decimal import Decimal
 
-from alphaswarm.config import Config
+from alphaswarm.config import ChainConfig
 from solana.rpc import api
 from solana.rpc.types import TokenAccountOpts
 from solders.pubkey import Pubkey  # type: ignore
@@ -15,11 +15,11 @@ SUPPORTED_CHAINS = {"solana", "solana_devnet"}
 class SolanaClient:
     """Client for interacting with Solana chains"""
 
-    def __init__(self, config: Config, chain: str) -> None:
-        self._config = config
-        self._chain_config = config.get_chain_config(chain)
+    def __init__(self, chain_config: ChainConfig) -> None:
+        self._validate_chain(chain_config.chain)
+        self._chain_config = chain_config
         self._client = api.Client(self._chain_config.rpc_url)
-        logger.info("Initialized SolanaClient")
+        logger.info(f"Initialized SolanaClient on chain '{self._chain_config.chain}'")
 
     @staticmethod
     def _validate_chain(chain: str) -> None:

@@ -3,7 +3,7 @@ from abc import abstractmethod
 from decimal import Decimal
 from typing import List, Tuple
 
-from alphaswarm.config import Config, TokenInfo
+from alphaswarm.config import ChainConfig, TokenInfo
 from alphaswarm.services.chains.evm import ERC20Contract, EVMClient, EVMSigner
 from alphaswarm.services.exchanges.base import DEXClient, SwapResult
 from eth_typing import ChecksumAddress, HexAddress
@@ -14,12 +14,12 @@ logger = logging.getLogger(__name__)
 
 
 class UniswapClientBase(DEXClient):
-    def __init__(self, config: Config, chain: str, version: str) -> None:
-        super().__init__(config, chain)
+    def __init__(self, chain_config: ChainConfig, version: str) -> None:
+        super().__init__(chain_config)
         self.version = version
-        self._evm_client = EVMClient(self.config, self.chain)
-        self._router = self._get_router(self.chain)
-        self._factory = self._get_factory(self.chain)
+        self._evm_client = EVMClient(chain_config)
+        self._router = self._get_router()
+        self._factory = self._get_factory()
 
         logger.info(f"Created {self.__class__.__name__} instance for chain {self.chain}")
 
@@ -32,11 +32,11 @@ class UniswapClientBase(DEXClient):
         return EVMClient.to_checksum_address(self.chain_config.wallet_address)
 
     @abstractmethod
-    def _get_router(self, chain: str) -> ChecksumAddress:
+    def _get_router(self) -> ChecksumAddress:
         pass
 
     @abstractmethod
-    def _get_factory(self, chain: str) -> ChecksumAddress:
+    def _get_factory(self) -> ChecksumAddress:
         pass
 
     @abstractmethod
@@ -115,7 +115,6 @@ class UniswapClientBase(DEXClient):
             Private key is read from environment variables via config for the specified chain.
         """
         logger.info(f"Initiating token swap for {quote_token.symbol} to {base_token.symbol}")
-
         logger.info(f"Wallet address: {self.wallet_address}")
 
         # Create contract instances

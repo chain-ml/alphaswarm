@@ -1,10 +1,12 @@
+from __future__ import annotations
+
 import logging
 from decimal import Decimal
 from typing import Any, Dict, List, Tuple
 from urllib.parse import urlencode
 
 import requests
-from alphaswarm.config import Config, TokenInfo
+from alphaswarm.config import ChainConfig, Config, JupiterSettings, JupiterVenue, TokenInfo
 from alphaswarm.services import ApiException
 from alphaswarm.services.exchanges.base import DEXClient, SwapResult
 from pydantic import Field
@@ -23,11 +25,16 @@ class QuoteResponse:
 class JupiterClient(DEXClient):
     """Client for Jupiter DEX on Solana"""
 
-    def __init__(self, config: Config, chain: str) -> None:
+    def __init__(self, chain_config: ChainConfig, venue_config: JupiterVenue, settings: JupiterSettings) -> None:
+        self._validate_chain(chain_config.chain)
+        super().__init__(chain_config)
+        self._settings = settings
+        self._venue_config = venue_config
+        logger.info(f"Initialized JupiterClient on chain '{self.chain}'")
+
+    def _validate_chain(self, chain):
         if chain != "solana":
-            raise ValueError("JupiterClient only supports Solana chain")
-        super().__init__(config, chain)
-        logger.info("Initialized JupiterClient")
+            raise ValueError(f"Chain '{chain}' not supported. JupiterClient only supports Solana chain")
 
     def swap(
         self,
@@ -53,7 +60,7 @@ class JupiterClient(DEXClient):
             Decimal: Current price in base/quote terms
         """
         # Verify tokens are on Solana
-        if not base_token.chain == "solana" or not quote_token.chain == "solana":
+        if not base_token.chain == self.chain or not quote_token.chain == self.chain:
             raise ValueError(f"Jupiter only supports Solana tokens. Got {base_token.chain} and {quote_token.chain}")
 
         logger.debug(f"Getting price for {base_token.symbol}/{quote_token.symbol} on {base_token.chain} using Jupiter")
@@ -63,11 +70,10 @@ class JupiterClient(DEXClient):
             "inputMint": base_token.address,
             "outputMint": quote_token.address,
             "amount": str(base_token.convert_to_wei(Decimal(1))),  # Get price for 1 full token
-            "slippageBps": self.config.get_venue_settings_jupiter().slippage_bps,
+            "slippageBps": self._settings.slippage_bps,
         }
 
-        venue_config = self.config.get_venue_jupiter("solana")
-        url = f"{venue_config.quote_api_url}?{urlencode(params)}"
+        url = f"{self._venue_config.quote_api_url}?{urlencode(params)}"
 
         response = requests.get(url)
         if response.status_code != 200:
@@ -98,3 +104,9 @@ class JupiterClient(DEXClient):
             List of tuples containing (base_token, quote_token) for each valid trading pair
         """
         raise NotImplementedError("Not yet implemented for Jupiter")
+
+    @classmethod
+    def from_config(cls, config: Config, chain: str) -> JupiterClient:
+        chain_config = config.get_chain_config(chain)
+        venue_config = config.get_venue_jupiter(chain=chain)
+        return cls(chain_config=chain_config, venue_config=venue_config, settings=config.get_venue_settings_jupiter())
