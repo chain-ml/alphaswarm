@@ -1,13 +1,16 @@
+from __future__ import annotations
+
 import logging
 from decimal import Decimal
 from typing import List, Tuple
 
-from alphaswarm.config import Config, TokenInfo
+from alphaswarm.config import ChainConfig, Config, TokenInfo
 from alphaswarm.services.chains.evm import ZERO_ADDRESS
 from alphaswarm.services.exchanges.uniswap.constants_v2 import (
     UNISWAP_V2_DEPLOYMENTS,
     UNISWAP_V2_FACTORY_ABI,
     UNISWAP_V2_ROUTER_ABI,
+    UNISWAP_V2_VERSION,
 )
 from alphaswarm.services.exchanges.uniswap.uniswap_client_base import UniswapClientBase
 from eth_defi.uniswap_v2.pair import fetch_pair_details
@@ -18,14 +21,15 @@ logger = logging.getLogger(__name__)
 
 
 class UniswapClientV2(UniswapClientBase):
-    def __init__(self, config: Config, chain: str):
-        super().__init__(config, chain, "v2")
 
-    def _get_router(self, chain: str) -> ChecksumAddress:
-        return self._evm_client.to_checksum_address(UNISWAP_V2_DEPLOYMENTS[chain]["router"])
+    def __init__(self, chain_config: ChainConfig):
+        super().__init__(chain_config=chain_config, version=UNISWAP_V2_VERSION)
 
-    def _get_factory(self, chain: str) -> ChecksumAddress:
-        return self._evm_client.to_checksum_address(UNISWAP_V2_DEPLOYMENTS[chain]["factory"])
+    def _get_router(self) -> ChecksumAddress:
+        return self._evm_client.to_checksum_address(UNISWAP_V2_DEPLOYMENTS[self.chain]["router"])
+
+    def _get_factory(self) -> ChecksumAddress:
+        return self._evm_client.to_checksum_address(UNISWAP_V2_DEPLOYMENTS[self.chain]["factory"])
 
     def _swap(
         self, base: TokenInfo, quote: TokenInfo, address: str, raw_quote_amount: int, slippage_bps: int
@@ -126,3 +130,7 @@ class UniswapClientV2(UniswapClientBase):
                     continue
 
         return markets
+
+    @classmethod
+    def from_config(cls, config: Config, chain: str) -> UniswapClientV2:
+        return cls(config.get_chain_config(chain))

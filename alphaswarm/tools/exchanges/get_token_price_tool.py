@@ -85,7 +85,7 @@ class GetTokenPriceTool(Tool):
         prices = []
         for venue in venues:
             try:
-                dex = DEXFactory.create(venue, self.config, chain)
+                dex = DEXFactory.create(dex_name=venue, config=self.config, chain=chain)
                 price = dex.get_token_price(base_token_info, quote_token_info)
                 prices.append(TokenPrice(price=price, source=venue))
             except Exception:

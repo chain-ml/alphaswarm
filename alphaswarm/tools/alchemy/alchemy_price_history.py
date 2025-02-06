@@ -29,7 +29,7 @@ class AlchemyPriceHistoryBySymbol(Tool):
 
     def __init__(self, alchemy_client: Optional[AlchemyClient] = None):
         super().__init__()
-        self.client = alchemy_client or AlchemyClient()
+        self.client = alchemy_client or AlchemyClient.from_env()
 
     def forward(self, symbol: str, interval: str, history: int) -> HistoricalPriceBySymbol:
         end_time = datetime.now(timezone.utc)
@@ -66,7 +66,7 @@ class AlchemyPriceHistoryByAddress(Tool):
 
     def __init__(self, alchemy_client: Optional[AlchemyClient] = None):
         super().__init__()
-        self.client = alchemy_client or AlchemyClient()
+        self.client = alchemy_client or AlchemyClient.from_env()
 
     def forward(self, address: str, history: int, interval: str, network: str) -> HistoricalPriceByAddress:
         end_time = datetime.now(timezone.utc)

@@ -4,8 +4,8 @@ from alphaswarm.services.exchanges.jupiter.jupiter import JupiterClient
 
 def test_get_token_price(default_config: Config):
     chain = "solana"
-    client = JupiterClient(default_config, chain=chain)
     chain_config = default_config.get_chain_config(chain)
+    client = JupiterClient.from_config(default_config, chain)
 
     # Get token info and create TokenInfo object
     tokens_config = chain_config.tokens

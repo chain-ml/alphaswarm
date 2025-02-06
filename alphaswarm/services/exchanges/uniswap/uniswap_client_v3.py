@@ -1,14 +1,17 @@
+from __future__ import annotations
+
 import logging
 from decimal import Decimal
 from typing import Any, Dict, List, Optional, Self, Tuple, Union
 
-from alphaswarm.config import Config, TokenInfo
+from alphaswarm.config import ChainConfig, Config, TokenInfo, UniswapV3Settings
 from alphaswarm.services.chains.evm import ZERO_ADDRESS, EMVContract, EVMClient, EVMSigner
 from alphaswarm.services.exchanges.uniswap.constants_v3 import (
     UNISWAP_V3_DEPLOYMENTS,
     UNISWAP_V3_FACTORY_ABI,
     UNISWAP_V3_ROUTER2_ABI,
     UNISWAP_V3_ROUTER_ABI,
+    UNISWAP_V3_VERSION,
 )
 from alphaswarm.services.exchanges.uniswap.uniswap_client_base import UniswapClientBase
 from eth_defi.uniswap_v3.pool import PoolDetails, fetch_pool_details
@@ -89,9 +92,10 @@ class RouterContract(EMVContract):
 
 
 class UniswapClientV3(UniswapClientBase):
-    def __init__(self, config: Config, chain: str):
-        super().__init__(config, chain, "v3")
+    def __init__(self, chain_config: ChainConfig, settings: UniswapV3Settings):
+        super().__init__(chain_config=chain_config, version=UNISWAP_V3_VERSION)
         self._factory_contract: Optional[FactoryContract] = None
+        self._settings = settings
 
     @property
     def factory_contract(self) -> FactoryContract:
@@ -99,11 +103,11 @@ class UniswapClientV3(UniswapClientBase):
             self._factory_contract = FactoryContract(self._evm_client, self._factory)
         return self._factory_contract
 
-    def _get_router(self, chain: str) -> ChecksumAddress:
-        return self._evm_client.to_checksum_address(UNISWAP_V3_DEPLOYMENTS[chain]["router"])
+    def _get_router(self) -> ChecksumAddress:
+        return self._evm_client.to_checksum_address(UNISWAP_V3_DEPLOYMENTS[self.chain]["router"])
 
-    def _get_factory(self, chain: str) -> ChecksumAddress:
-        return self._evm_client.to_checksum_address(UNISWAP_V3_DEPLOYMENTS[chain]["factory"])
+    def _get_factory(self) -> ChecksumAddress:
+        return self._evm_client.to_checksum_address(UNISWAP_V3_DEPLOYMENTS[self.chain]["factory"])
 
     def _swap(
         self, base: TokenInfo, quote: TokenInfo, address: str, quote_wei: int, slippage_bps: int
@@ -215,13 +219,11 @@ class UniswapClientV3(UniswapClientBase):
             PoolDetails: Details about the pool with highest liquidity, or None if no pool exists
             or there was an error finding a pool
         """
-        settings = self.config.get_venue_settings_uniswap_v3()
-
         max_liquidity = 0
         best_pool_details = None
 
         # Check all fee tiers to find pool with highest liquidity
-        for fee in settings.fee_tiers:
+        for fee in self._settings.fee_tiers:
             try:
                 pool_address = self.factory_contract.get_pool_address_or_none(
                     token0.checksum_address, token1.checksum_address, fee
@@ -252,8 +254,7 @@ class UniswapClientV3(UniswapClientBase):
         markets = []
 
         # Get fee tiers from settings
-        settings = self.config.get_venue_settings_uniswap_v3()
-        fee_tiers = settings.fee_tiers
+        fee_tiers = self._settings.fee_tiers
 
         # Check each possible token pair
         for i, token1 in enumerate(tokens):
@@ -279,3 +280,8 @@ class UniswapClientV3(UniswapClientBase):
                     continue
 
         return markets
+
+    @classmethod
+    def from_config(cls, config: Config, chain: str) -> UniswapClientV3:
+        chain_config = config.get_chain_config(chain)
+        return cls(chain_config, config.get_venue_settings_uniswap_v3())

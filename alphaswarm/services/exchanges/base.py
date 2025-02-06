@@ -3,7 +3,7 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from decimal import Decimal
-from typing import List, Optional, Tuple
+from typing import List, Optional, Tuple, Type, TypeVar
 
 from alphaswarm.config import ChainConfig, Config, TokenInfo
 from hexbytes import HexBytes
@@ -26,23 +26,20 @@ class SwapResult:
         return cls(success=True, base_amount=base_amount, quote_amount=quote_amount, tx_hash=tx_hash.hex())
 
 
+T = TypeVar("T", bound="DEXClient")
+
+
 class DEXClient(ABC):
     """Base class for DEX clients"""
 
     @abstractmethod
-    def __init__(self, config: Config, chain: str) -> None:
+    def __init__(self, chain_config: ChainConfig) -> None:
         """Initialize the DEX client with configuration"""
-        self._config = config
-        self._chain = chain
-        self._chain_config = config.get_chain_config(chain=self._chain)
-
-    @property
-    def config(self) -> Config:
-        return self._config
+        self._chain_config = chain_config
 
     @property
     def chain(self) -> str:
-        return self._chain
+        return self._chain_config.chain
 
     @property
     def chain_config(self) -> ChainConfig:
@@ -104,5 +101,19 @@ class DEXClient(ABC):
 
         Returns:
             List of tuples containing (base_token, quote_token) for each valid trading pair
+        """
+        pass
+
+    @classmethod
+    @abstractmethod
+    def from_config(cls: Type[T], config: Config, chain: str) -> T:
+        """Create a DEX client instance from configuration
+
+        Args:
+            config: Chain-specific configuration
+            chain: Chain name (e.g., "ethereum", "base")
+
+        Returns:
+            An instance of the DEX client
         """
         pass
