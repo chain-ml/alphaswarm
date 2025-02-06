@@ -40,15 +40,25 @@ class SendTelegramNotificationTool(Tool):
         self.chat_id = chat_id
 
         self._telegram_app = TelegramApp(bot_token=self.token)
+        self._loop = asyncio.new_event_loop()
+
+    def __del__(self) -> None:
+        if self._loop and self._loop.is_running():
+            self._loop.close()
 
     def forward(self, message: str, confidence: float, priority: str, image_path: Optional[str] = None) -> str:
         message_to_send = self.format_alert_message(message=message, confidence=confidence, priority=priority)
-        asyncio.run(self._telegram_app.send_message(chat_id=self.chat_id, message=message_to_send))
-        if image_path:
-            try:
-                asyncio.run(self._telegram_app.send_image(chat_id=self.chat_id, image_path=image_path))
-            except Exception as e:
-                logger.error(f"Error sending image: {e}. Skipping image.")
+
+        async def send_message():
+            await self._telegram_app.send_message(chat_id=self.chat_id, message=message_to_send)
+            if image_path:
+                try:
+                    await self._telegram_app.send_image(chat_id=self.chat_id, image_path=image_path)
+                except Exception as e:
+                    logger.error(f"Error sending image: {e}. Skipping image.")
+
+        self._loop.run_until_complete(send_message())
+
         return "Message sent successfully"
 
     @classmethod
