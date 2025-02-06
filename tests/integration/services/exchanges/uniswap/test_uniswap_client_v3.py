@@ -94,9 +94,9 @@ def test_swap_eth_sepolia(eth_sepolia_client: UniswapClientV3) -> None:
     pool = eth_sepolia_client._get_pool(usdc, weth)
     print(f"find pool {pool.address}")
 
-    quote = eth_sepolia_client._get_token_price_from_pool(quote_token=usdc, pool_details=pool)
-    print(f"1 {weth.symbol} is {quote} {usdc.symbol}")
+    quote = eth_sepolia_client._get_token_price_from_pool(quote_token=usdc, pool=pool)
+    print(f"1 {usdc.symbol} is {quote} {weth.symbol}")
 
     # Buy X Weth for 1 USDC
-    result = eth_sepolia_client.swap(weth, usdc, Decimal(1))
+    result = eth_sepolia_client.swap(weth, usdc, Decimal(100))
     print(result)

@@ -144,7 +144,7 @@ class UniswapClientV3(UniswapClientBase):
         logger.info(f"Using Uniswap V3 pool at address: {pool.address} (raw fee tier: {pool.raw_fee})")
 
         # Get the on-chain price from the pool and reverse if necessary
-        price = pool.get_price_for_token_out(quote.checksum_address)
+        price = self._get_token_price_from_pool(quote, pool)
         logger.info(f"Pool raw price: {price} ({quote.symbol} per {base.symbol})")
 
         # Convert to decimal for calculations
@@ -152,7 +152,7 @@ class UniswapClientV3(UniswapClientBase):
         logger.info(f"Actual input amount: {input_amount_decimal} {quote.symbol}")
 
         # Calculate expected output
-        expected_output_decimal = input_amount_decimal / price
+        expected_output_decimal = input_amount_decimal * price
         logger.info(f"Expected output: {expected_output_decimal} {base.symbol}")
 
         # Convert expected output to raw integer
@@ -218,12 +218,10 @@ class UniswapClientV3(UniswapClientBase):
             Uses the pool with the most liquidity.
         """
         pool = self._get_pool(base_token, quote_token)
-        return pool.get_price_for_token_out(quote_token.checksum_address)
+        return self._get_token_price_from_pool(quote_token, pool)
 
-    def _get_token_price_from_pool(self, quote_token: TokenInfo, pool_details: PoolDetails) -> Decimal:
-        reverse = quote_token.address.lower() == pool_details.token0.address.lower()
-        raw_price = get_onchain_price(self._evm_client.client, pool_details.address, reverse_token_order=reverse)
-        return raw_price
+    def _get_token_price_from_pool(self, quote_token: TokenInfo, pool: PoolContract) -> Decimal:
+        return pool.get_price_for_token_in(quote_token.checksum_address)
 
     def _get_pool_by_address(self, address: Union[str, HexAddress]) -> PoolContract:
         return PoolContract(self._evm_client, EVMClient.to_checksum_address(address))
