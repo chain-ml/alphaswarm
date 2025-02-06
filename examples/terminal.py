@@ -1,10 +1,6 @@
 import asyncio
 import json
-<<<<<<< HEAD
-from typing import List
-=======
 from typing import List, Mapping
->>>>>>> main
 
 import dotenv
 from alphaswarm.agent.agent import AlphaSwarmAgent
