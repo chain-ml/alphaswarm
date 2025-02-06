@@ -1,6 +1,6 @@
 import pytest
 
-from alphaswarm.core.llm import LLMFunction, Message, TextContentBlock
+from alphaswarm.core.llm import LLMFunction, Message
 
 
 def test_validate_messages_str_only() -> None:
@@ -9,7 +9,7 @@ def test_validate_messages_str_only() -> None:
     assert isinstance(messages, list)
     assert len(messages) == 1
     assert messages[0].role == "system"
-    assert isinstance(messages[0].content[0], TextContentBlock)
+    assert messages[0].content[0].type == "text"
     assert messages[0].content[0].text == "test message"
 
 
@@ -29,7 +29,7 @@ def test_validate_messages_both() -> None:
 
     assert len(messages) == 2
     assert messages[0].role == "system"
-    assert isinstance(messages[0].content[0], TextContentBlock)
+    assert messages[0].content[0].type == "text"
     assert messages[0].content[0].text == "test message"
     assert messages[1] == test_messages[0]
 
