@@ -7,7 +7,7 @@ from alphaswarm.agent.agent import AlphaSwarmAgent
 from alphaswarm.agent.clients import TerminalClient
 from alphaswarm.config import BASE_PATH, Config
 from alphaswarm.tools.telegram import SendTelegramNotificationTool
-from lab.trade_advisor_agent.call_forecasting_agent_tool import CallForecastingAgentTool
+from lab.trade_advisor_agent.tools.call_forecasting_agent_tool import CallForecastingAgentTool
 from smolagents import Tool
 
 

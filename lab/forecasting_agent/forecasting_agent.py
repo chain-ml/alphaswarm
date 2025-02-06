@@ -7,10 +7,12 @@ from alphaswarm.agent.agent import AlphaSwarmAgent
 from alphaswarm.agent.clients import TerminalClient
 from alphaswarm.config import BASE_PATH
 from alphaswarm.tools.alchemy import AlchemyPriceHistoryBySymbol
-from alphaswarm.tools.cookie.cookie_metrics import CookieMetricsPaged
+from alphaswarm.tools.cookie.cookie_metrics import CookieMetricsPaged, CookieMetricsBySymbol
 from alphaswarm.tools.telegram import SendTelegramNotificationTool
 from alphaswarm.utils.file_utils import read_text_file_to_string
-from lab.forecasting_agent.price_forecasting_tool import PriceForecastingTool
+from lab.forecasting_agent.tools.price_forecasting_tool import PriceForecastingTool
+from lab.forecasting_agent.tools.duck_duck_go_search_tool import DuckDuckGoSearchTool
+# from lab.forecasting_agent.alchemy_context_tool import AlchemyContextTool
 from smolagents import Tool
 
 
@@ -19,10 +21,10 @@ class ForecastingAgent(AlphaSwarmAgent):
         tools: List[Tool] = [
             # AlchemyContextTool(),
             AlchemyPriceHistoryBySymbol(),
-            # CookieMetricsBySymbol(),
+            CookieMetricsBySymbol(),
             CookieMetricsPaged(),
             PriceForecastingTool(),
-            # DuckDuckGoSearchTool(),
+            DuckDuckGoSearchTool(),
             SendTelegramNotificationTool(
                 telegram_bot_token=os.getenv("TELEGRAM_BOT_TOKEN"), chat_id=int(os.getenv("TELEGRAM_CHAT_ID"))
             ),
@@ -35,15 +37,16 @@ class ForecastingAgent(AlphaSwarmAgent):
         specialization = """
         ## Specialization
         You are specialized in making price forecasts for crypto assets.
+        You are an expert at doing research to establish the context for your forecasts.
 
-        When doing this:
-        1. Get the historical price data for the token
-        2. Use additional tools to get market context that is relevant to predicting the price of a token
-        3. Use may use more than one tool to get additional market context if needed and if available
-        4. Use the forecasting tool to generate a price forecast
-        5. Your final response must include the reasoning behind the forecast
-        6. Use web search to gather any information that could be relevant for the context, 
-        but be mindful about information relevance and recency.
+        Your workflow:
+        - Get the historical price data for the token
+        - Conduct research using your available tools
+        -- Use `CookieMetricsBySymbol` to get metrics about the subject token
+        -- Use `CookieMetricsPaged` to get a broader market overview of related AI agent tokens
+        - Conduct additional research using the same or other tools as needed
+        - Use the forecasting tool to generate a price forecast
+        - Present a final response that includes a justification for your forecast
         """
 
         system_prompt = system_prompt.replace("{{my_tokens}}", "")

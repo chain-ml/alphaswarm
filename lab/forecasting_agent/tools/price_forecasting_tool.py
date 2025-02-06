@@ -60,7 +60,12 @@ class PriceForecastingTool(Tool):
         },
         "market_context": {
             "type": "string",
-            "description": "Relevant market context for the token. For every piece of information, include source and timeframe. If those are not available, state that or do not include them.",
+            "description": """Additional context to support your basis for the forecast. Include sources and timeframes for each piece of information.
+            Use the following example format for each piece of information:
+            - The price of the token has been steadily increasing over the past 2 days. [Source: Cookie.fun, Timeframe: last 2 days]
+            - Meanwhile, the broader market has been down over the past 7 days. [Source: CoinGecko, Timeframe: last 7 days]
+            - The token's foundation has recently launched a new product and the reception has been positive. [Source: News Article, Timeframe: last 24 hours]
+            """,
             "nullable": True,
         },
     }
