@@ -1,4 +1,5 @@
 from datetime import UTC, datetime
+from typing import Any
 
 import requests
 from smolagents import Tool
@@ -22,7 +23,7 @@ class PriceTool(Tool):
     }
     output_type = "object"
 
-    def __init__(self, *args, **kwargs) -> None:
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
         self.base_url = "https://api.coingecko.com/api/v3"
         self.session = requests.Session()

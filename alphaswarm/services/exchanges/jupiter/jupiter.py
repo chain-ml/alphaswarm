@@ -32,7 +32,7 @@ class JupiterClient(DEXClient):
         self._venue_config = venue_config
         logger.info(f"Initialized JupiterClient on chain '{self.chain}'")
 
-    def _validate_chain(self, chain) -> None:
+    def _validate_chain(self, chain: str) -> None:
         if chain != "solana":
             raise ValueError(f"Chain '{chain}' not supported. JupiterClient only supports Solana chain")
 

@@ -5,7 +5,7 @@ from alphaswarm.config import Config
 from alphaswarm.services.chains.evm import ERC20Contract
 
 
-def test_get_token_info(default_config: Config):
+def test_get_token_info(default_config: Config) -> None:
     """Test getting token info for USDC on ethereum."""
     chain = "ethereum"
     client = EVMClient(chain_config=default_config.get_chain_config(chain))
@@ -21,7 +21,7 @@ def test_get_token_info(default_config: Config):
     assert not token_info.is_native
 
 
-def test_get_solana_balance(default_config: Config):
+def test_get_solana_balance(default_config: Config) -> None:
     """Test getting balance for a known Solana wallet."""
     client = SolanaClient(default_config.get_chain_config("solana"))
 
@@ -35,7 +35,7 @@ def test_get_solana_balance(default_config: Config):
     print(f"Wallet balance: {balance}")
 
 
-def test_get_base_balance(default_config: Config):
+def test_get_base_balance(default_config: Config) -> None:
     client = EVMClient(chain_config=default_config.get_chain_config("base"))
 
     # Test wallet with known balance
@@ -49,7 +49,7 @@ def test_get_base_balance(default_config: Config):
     print(f"Wallet balance: {balance}")
 
 
-def test_get_contract_balance(default_config: Config):
+def test_get_contract_balance(default_config: Config) -> None:
     client = EVMClient(default_config.get_chain_config("base"))
     contract = ERC20Contract(client, client.get_token_info_by_name("USDC").checksum_address)
     # Using a known active Base wallet (Binance hot wallet)
@@ -57,7 +57,7 @@ def test_get_contract_balance(default_config: Config):
     assert value > 0
 
 
-def test_get_eth_balance(default_config: Config):
+def test_get_eth_balance(default_config: Config) -> None:
     """Test getting balance for a known ETH wallet."""
     client = EVMClient(chain_config=default_config.get_chain_config("ethereum"))
 
@@ -72,7 +72,7 @@ def test_get_eth_balance(default_config: Config):
     print(f"Wallet balance: {balance}")
 
 
-def test_get_native_token_vs_get_token(default_config: Config):
+def test_get_native_token_vs_get_token(default_config: Config) -> None:
     client = EVMClient(chain_config=default_config.get_chain_config("ethereum"))
     wallet = client.to_checksum_address("0xF977814e90dA44bFA03b6295A0616a897441aceC")
     token_info = client.get_token_info_by_name("ETH")
