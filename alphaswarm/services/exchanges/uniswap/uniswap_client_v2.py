@@ -20,6 +20,7 @@ logger = logging.getLogger(__name__)
 class UniswapClientV2(UniswapClientBase):
     def __init__(self, config: Config, chain: str):
         super().__init__(config, chain, "v2")
+        self._web3 = self._evm_client.client
 
     def _get_router(self, chain: str) -> ChecksumAddress:
         return self._evm_client.to_checksum_address(UNISWAP_V2_DEPLOYMENTS[chain]["router"])
@@ -40,13 +41,13 @@ class UniswapClientV2(UniswapClientBase):
             raise ValueError(f"No V2 price found for {base.symbol}/{quote.symbol}")
 
         # Calculate expected output
-        input_amount_decimal = Decimal(raw_quote_amount) / (Decimal(10) ** quote.decimals)
+        input_amount_decimal = quote.convert_from_wei(raw_quote_amount)
         expected_output_decimal = input_amount_decimal * price
         logger.info(f"Expected output: {expected_output_decimal} {base.symbol}")
 
         # Convert expected output to raw integer and apply slippage
         slippage_multiplier = Decimal(1) - (Decimal(slippage_bps) / Decimal(10000))
-        min_output_raw = int(expected_output_decimal * (10**base.decimals) * slippage_multiplier)
+        min_output_raw = base.convert_to_wei(expected_output_decimal) * slippage_multiplier
         logger.info(f"Minimum output with {slippage_bps} bps slippage (raw): {min_output_raw}")
 
         # Build swap path
@@ -54,7 +55,7 @@ class UniswapClientV2(UniswapClientBase):
 
         # Build swap transaction with EIP-1559 parameters
         router_contract = self._web3.eth.contract(address=self._router, abi=UNISWAP_V2_ROUTER_ABI)
-        deadline = int(self._web3.eth.get_block("latest")["timestamp"] + 300)  # 5 minutes
+        deadline = int(self._evm_client.get_block_latest()["timestamp"] + 300)  # 5 minutes
 
         swap = router_contract.functions.swapExactTokensForTokens(
             raw_quote_amount,  # amount in
