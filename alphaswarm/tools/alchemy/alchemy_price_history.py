@@ -4,18 +4,13 @@ from typing import Optional
 from alphaswarm.services.alchemy import NETWORKS, AlchemyClient, HistoricalPriceByAddress, HistoricalPriceBySymbol
 from smolagents import Tool
 
+from alphaswarm.utils.type_description import with_return_type_schema
 
+
+@with_return_type_schema(HistoricalPriceBySymbol)
 class AlchemyPriceHistoryBySymbol(Tool):
     name = "AlchemyPriceHistoryBySymbol"
     description = """Retrieve price history for a given token symbol using Alchemy.
-
-    Returns a `HistoricalPriceBySymbol` object with the following schema:
-    - symbol: str - The symbol of the token
-    - data: List[HistoricalPrice] - A list of historical price data points
-
-    Each `HistoricalPrice` object in the data list contains:
-    - value: Decimal - The price of the token at the given timestamp
-    - timestamp: datetime - The UTC timestamp of the price point
     """
     inputs = {
         "symbol": {
@@ -46,18 +41,10 @@ class AlchemyPriceHistoryBySymbol(Tool):
         return self.client.get_historical_prices_by_symbol(symbol, start_time, end_time, interval)
 
 
+@with_return_type_schema(HistoricalPriceByAddress)
 class AlchemyPriceHistoryByAddress(Tool):
     name = "AlchemyPriceHistoryByAddress"
     description = """Retrieve price history for a given token address using Alchemy.
-
-    Returns a `HistoricalPriceByAddress` object with the following schema:
-    - address: str - The contractaddress of the token
-    - network: str - The network of the token
-    - data: List[HistoricalPrice] - A list of historical price data points
-
-    Each `HistoricalPrice` object in the data list contains:
-    - value: Decimal - The price of the token at the given timestamp
-    - timestamp: datetime - The UTC timestamp of the price point
     """
     inputs = {
         "address": {

@@ -4,10 +4,13 @@ from typing import Optional
 from alphaswarm.services.cookiefun.cookiefun_client import AgentMetrics, CookieFunClient, Interval, PagedAgentsResponse
 from smolagents import Tool
 
+from alphaswarm.utils.type_description import with_return_type_schema
+
 # Set up logging
 logger = logging.getLogger(__name__)
 
 
+@with_return_type_schema(AgentMetrics)
 class CookieMetricsByTwitter(Tool):
     name = "CookieMetricsByTwitter"
     description = "Retrieve AI agent metrics such as mindshare, market cap, price, liquidity, volume, holders, average impressions, average engagements, followers, and top tweets by Twitter username from Cookie.fun"
@@ -60,6 +63,7 @@ class CookieMetricsByContract(Tool):
         return self.client.get_agent_metrics_by_contract(address, Interval(interval), chain)
 
 
+@with_return_type_schema(AgentMetrics)
 class CookieMetricsBySymbol(Tool):
     name = "CookieMetricsBySymbol"
     description = "Retrieve AI agent metrics such as mindshare, market cap, price, liquidity, volume, holders, average impressions, average engagements, followers, and top tweets by token symbol from Cookie.fun"
@@ -84,6 +88,7 @@ class CookieMetricsBySymbol(Tool):
         return self.client.get_agent_metrics_by_contract(symbol, Interval(interval))
 
 
+@with_return_type_schema(PagedAgentsResponse)
 class CookieMetricsPaged(Tool):
     name = "CookieMetricsPaged"
     description = "Retrieve paged list of AI agents ordered by mindshare from Cookie.fun. Important for getting a list of trending AI agents. page_size is the number of agents per page. If asked for example for Top 10 agents, page_size should be 10."

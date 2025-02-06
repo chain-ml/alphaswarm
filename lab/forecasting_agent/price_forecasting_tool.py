@@ -7,6 +7,7 @@ from alphaswarm.core.llm.llm_function import LLMFunctionFromPromptFiles
 from pydantic import BaseModel, Field
 from smolagents import Tool
 
+from alphaswarm.utils.type_description import with_return_type_schema
 
 class PriceForecast(BaseModel):
     timestamp: str = Field(description="The timestamp of the forecast")
@@ -20,21 +21,10 @@ class PriceForecastResponse(BaseModel):
     forecast: List[PriceForecast] = Field(description="The forecasted prices of the token")
 
 
+@with_return_type_schema(PriceForecastResponse)
 class PriceForecastingTool(Tool):
     name = "PriceForecastingTool"
     description = """Forecast the price of a token based on historical price data and other relevant market context.
-    
-    Returns a `PriceForecastResponse` object.
-
-    The `PriceForecastResponse` object has the following fields:
-    - reason: The reasoning behind the forecast
-    - forecast: A list of `PriceForecast` objects, each containing a timestamp and a price
-
-    A `PriceForecast` object has the following fields:
-    - timestamp: The timestamp of the forecast
-    - price: The forecasted median price of the token
-    - lower_confidence_bound: The lower confidence bound of the forecast
-    - upper_confidence_bound: The upper confidence bound of the forecast
     """
     inputs = {
         "historical_price_data": {
