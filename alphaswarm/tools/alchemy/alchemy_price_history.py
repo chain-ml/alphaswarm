@@ -7,7 +7,16 @@ from smolagents import Tool
 
 class AlchemyPriceHistoryBySymbol(Tool):
     name = "AlchemyPriceHistoryBySymbol"
-    description = "Retrieve price history for a given token symbol using Alchemy"
+    description = """Retrieve price history for a given token symbol using Alchemy.
+
+    Returns a `HistoricalPriceBySymbol` object with the following schema:
+    - symbol: str - The symbol of the token
+    - data: List[HistoricalPrice] - A list of historical price data points
+
+    Each `HistoricalPrice` object in the data list contains:
+    - value: Decimal - The price of the token at the given timestamp
+    - timestamp: datetime - The UTC timestamp of the price point
+    """
     inputs = {
         "symbol": {
             "type": "string",
@@ -39,7 +48,17 @@ class AlchemyPriceHistoryBySymbol(Tool):
 
 class AlchemyPriceHistoryByAddress(Tool):
     name = "AlchemyPriceHistoryByAddress"
-    description = "Retrieve price history for a given token address using Alchemy"
+    description = """Retrieve price history for a given token address using Alchemy.
+
+    Returns a `HistoricalPriceByAddress` object with the following schema:
+    - address: str - The contractaddress of the token
+    - network: str - The network of the token
+    - data: List[HistoricalPrice] - A list of historical price data points
+
+    Each `HistoricalPrice` object in the data list contains:
+    - value: Decimal - The price of the token at the given timestamp
+    - timestamp: datetime - The UTC timestamp of the price point
+    """
     inputs = {
         "address": {
             "type": "string",

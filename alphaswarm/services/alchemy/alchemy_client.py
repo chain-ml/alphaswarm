@@ -6,6 +6,7 @@ from typing import Dict, List, Optional
 
 import requests
 from alphaswarm.services.api_exception import ApiException
+from pydantic import Field
 from pydantic.dataclasses import dataclass
 
 logger = logging.getLogger(__name__)
@@ -13,21 +14,21 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class HistoricalPrice:
-    value: Decimal
-    timestamp: datetime
+    value: Decimal = Field(..., description="The price of the token at the given timestamp")
+    timestamp: datetime = Field(..., description="The UTC timestamp of the price point")
 
 
 @dataclass
 class HistoricalPriceBySymbol:
-    symbol: str
-    data: List[HistoricalPrice]
+    symbol: str = Field(..., description="The symbol of the token")
+    data: List[HistoricalPrice] = Field(..., description="The historical price data for the token")
 
 
 @dataclass
 class HistoricalPriceByAddress:
-    address: str
-    network: str
-    data: List[HistoricalPrice]
+    address: str = Field(..., description="The address of the token")
+    network: str = Field(..., description="The network of the token")
+    data: List[HistoricalPrice] = Field(..., description="The historical price data for the token")
 
 
 NETWORKS = ["eth-mainnet", "base-mainnet", "solana-mainnet", "eth-sepolia", "base-sepolia", "solana-devnet"]
