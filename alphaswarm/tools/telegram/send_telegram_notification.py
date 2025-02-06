@@ -14,7 +14,11 @@ class SendTelegramNotificationTool(Tool):
     Returns a string describing whether the notification was sent successfully or not."""
 
     inputs = {
-        "message": {"type": "string", "description": "The message to send.", "required": True},
+        "message": {
+            "type": "string",
+            "description": "The message to send. When sending alert message, ALWAYS include token symbol or address in the message.",
+            "required": True,
+        },
         "confidence": {"type": "number", "description": "The confidence score, between 0 and 1.", "required": True},
         "priority": {
             "type": "string",
