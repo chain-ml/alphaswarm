@@ -87,34 +87,7 @@ class CookieMetricsBySymbol(Tool):
 class CookieMetricsPaged(Tool):
     name = "CookieMetricsPaged"
     description = """Retrieve paged list of market data and statistics for `page_size` AI agent tokens ordered by mindshare from Cookie.fun. 
-
-        Returns PagedAgentsResponse, which is defined using the following dataclasses:
-
-        @dataclass
-        class Contract:
-            chain: int = Field(default=0)
-            contract_address: str = Field(default="", alias="contractAddress")
-
-        @dataclass
-        class Tweet:
-            tweet_url: str = Field(default="", alias="tweetUrl")
-            tweet_author_profile_image_url: str = Field(default="", alias="tweetAuthorProfileImageUrl")
-            tweet_author_display_name: str = Field(default="", alias="tweetAuthorDisplayName")
-            smart_engagement_points: int = Field(default=0, alias="smartEngagementPoints")
-            impressions_count: int = Field(default=0, alias="impressionsCount")
-
-        @dataclass
-        class AgentMetrics:
-            {{several data fields}}
-
-        @dataclass
-        class PagedAgentsResponse:
-            "Response from the paged agents endpoint"
-
-            data: List[AgentMetrics] = Field(default_factory=list)
-            current_page: int = Field(default=0, alias="currentPage")
-            total_pages: int = Field(default=0, alias="totalPages")
-            total_count: int = Field(default=0, alias="totalCount")
+    Outputs an object of type PagedAgentsResponse, which has a field `data` containing a list of AgentMetrics data objects.
     """
     inputs = {
         "interval": {
