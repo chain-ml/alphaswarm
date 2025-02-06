@@ -5,7 +5,7 @@ import dotenv
 from alphaswarm.agent.agent import AlphaSwarmAgent
 from alphaswarm.agent.clients import TerminalClient
 from alphaswarm.config import BASE_PATH
-from alphaswarm.tools.cookie.cookie_metrics import CookieMetricsBySymbol
+from alphaswarm.tools.cookie.cookie_metrics import CookieMetricsBySymbol, CookieMetricsPaged
 from alphaswarm.utils.file_utils import read_text_file_to_string
 from lab.forecasting_agent.alchemy_context_tool import AlchemyContextTool
 from lab.forecasting_agent.duck_duck_go_search import DuckDuckGoSearchTool
@@ -14,16 +14,17 @@ from smolagents import Tool
 
 
 class ForecastingAgent(AlphaSwarmAgent):
-    def __init__(self):
+    def __init__(self) -> None:
         tools: List[Tool] = [
             AlchemyContextTool(),
             CookieMetricsBySymbol(),
+            CookieMetricsPaged(),
             PriceForecastingTool(),
             DuckDuckGoSearchTool(),
         ]
 
         system_prompt = read_text_file_to_string(
-            BASE_PATH / "lab/forecasting_agent/prompts/forecasting_agent_system_prompt.txt"
+            BASE_PATH / "lab/research_agent_system_prompt.txt"
         )
 
         specialization = """
@@ -40,6 +41,7 @@ class ForecastingAgent(AlphaSwarmAgent):
         but be mindful about information relevance and recency.
         """
 
+        system_prompt = system_prompt.replace("{{my_tokens}}", "")
         system_prompt = system_prompt.replace("{{specialization}}", specialization)
 
         super().__init__(tools=tools, model_id="anthropic/claude-3-5-sonnet-20241022", system_prompt=system_prompt)

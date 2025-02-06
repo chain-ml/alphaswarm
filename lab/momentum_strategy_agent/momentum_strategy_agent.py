@@ -13,7 +13,7 @@ from smolagents import Tool
 
 
 class MomentumStrategyAgent(AlphaSwarmAgent):
-    def __init__(self):
+    def __init__(self) -> None:
         config = Config()
         telegram_config = config.get("telegram", {})
         telegram_bot_token = telegram_config.get("bot_token")

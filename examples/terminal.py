@@ -7,6 +7,12 @@ from alphaswarm.agent.agent import AlphaSwarmAgent
 from alphaswarm.agent.clients import TerminalClient
 from alphaswarm.config import CONFIG_PATH, Config
 from alphaswarm.tools.alchemy import AlchemyPriceHistoryByAddress, AlchemyPriceHistoryBySymbol
+from alphaswarm.tools.cookie.cookie_metrics import (
+    CookieMetricsByContract,
+    CookieMetricsBySymbol,
+    CookieMetricsByTwitter,
+    CookieMetricsPaged,
+)
 from alphaswarm.tools.exchanges import ExecuteTokenSwapTool, GetTokenPriceTool
 from alphaswarm.tools.price_tool import PriceTool
 from alphaswarm.tools.strategy_analysis.generic import GenericStrategyAnalysisTool
@@ -32,6 +38,10 @@ async def main() -> None:
         AlchemyPriceHistoryByAddress(),
         AlchemyPriceHistoryBySymbol(),
         GenericStrategyAnalysisTool(strategy=strategy),
+        CookieMetricsByContract(),
+        CookieMetricsBySymbol(),
+        CookieMetricsByTwitter(),
+        CookieMetricsPaged(),
         SendTelegramNotificationTool(telegram_bot_token=telegram_bot_token, chat_id=chat_id),
         ExecuteTokenSwapTool(config),
     ]  # Add your tools here
