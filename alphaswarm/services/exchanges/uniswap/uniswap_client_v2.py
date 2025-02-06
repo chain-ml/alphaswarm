@@ -40,13 +40,13 @@ class UniswapClientV2(UniswapClientBase):
             raise ValueError(f"No V2 price found for {base.symbol}/{quote.symbol}")
 
         # Calculate expected output
-        input_amount_decimal = Decimal(raw_quote_amount) / (Decimal(10) ** quote.decimals)
+        input_amount_decimal = quote.convert_from_wei(raw_quote_amount)
         expected_output_decimal = input_amount_decimal * price
         logger.info(f"Expected output: {expected_output_decimal} {base.symbol}")
 
         # Convert expected output to raw integer and apply slippage
         slippage_multiplier = Decimal(1) - (Decimal(slippage_bps) / Decimal(10000))
-        min_output_raw = int(expected_output_decimal * (10**base.decimals) * slippage_multiplier)
+        min_output_raw = base.convert_to_wei(expected_output_decimal) * slippage_multiplier
         logger.info(f"Minimum output with {slippage_bps} bps slippage (raw): {min_output_raw}")
 
         # Build swap path
