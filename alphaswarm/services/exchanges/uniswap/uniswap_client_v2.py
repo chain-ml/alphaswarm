@@ -54,7 +54,7 @@ class UniswapClientV2(UniswapClientBase):
 
         # Build swap transaction with EIP-1559 parameters
         router_contract = self._web3.eth.contract(address=self._router, abi=UNISWAP_V2_ROUTER_ABI)
-        deadline = int(self._web3.eth.get_block("latest")["timestamp"] + 300)  # 5 minutes
+        deadline = int(self._evm_client.get_block_latest()["timestamp"] + 300)  # 5 minutes
 
         swap = router_contract.functions.swapExactTokensForTokens(
             raw_quote_amount,  # amount in

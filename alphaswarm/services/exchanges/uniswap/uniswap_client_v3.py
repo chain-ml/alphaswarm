@@ -3,7 +3,7 @@ from decimal import Decimal
 from typing import Any, Dict, List, Optional, Self, Tuple, Union
 
 from alphaswarm.config import Config, TokenInfo
-from alphaswarm.services.chains.evm import ZERO_ADDRESS, EMVContract, EVMClient, EVMSigner
+from alphaswarm.services.chains.evm import ZERO_ADDRESS, EVMClient, EVMContract, EVMSigner
 from alphaswarm.services.exchanges.uniswap.constants_v3 import (
     UNISWAP_V3_DEPLOYMENTS,
     UNISWAP_V3_FACTORY_ABI,
@@ -16,13 +16,12 @@ from eth_defi.uniswap_v3.price import get_onchain_price
 from eth_typing import ChecksumAddress, HexAddress
 from pydantic import BaseModel, Field
 from typing_extensions import Annotated
-from web3 import Web3
 from web3.types import TxReceipt
 
 logger = logging.getLogger(__name__)
 
 
-class FactoryContract(EMVContract):
+class FactoryContract(EVMContract):
     def __init__(self, client: EVMClient, address: ChecksumAddress) -> None:
         super().__init__(client, address, UNISWAP_V3_FACTORY_ABI)
 
@@ -36,29 +35,57 @@ class FactoryContract(EMVContract):
 
 
 class PoolContract:
-    def __init__(self, client: Web3, address: HexAddress) -> None:
+    def __init__(self, client: EVMClient, address: HexAddress) -> None:
         self._client = client
         self._address = address
-        self._pool_details: Optional[PoolDetails] = None
+        self._cached_pool_details: Optional[PoolDetails] = None
         self._liquidity: Optional[int] = None
 
     @property
-    def pool_details(self) -> PoolDetails:
-        if self._pool_details is None:
-            self._pool_details = fetch_pool_details(self._client, self._address)
-        return self._pool_details
+    def _pool_details(self) -> PoolDetails:
+        if self._cached_pool_details is None:
+            self._cached_pool_details = fetch_pool_details(self._client.client, self._address)
+        return self._cached_pool_details
+
+    @property
+    def address(self) -> ChecksumAddress:
+        return EVMClient.to_checksum_address(self._address)
+
+    @property
+    def raw_fee(self) -> int:
+        return self._pool_details.raw_fee
 
     @property
     def liquidity(self) -> int:
         if self._liquidity is None:
-            self._liquidity = self.pool_details.pool.functions.liquidity().call()
+            self._liquidity = self._pool_details.pool.functions.liquidity().call()
         return self._liquidity
 
-    @classmethod
-    def from_pool_details(cls, pool_details: PoolDetails) -> Self:
-        result = cls(pool_details.pool.w3, pool_details.address)
-        result._pool_details = pool_details
-        return result
+    def get_price_for_token_out(self, token_out: ChecksumAddress) -> Decimal:
+        """Get the current mid-price for the pair of token.
+
+        Args:
+            token_out: The token to be bought (going out of the pool)
+
+        Returns:
+            Decimal: the amount of token_out (bought) for exactly one token_in (sold)
+        """
+
+        reverse = token_out.lower() == self._pool_details.token0.address.lower()
+        return get_onchain_price(self._client.client, self._address, reverse_token_order=reverse)
+
+    def get_price_for_token_in(self, token_in: ChecksumAddress) -> Decimal:
+        """Get the current mid-price for the pair of token.
+
+        Args:
+            token_in: The token to be bought (going into the pool)
+
+        Returns:
+            Decimal: the amount of token_in (sold) for exactly one token_out (bought)
+        """
+
+        reverse = token_in.lower() == self._pool_details.token1.address.lower()
+        return get_onchain_price(self._client.client, self._address, reverse_token_order=reverse)
 
 
 class ExactInputSingleParams(BaseModel):
@@ -75,7 +102,7 @@ class ExactInputSingleParams(BaseModel):
         return self.model_dump(by_alias=True)
 
 
-class RouterContract(EMVContract):
+class RouterContract(EVMContract):
     def __init__(self, client: EVMClient, address: ChecksumAddress, abi: List[Dict]) -> None:
         super().__init__(client, address, abi)
 
@@ -113,11 +140,11 @@ class UniswapClientV3(UniswapClientBase):
         approval_receipt = self._approve_token_spend(quote, quote_wei)
 
         # Build a swap transaction
-        pool_details = self._get_pool(base, quote)
-        logger.info(f"Using Uniswap V3 pool at address: {pool_details.address} (raw fee tier: {pool_details.raw_fee})")
+        pool = self._get_pool(base, quote)
+        logger.info(f"Using Uniswap V3 pool at address: {pool.address} (raw fee tier: {pool.raw_fee})")
 
         # Get the on-chain price from the pool and reverse if necessary
-        price = self._get_token_price_from_pool(quote, pool_details)
+        price = pool.get_price_for_token_out(quote.checksum_address)
         logger.info(f"Pool raw price: {price} ({quote.symbol} per {base.symbol})")
 
         # Convert to decimal for calculations
@@ -133,7 +160,7 @@ class UniswapClientV3(UniswapClientBase):
         logger.info(f"Expected output amount (raw): {raw_output}")
 
         # Calculate price impact
-        pool_liquidity = PoolContract.from_pool_details(pool_details).liquidity
+        pool_liquidity = pool.liquidity
         logger.info(f"Pool liquidity: {pool_liquidity}")
 
         # Estimate price impact (simplified)
@@ -159,9 +186,9 @@ class UniswapClientV3(UniswapClientBase):
         params = ExactInputSingleParams(
             token_in=quote.checksum_address,
             token_out=base.checksum_address,
-            fee=pool_details.raw_fee,
+            fee=pool.raw_fee,
             recipient=self._evm_client.to_checksum_address(address),
-            deadline=int(self._web3.eth.get_block("latest")["timestamp"] + 300),
+            deadline=int(self._evm_client.get_block_latest()["timestamp"] + 300),
             amount_in=quote_wei,
             amount_out_minimum=min_output_raw,
             sqrt_price_limit_x96=0,
@@ -190,18 +217,18 @@ class UniswapClientV3(UniswapClientBase):
         Note:
             Uses the pool with the most liquidity.
         """
-        pool_details = self._get_pool(base_token, quote_token)
-        return self._get_token_price_from_pool(quote_token, pool_details)
+        pool = self._get_pool(base_token, quote_token)
+        return pool.get_price_for_token_out(quote_token.checksum_address)
 
     def _get_token_price_from_pool(self, quote_token: TokenInfo, pool_details: PoolDetails) -> Decimal:
         reverse = quote_token.address.lower() == pool_details.token0.address.lower()
-        raw_price = get_onchain_price(self._web3, pool_details.address, reverse_token_order=reverse)
+        raw_price = get_onchain_price(self._evm_client.client, pool_details.address, reverse_token_order=reverse)
         return raw_price
 
-    def _get_pool_by_address(self, address: Union[str, HexAddress]):
-        return PoolContract(self._web3, self._web3.to_checksum_address(address))
+    def _get_pool_by_address(self, address: Union[str, HexAddress]) -> PoolContract:
+        return PoolContract(self._evm_client, EVMClient.to_checksum_address(address))
 
-    def _get_pool(self, token0: TokenInfo, token1: TokenInfo) -> PoolDetails:
+    def _get_pool(self, token0: TokenInfo, token1: TokenInfo) -> PoolContract:
         """Find the Uniswap V3 pool with highest liquidity for a token pair.
 
         Checks all configured fee tiers and returns the pool with the highest liquidity.
@@ -212,13 +239,13 @@ class UniswapClientV3(UniswapClientBase):
             token1: second token of the pair
 
         Returns:
-            PoolDetails: Details about the pool with highest liquidity, or None if no pool exists
+            PoolContract: The pool with the highest liquidity, or None if no pool exists
             or there was an error finding a pool
         """
         settings = self.config.get_venue_settings_uniswap_v3()
 
         max_liquidity = 0
-        best_pool_details = None
+        best_pool = None
 
         # Check all fee tiers to find pool with highest liquidity
         for fee in settings.fee_tiers:
@@ -229,20 +256,18 @@ class UniswapClientV3(UniswapClientBase):
                 if pool_address is None:
                     continue
 
-                pool = PoolContract(self._web3, pool_address)
+                pool = self._get_pool_by_address(pool_address)
                 if pool.liquidity > max_liquidity:
-                    best_pool_details = pool
+                    best_pool = pool
                     max_liquidity = pool.liquidity
 
             except Exception:
                 logger.exception(f"Failed to get pool for fee tier {fee}")
                 continue
 
-        if best_pool_details:
-            logger.info(
-                f"Selected pool with highest liquidity: {best_pool_details.pool_details.address} (liquidity: {best_pool_details.liquidity})"
-            )
-            return best_pool_details.pool_details
+        if best_pool:
+            logger.info(f"Selected pool with highest liquidity: {best_pool.address} (liquidity: {best_pool.liquidity})")
+            return best_pool
 
         logger.warning(f"No V3 pool found for {token0.symbol}/{token1.symbol}")
         raise RuntimeError(f"No pool found for {token0.symbol}/{token1.symbol}")

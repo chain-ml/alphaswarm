@@ -2,7 +2,7 @@ from decimal import Decimal
 
 import pytest
 
-from alphaswarm.config import Config
+from alphaswarm.config import Config, TokenInfo
 from alphaswarm.services.exchanges.uniswap import UniswapClientV3
 
 BASE_WETH_USDC_005 = "0xd0b53D9277642d899DF5C87A3966A349A798F224"
@@ -32,14 +32,14 @@ def test_get_price(base_client: UniswapClientV3) -> None:
 
 
 def test_quote_from_pool(base_client: UniswapClientV3) -> None:
-    pool = base_client._get_pool_by_address(BASE_WETH_USDC_005).pool_details
-    usdc = base_client.chain_config.get_token_info("USDC")
+    pool = base_client._get_pool_by_address(BASE_WETH_USDC_005)
+    usdc: TokenInfo = base_client.chain_config.get_token_info("USDC")
     weth = base_client.chain_config.get_token_info("WETH")
 
-    price_in_usdc = base_client._get_token_price_from_pool(usdc, pool)
+    price_in_usdc = pool.get_price_for_token_out(usdc.checksum_address)
     print(f"1 {weth.symbol} is {price_in_usdc} {usdc.symbol}")
 
-    price_in_weth = base_client._get_token_price_from_pool(weth, pool)
+    price_in_weth = pool.get_price_for_token_in(usdc.checksum_address)
     print(f"1 {usdc.symbol} is {price_in_weth} {weth.symbol}")
 
     assert price_in_usdc > price_in_weth
@@ -48,11 +48,11 @@ def test_quote_from_pool(base_client: UniswapClientV3) -> None:
 def test_get_pool_detail(base_client: UniswapClientV3) -> None:
     pool = base_client._get_pool_by_address(BASE_WETH_USDC_005)
 
-    assert pool.pool_details.address == BASE_WETH_USDC_005
-    assert pool.pool_details.token0.symbol == "WETH"
-    assert pool.pool_details.token1.symbol == "USDC"
-    assert pool.pool_details.token0.address == base_client.chain_config.get_token_info("WETH").address
-    assert pool.pool_details.token1.address == base_client.chain_config.get_token_info("USDC").address
+    assert pool.address == BASE_WETH_USDC_005
+    assert pool._pool_details.token0.symbol == "WETH"
+    assert pool._pool_details.token1.symbol == "USDC"
+    assert pool._pool_details.token0.address == base_client.chain_config.get_token_info("WETH").address
+    assert pool._pool_details.token1.address == base_client.chain_config.get_token_info("USDC").address
 
 
 def test_get_pool_for_token_pair(base_client: UniswapClientV3) -> None:
