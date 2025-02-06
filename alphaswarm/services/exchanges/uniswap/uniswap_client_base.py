@@ -18,7 +18,6 @@ class UniswapClientBase(DEXClient):
         super().__init__(config, chain)
         self.version = version
         self._evm_client = EVMClient(self.config, self.chain)
-        self._web3 = self._evm_client.client
         self._router = self._get_router(self.chain)
         self._factory = self._get_factory(self.chain)
 

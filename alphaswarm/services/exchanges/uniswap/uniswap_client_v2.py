@@ -20,6 +20,7 @@ logger = logging.getLogger(__name__)
 class UniswapClientV2(UniswapClientBase):
     def __init__(self, config: Config, chain: str):
         super().__init__(config, chain, "v2")
+        self._web3 = self._evm_client.client
 
     def _get_router(self, chain: str) -> ChecksumAddress:
         return self._evm_client.to_checksum_address(UNISWAP_V2_DEPLOYMENTS[chain]["router"])
