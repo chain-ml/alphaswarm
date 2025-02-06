@@ -6,7 +6,7 @@ import dotenv
 from alphaswarm.agent.agent import AlphaSwarmAgent
 from alphaswarm.agent.clients import TerminalClient
 from alphaswarm.config import CONFIG_PATH, Config
-from alphaswarm.tools.cookie.cookie_metrics import CookieMetricsBySymbol
+from alphaswarm.tools.cookie.cookie_metrics import CookieMetricsByContract
 from alphaswarm.tools.telegram import SendTelegramNotificationTool
 from lab.momentum_strategy_agent.tools.price_change_tool import TokenPriceChangeCalculator
 from smolagents import Tool
@@ -21,7 +21,7 @@ class MomentumStrategyAgent(AlphaSwarmAgent):
 
         tools: List[Tool] = [
             TokenPriceChangeCalculator(),
-            CookieMetricsBySymbol(),
+            CookieMetricsByContract(),
             SendTelegramNotificationTool(telegram_bot_token=telegram_bot_token, chat_id=chat_id),
         ]
 
@@ -65,7 +65,7 @@ class MomentumStrategyAgent(AlphaSwarmAgent):
         except FileNotFoundError:
             system_prompt = ""
 
-        system_prompt = system_prompt.replace("{{token_set}}", json.dumps(my_tokens))
+        system_prompt = system_prompt.replace("{{token_name_to_address}}", json.dumps(my_tokens))
         system_prompt = system_prompt.replace("{{trading_strategy}}", trading_strategy)
 
         super().__init__(tools=tools, model_id="anthropic/claude-3-5-sonnet-20241022", system_prompt=system_prompt)
