@@ -119,7 +119,7 @@ class RouterContract(EVMContract):
 
 
 class UniswapClientV3(UniswapClientBase):
-    def __init__(self, chain_config: ChainConfig, settings: UniswapV3Settings):
+    def __init__(self, chain_config: ChainConfig, settings: UniswapV3Settings) -> None:
         super().__init__(chain_config=chain_config, version=UNISWAP_V3_VERSION)
         self._factory_contract: Optional[FactoryContract] = None
         self._settings = settings

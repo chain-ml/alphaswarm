@@ -27,7 +27,7 @@ class AlchemyPriceHistoryBySymbol(Tool):
     }
     output_type = "object"
 
-    def __init__(self, alchemy_client: Optional[AlchemyClient] = None):
+    def __init__(self, alchemy_client: Optional[AlchemyClient] = None) -> None:
         super().__init__()
         self.client = alchemy_client or AlchemyClient.from_env()
 
@@ -64,7 +64,7 @@ class AlchemyPriceHistoryByAddress(Tool):
     }
     output_type = "object"
 
-    def __init__(self, alchemy_client: Optional[AlchemyClient] = None):
+    def __init__(self, alchemy_client: Optional[AlchemyClient] = None) -> None:
         super().__init__()
         self.client = alchemy_client or AlchemyClient.from_env()
 
