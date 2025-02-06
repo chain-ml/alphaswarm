@@ -16,7 +16,7 @@ agent = AlphaSwarmAgent(tools=tools, model_id="anthropic/claude-3-5-sonnet-20241
 
 
 # Interact with the agent
-async def main():
+async def main() -> None:
     response = await agent.process_message("Swap 3 USDC for WETH on Ethereum Sepolia")
     print(response)
 
