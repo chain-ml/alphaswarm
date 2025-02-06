@@ -11,7 +11,7 @@ from .evm import EVMClient, EVMSigner
 
 
 class EVMContract:
-    def __init__(self, client: EVMClient, address: ChecksumAddress, abi: list[dict]):
+    def __init__(self, client: EVMClient, address: ChecksumAddress, abi: list[dict]) -> None:
         self._client = client
         self._address = address
         self._abi = abi

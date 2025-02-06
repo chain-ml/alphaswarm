@@ -5,7 +5,7 @@ from alphaswarm.tools.strategy_analysis.strategy import Strategy
 
 def test_generic_strategy_analysis():
     """Test the generic strategy analysis with basic WETH price data"""
-    strategy = Strategy.from_file("momentum_strategy_config.md")
+    strategy = Strategy.from_file(filename="momentum_strategy_config.md")
     tool = GenericStrategyAnalysisTool(strategy=strategy)
 
     # Sample token data with realistic price changes
