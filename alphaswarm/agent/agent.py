@@ -10,7 +10,7 @@ class AlphaSwarmAgent:
     def __init__(
         self,
         tools: Sequence[Tool],
-        model_id: str,
+        model_id: str = "anthropic/claude-3-5-sonnet-20241022",
         system_prompt: Optional[str] = None,
         hints: Optional[str] = None,
     ) -> None:
