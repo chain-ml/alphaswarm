@@ -24,7 +24,7 @@ async def main() -> None:
     telegram_bot_token = telegram_config.get("bot_token")
     chat_id = int(telegram_config.get("chat_id"))
 
-    strategy = Strategy.from_file(CONFIG_PATH / "momentum_strategy_config.md")
+    strategy = Strategy.from_file(filename=CONFIG_PATH / "momentum_strategy_config.md")
 
     tools: List[Tool] = [
         PriceTool(),

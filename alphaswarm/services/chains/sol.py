@@ -4,7 +4,7 @@ from decimal import Decimal
 from alphaswarm.config import ChainConfig
 from solana.rpc import api
 from solana.rpc.types import TokenAccountOpts
-from solders.pubkey import Pubkey  # type: ignore
+from solders.pubkey import Pubkey
 
 logger = logging.getLogger(__name__)
 
