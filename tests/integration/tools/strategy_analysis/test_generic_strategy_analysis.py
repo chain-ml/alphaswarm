@@ -3,7 +3,7 @@ from alphaswarm.tools.strategy_analysis.generic.generic_analysis import GenericS
 from alphaswarm.tools.strategy_analysis.strategy import Strategy
 
 
-def test_generic_strategy_analysis():
+def test_generic_strategy_analysis() -> None:
     """Test the generic strategy analysis with basic WETH price data"""
     strategy = Strategy.from_file("momentum_strategy_config.md")
     tool = GenericStrategyAnalysisTool(strategy=strategy)

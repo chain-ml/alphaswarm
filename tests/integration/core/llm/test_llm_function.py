@@ -1,5 +1,5 @@
 import time
-from typing import List, Literal, Type
+from typing import Any, List, Literal, Type
 
 import dotenv
 import requests
@@ -30,7 +30,7 @@ class ComplexResponse(BaseModel):
     list_of_items: List[ItemPricePair] = Field(..., description="The list of items and their prices")
 
 
-def get_llm_function(response_model: Type[BaseModel] = SimpleResponse, **kwargs) -> LLMFunction:
+def get_llm_function(response_model: Type[BaseModel] = SimpleResponse, **kwargs: Any) -> LLMFunction:
     return LLMFunction(
         model_id="anthropic/claude-3-haiku-20240307",
         response_model=response_model,
@@ -38,7 +38,7 @@ def get_llm_function(response_model: Type[BaseModel] = SimpleResponse, **kwargs)
     )
 
 
-def test_llm_function_simple():
+def test_llm_function_simple() -> None:
     llm_func = get_llm_function(system_message="Output a random number between 1 and 10")
 
     result = llm_func.execute()
@@ -46,7 +46,7 @@ def test_llm_function_simple():
     assert 1 <= result.number <= 10
 
 
-def test_llm_function_messages():
+def test_llm_function_messages() -> None:
     llm_func = get_llm_function(
         system_message="Output a random number",
         messages=[Message.create(role="user", content="Pick between 2 and 5")],
@@ -57,7 +57,7 @@ def test_llm_function_messages():
     assert 2 <= result.number <= 5
 
 
-def test_llm_function_user_message():
+def test_llm_function_user_message() -> None:
     llm_func = get_llm_function(system_message="Output a random number")
 
     result = llm_func.execute(user_message="Pick between 3 and 7")
@@ -65,7 +65,7 @@ def test_llm_function_user_message():
     assert 3 <= result.number <= 7
 
 
-def test_llm_function_with_complex_response_model():
+def test_llm_function_with_complex_response_model() -> None:
     llm_func = get_llm_function(
         response_model=ComplexResponse,
         system_message="Output a list of items and their prices for a made up store",
@@ -77,7 +77,7 @@ def test_llm_function_with_complex_response_model():
     assert all(isinstance(item, ItemPricePair) for item in result.list_of_items)
 
 
-def test_llm_function_with_prompt_caching():
+def test_llm_function_with_prompt_caching() -> None:
     url = "https://raw.githubusercontent.com/dhimmel/bitcoin-whitepaper/main/content/02.body.md"
     response = requests.get(url)
 
@@ -102,10 +102,11 @@ def test_llm_function_with_prompt_caching():
     assert isinstance(llm_func_response.response, TestResponse)
     assert "peer" in llm_func_response.response.content.lower()
 
-    assert llm_func_response.completion.usage.prompt_tokens_details.cached_tokens > 0
+    # FIX ME
+    assert llm_func_response.completion.usage.prompt_tokens_details.cached_tokens > 0  # type: ignore[attr-defined]
 
 
-def test_llm_function_with_image():
+def test_llm_function_with_image() -> None:
     message = Message.create(
         role="user", content="Describe the image", image_url=ImageURL.from_path(get_data_filename("eth_sol_prices.png"))
     )

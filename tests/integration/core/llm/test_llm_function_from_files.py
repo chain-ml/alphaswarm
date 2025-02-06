@@ -1,4 +1,5 @@
 import tempfile
+from typing import Any
 
 import dotenv
 from pydantic import BaseModel, Field
@@ -13,7 +14,7 @@ class SimpleResponse(BaseModel):
     number: int = Field(..., ge=1, le=10, description="The random number between 1 and 10.")
 
 
-def get_llm_function_from_files(**kwargs) -> LLMFunctionFromPromptFiles[SimpleResponse]:
+def get_llm_function_from_files(**kwargs: Any) -> LLMFunctionFromPromptFiles[SimpleResponse]:
     return LLMFunctionFromPromptFiles(
         model_id="anthropic/claude-3-haiku-20240307",
         response_model=SimpleResponse,
@@ -21,7 +22,7 @@ def get_llm_function_from_files(**kwargs) -> LLMFunctionFromPromptFiles[SimpleRe
     )
 
 
-def test_llm_function_from_system_file():
+def test_llm_function_from_system_file() -> None:
     with tempfile.NamedTemporaryFile(mode="w", encoding="utf-8", suffix=".txt", delete=True) as temp_file:
         temp_file.write("Output a random number between {min_value} and {max_value}")
         temp_file.flush()  # ensure the content is written to disk
@@ -35,7 +36,7 @@ def test_llm_function_from_system_file():
         assert 2 <= result.number <= 7
 
 
-def test_llm_function_from_user_file():
+def test_llm_function_from_user_file() -> None:
     with (
         tempfile.NamedTemporaryFile(mode="w", encoding="utf-8", suffix=".txt", delete=True) as system_file,
         tempfile.NamedTemporaryFile(mode="w", encoding="utf-8", suffix=".txt", delete=True) as user_file,

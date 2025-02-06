@@ -35,7 +35,7 @@ def test_execute_with_user_messages_raises():
         llm_func.execute(user_message="test", messages=[Message(role="user", content="test")])
 
 
-def test_execute_with_user_prompt_params_but_no_template_raises():
+def test_execute_with_user_prompt_params_but_no_template_raises() -> None:
     with tempfile.NamedTemporaryFile(mode="w", encoding="utf-8", suffix=".txt", delete=True) as system_file:
         system_file.write("Sample system prompt")
         system_file.flush()
