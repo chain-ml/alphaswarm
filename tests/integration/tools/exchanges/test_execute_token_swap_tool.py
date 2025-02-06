@@ -13,5 +13,5 @@ def token_swap_tool(default_config: Config) -> ExecuteTokenSwapTool:
 
 @pytest.mark.skip("Requires a founded wallet. Run manually")
 def test_token_swap_tool(token_swap_tool: ExecuteTokenSwapTool) -> None:
-    result = token_swap_tool.forward("WETH", "USDC", Decimal(1), "ethereum_sepolia")
+    result = token_swap_tool.forward(token_quote="WETH", token_base="USDC", amount=Decimal(1), chain="ethereum_sepolia")
     print(result)

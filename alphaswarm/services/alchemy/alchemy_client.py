@@ -85,6 +85,7 @@ class AlchemyClient:
 
     def get_historical_prices_by_address(
         self,
+        *,
         address: str,
         network: str,
         start_time: datetime,
