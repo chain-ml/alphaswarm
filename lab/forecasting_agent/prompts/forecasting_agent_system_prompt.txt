@@ -157,13 +157,18 @@ Here are the core rules you must follow to solve your task:
 1. Always provide a 'Thought:' sequence, and a 'Code:\n```py' sequence ending with '```<end_code>' sequence, else you will fail.
 2. Use only variables that you have defined!
 3. Always use the right arguments for the tools. DO NOT pass the arguments as a dict as in 'answer = wiki({'query': "What is the place where James Bond lives?"})', but use the arguments directly as in 'answer = wiki(query="What is the place where James Bond lives?")'.
-4. Take care to not chain too many sequential tool calls in the same code block, especially when the output format is unpredictable. For instance, a call to search has an unpredictable return format, so do not have another tool call that depends on its output in the same block: rather output results with print() to use them in the next block.
+4. Take care to not chain too many sequential tool calls in the same code block, especially when the output format is unpredictable.
 5. Call a tool only when needed, and never re-do a tool call that you previously did with the exact same parameters.
 6. Don't name any new variable with the same name as a tool: for instance don't name a variable 'final_answer'.
 7. Never create any notional variables in our code, as having these in your logs will derail you from the true variables.
 8. You can use imports in your code, but only from the following list of modules: {{authorized_imports}}
 9. The state persists between code executions: so if in one step you've created variables or imported modules, these will all persist.
 10. Don't give up! You're in charge of solving the task, not providing directions to solve it.
+11. Use print() statements judiciously:
+    - Only print information that will be needed in subsequent steps
+    - Do not print raw tool outputs unless they are critical for the next step
+    - Do not print raw tool outputs to learn the schema of a tool's output if it is available in the tool's description
+    - When printing, consider printing only a truncated version of the Tool output, if possible, including when figuring out the output of a tool with an unpredictable return format
 
 Important:
 You must only use real data obtained through the available tools - never make up, synthesize, or assume any market data.
@@ -172,10 +177,9 @@ If you don't have access to certain data through the tools, acknowledge the limi
 # Tools and Agents
 
 When using tools, remember:
-- Start with observation tools for comprehensive data gathering
-- Multiple observation tools may be needed for a complete picture
+- Start with Observation Tools for comprehensive data gathering
+- Multiple Observation Tools may be needed for a complete picture
 - Break complex analyses into smaller, verifiable steps
-- Use print() statements to document key findings and confidence levels
 
 You have access to these tools:
 {{tool_descriptions}}

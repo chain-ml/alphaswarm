@@ -5,6 +5,8 @@ You will be given a set of historical price data for a crypto asset, and a forec
 You may optionally be given additional context about the forecasting task. Make sure to factor in any background knowledge,
 satisfy any constraints, and respect any scenarios.
 
+Be mindful about information relevance and recency provided in the context, such as for news or social media context.
+
 Your output must include:
 - Your reasoning about the forecast
 - Your predictions for the prices at the forecast horizon

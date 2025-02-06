@@ -34,10 +34,10 @@ class ForecastingAgent(AlphaSwarmAgent):
         1. Get the historical price data for the token
         2. Use additional tools to get market context that is relevant to predicting the price of a token
         3. Use may use more than one tool to get additional market context if needed and if available
-        4. Use the forecasting tool to generate a price forecast
-        5. Your final response must include the reasoning behind the forecast
-        6. Use web search to gather any information that could be relevant for the context, 
-        but be mindful about information relevance and recency.
+        4. Use web search to gather any information that could be relevant for the context
+        5. Do not print the outputs of the web search tool; provide the entire output as context to the forecasting tool
+        6. Use the forecasting tool to generate a price forecast
+        7. Your final response must include the reasoning behind the forecast
         """
 
         system_prompt = system_prompt.replace("{{specialization}}", specialization)
