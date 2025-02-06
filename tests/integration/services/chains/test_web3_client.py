@@ -2,6 +2,7 @@ import pytest
 
 from alphaswarm.services.chains import EVMClient, SolanaClient
 from alphaswarm.config import Config
+from alphaswarm.services.chains.evm import ERC20Contract
 
 
 def test_get_token_info(default_config: Config):
@@ -46,6 +47,14 @@ def test_get_base_balance(default_config: Config):
     assert balance is not None
     assert balance > 0
     print(f"Wallet balance: {balance}")
+
+
+def test_get_contract_balance(default_config: Config):
+    client = EVMClient(default_config, "base")
+    contract = ERC20Contract(client, client.get_token_info_by_name("USDC").checksum_address)
+    # Using a known active Base wallet (Binance hot wallet)
+    value = contract.get_balance("0xF977814e90dA44bFA03b6295A0616a897441aceC")
+    assert value > 0
 
 
 def test_get_eth_balance(default_config: Config):

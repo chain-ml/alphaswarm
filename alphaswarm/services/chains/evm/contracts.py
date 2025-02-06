@@ -44,7 +44,7 @@ class ERC20Contract(EVMContract):
             )
         return self._details
 
-    def get_balance(self, owner: ChecksumAddress) -> Decimal:
+    def get_balance(self, owner: ChecksumAddress) -> Wei:
         return self.contract.functions.balanceOf(owner).call()
 
     def get_allowance(self, owner: ChecksumAddress, spender: ChecksumAddress) -> Wei:
