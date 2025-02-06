@@ -4,7 +4,7 @@ from typing import Any
 import pytest
 from pydantic import BaseModel
 
-from alphaswarm.core.llm import LLMFunctionFromPromptFiles, Message
+from alphaswarm.core.llm import LLMFunctionFromPromptFiles, Message, TextContentBlock
 
 
 class Response(BaseModel):
@@ -30,10 +30,12 @@ def test_execute_with_user_messages_raises() -> None:
         llm_func.execute(user_message="test")
 
     with pytest.raises(ValueError, match="Both `user_message` and `messages` are expected to be None"):
-        llm_func.execute(messages=[Message(role="user", content="test")])
+        llm_func.execute(messages=[Message(role="user", content=[TextContentBlock.default("test")])])
 
     with pytest.raises(ValueError, match="Both `user_message` and `messages` are expected to be None"):
-        llm_func.execute(user_message="test", messages=[Message(role="user", content="test")])
+        llm_func.execute(
+            user_message="test", messages=[Message(role="user", content=[TextContentBlock.default("test")])]
+        )
 
 
 def test_execute_with_user_prompt_params_but_no_template_raises() -> None:

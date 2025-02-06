@@ -2,7 +2,7 @@ from datetime import datetime, timedelta, timezone
 from alphaswarm.services.alchemy.alchemy_client import AlchemyClient
 
 
-def test_historical_prices_by_symbol(alchemy_client: AlchemyClient):
+def test_historical_prices_by_symbol(alchemy_client: AlchemyClient) -> None:
     end = datetime.now(timezone.utc)
     start = end - timedelta(days=1)
     result = alchemy_client.get_historical_prices_by_symbol(
@@ -16,7 +16,7 @@ def test_historical_prices_by_symbol(alchemy_client: AlchemyClient):
     assert result.data[0].timestamp >= start
 
 
-def test_historical_prices_by_address(alchemy_client: AlchemyClient):
+def test_historical_prices_by_address(alchemy_client: AlchemyClient) -> None:
     end = datetime.now(timezone.utc)
     start = end - timedelta(days=1)
     address = "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48"

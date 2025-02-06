@@ -22,7 +22,7 @@ def eth_sepolia_signer(eth_sepolia_config: ChainConfig) -> EVMSigner:
 
 
 @pytest.fixture
-def eth_sepolia_usdc_contract(eth_sepolia_client) -> ERC20Contract:
+def eth_sepolia_usdc_contract(eth_sepolia_client: EVMClient) -> ERC20Contract:
     return ERC20Contract(eth_sepolia_client, Web3.to_checksum_address("0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238"))
 
 

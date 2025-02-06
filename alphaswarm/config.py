@@ -227,7 +227,7 @@ class Config:
         """Get list of supported networks for current environment"""
         return self._config["network_environments"].get(self._network_env, [])
 
-    def get(self, key_path: str, default=None) -> Any:
+    def get(self, key_path: str, default: Any = None) -> Any:
         """Get configuration value using dot notation"""
         try:
             keys = key_path.split(".")

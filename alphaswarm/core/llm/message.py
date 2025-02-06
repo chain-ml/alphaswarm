@@ -3,7 +3,7 @@ from __future__ import annotations
 import base64
 import mimetypes
 from dataclasses import asdict, dataclass
-from typing import Any, Dict, List, Literal, Optional, Sequence, Union
+from typing import Any, Dict, List, Literal, Optional, Self, Sequence, Union
 
 
 @dataclass
@@ -27,7 +27,7 @@ class TextContentBlock:
     cache_control: Optional[CacheControl] = None
 
     @classmethod
-    def default(cls, text: str):
+    def default(cls, text: str) -> Self:
         """Creates a default text content block without caching."""
         return cls(type="text", text=text)
 

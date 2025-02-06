@@ -113,7 +113,7 @@ class AlphaSwarmAgentClient(ABC, Generic[T_Context]):
                 self._message_buffer[channel_id].append(error_message)
                 await self.on_agent_error(context, error_message)
 
-    async def start(self):
+    async def start(self) -> None:
         """Start the client with proper registration"""
         if self._lock:
             raise RuntimeError("Client already started")
@@ -131,7 +131,7 @@ class AlphaSwarmAgentClient(ABC, Generic[T_Context]):
         finally:
             await self.stop()
 
-    async def stop(self):
+    async def stop(self) -> None:
         """Stop the client and cleanup"""
         if not self._lock:
             raise RuntimeError("Client not started")
