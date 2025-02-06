@@ -50,7 +50,7 @@ def test_get_base_balance(default_config: Config):
 
 
 def test_get_contract_balance(default_config: Config):
-    client = EVMClient(default_config, "base")
+    client = EVMClient(default_config.get_chain_config("base"))
     contract = ERC20Contract(client, client.get_token_info_by_name("USDC").checksum_address)
     # Using a known active Base wallet (Binance hot wallet)
     value = contract.get_balance(EVMClient.to_checksum_address("0xF977814e90dA44bFA03b6295A0616a897441aceC"))

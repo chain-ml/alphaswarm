@@ -114,9 +114,7 @@ class UniswapClientBase(DEXClient):
         Note:
             Private key is read from environment variables via config for the specified chain.
         """
-        private_key = self._config.get_chain_config(self.chain).private_key
         logger.info(f"Initiating token swap for {quote_token.symbol} to {base_token.symbol}")
-
         logger.info(f"Wallet address: {self.wallet_address}")
 
         # Create contract instances
