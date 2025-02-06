@@ -3,7 +3,24 @@ from smolagents import Tool
 
 class DuckDuckGoSearchTool(Tool):
     name = "web_search"
-    description = """Performs a duckduckgo web search based on your query (think a Google search) then returns the top search results."""
+    description = """Performs a duckduckgo web search based on your query (think a Google search) then returns the top search results.
+    
+    Output format:
+    Return a string with search results in the following structure:
+
+    [<title>](<url>)
+    <snippet of article text>
+
+    [<title>](<url>)
+    <snippet of article text>
+    
+    ... (up to max_results entries)
+    
+    where:
+    - <title>: The title of the search result
+    - <url>: The URL link to the full article
+    - <snippet>: A brief excerpt from the article content
+    """
     inputs = {"query": {"type": "string", "description": "The search query to perform."}}
     output_type = "string"
 
