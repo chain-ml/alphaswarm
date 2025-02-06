@@ -1,3 +1,5 @@
+from decimal import Decimal
+
 import pytest
 
 from alphaswarm.config import Config
@@ -14,6 +16,11 @@ def base_client(default_config: Config) -> UniswapClientV3:
 @pytest.fixture
 def eth_client(default_config: Config) -> UniswapClientV3:
     return UniswapClientV3(default_config, chain="ethereum")
+
+
+@pytest.fixture
+def eth_sepolia_client(default_config: Config) -> UniswapClientV3:
+    return UniswapClientV3(default_config, chain="ethereum_sepolia")
 
 
 def test_get_price(base_client: UniswapClientV3) -> None:
@@ -62,9 +69,9 @@ def test_get_markets_for_tokens(eth_client: UniswapClientV3) -> None:
     usdc_address = "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48"  # Ethereum USDC
     weth_address = "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"  # Ethereum WETH
 
-    web3_client = eth_client._blockchain_client
-    usdc = web3_client.get_token_info(usdc_address, eth_client.chain)
-    weth = web3_client.get_token_info(weth_address, eth_client.chain)
+    evm_client = eth_client._evm_client
+    usdc = evm_client.get_token_info(evm_client.to_checksum_address(usdc_address))
+    weth = evm_client.get_token_info(evm_client.to_checksum_address(weth_address))
 
     tokens = [usdc, weth]
     markets = eth_client.get_markets_for_tokens(tokens)
@@ -79,10 +86,17 @@ def test_get_markets_for_tokens(eth_client: UniswapClientV3) -> None:
     assert quote_token.chain == eth_client.chain
 
 
-# TO DO make this a unit test with mocks
-# def test_swap(base_client: UniswapClientV3) -> None:
-#     usdc = base_client.chain_config.get_token_info("USDC")
-#     weth = base_client.chain_config.get_token_info("WETH")
-#
-#     # Buy X USDC for 1 Weth
-#     result = base_client.swap(usdc, weth, Decimal(1))
+@pytest.mark.skip("Needs a wallet with USDC to perform the swap to WETH. Run manually")
+def test_swap_eth_sepolia(eth_sepolia_client: UniswapClientV3) -> None:
+    usdc = eth_sepolia_client.chain_config.get_token_info("USDC")
+    weth = eth_sepolia_client.chain_config.get_token_info("WETH")
+
+    pool = eth_sepolia_client._get_pool(usdc, weth)
+    print(f"find pool {pool.address}")
+
+    quote = eth_sepolia_client._get_token_price_from_pool(quote_token=usdc, pool_details=pool)
+    print(f"1 {weth.symbol} is {quote} {usdc.symbol}")
+
+    # Buy X Weth for 1 USDC
+    result = eth_sepolia_client.swap(weth, usdc, Decimal(1))
+    print(result)
