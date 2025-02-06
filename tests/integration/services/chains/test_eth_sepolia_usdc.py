@@ -13,7 +13,7 @@ def eth_sepolia_config(default_config: Config) -> ChainConfig:
 
 @pytest.fixture
 def eth_sepolia_client(default_config: Config) -> EVMClient:
-    return EVMClient(default_config, "ethereum_sepolia")
+    return EVMClient(default_config.get_chain_config("ethereum_sepolia"))
 
 
 @pytest.fixture

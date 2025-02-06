@@ -31,7 +31,7 @@ class DEXFactory:
             raise ValueError(f"Unsupported DEX: {dex_name}")
 
         logger.debug(f"Using DEX class: {dex_client_class.__name__}")
-        client = dex_client_class(config, chain)
+        client = dex_client_class.from_config(config, chain)
 
         logger.debug("DEX client created successfully")
         return client

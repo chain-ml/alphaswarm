@@ -62,14 +62,8 @@ class ExecuteTokenSwapTool(Tool):
 
         # Get wallet address and private key from chain config
         chain_config = self.config.get_chain_config(chain)
-
-        # Get token info and create TokenInfo objects
-        try:
-            token_config = chain_config.tokens
-            base_token_info = token_config[token_base]
-            quote_token_info = token_config[token_quote]
-        except KeyError as e:
-            raise RuntimeError("Token not found in config") from e
+        base_token_info = chain_config.get_token_info(token_base)
+        quote_token_info = chain_config.get_token_info(token_quote)
 
         # Log token details
         logger.info(
