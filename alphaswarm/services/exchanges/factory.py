@@ -37,7 +37,7 @@ class DEXFactory:
         return client
 
     @classmethod
-    def register_dex(cls, name: str, dex_class: Type[DEXClient]):
+    def register_dex(cls, name: str, dex_class: Type[DEXClient]) -> None:
         """Register a new DEX client class"""
         logger.debug(f"Registering new DEX type: {name} with class {dex_class.__name__}")
         cls._dex_registry[name] = dex_class

@@ -1,4 +1,5 @@
 import tempfile
+from typing import Any
 
 import pytest
 from pydantic import BaseModel
@@ -10,7 +11,7 @@ class Response(BaseModel):
     test: str
 
 
-def get_sample_llm_function_from_files(**kwargs) -> LLMFunctionFromPromptFiles[Response]:
+def get_sample_llm_function_from_files(**kwargs: Any) -> LLMFunctionFromPromptFiles[Response]:
     return LLMFunctionFromPromptFiles(
         model_id="test",
         response_model=Response,
@@ -18,7 +19,7 @@ def get_sample_llm_function_from_files(**kwargs) -> LLMFunctionFromPromptFiles[R
     )
 
 
-def test_execute_with_user_messages_raises():
+def test_execute_with_user_messages_raises() -> None:
     with tempfile.NamedTemporaryFile(mode="w", encoding="utf-8", suffix=".txt", delete=True) as system_file:
         system_file.write("Sample system prompt")
         system_file.flush()

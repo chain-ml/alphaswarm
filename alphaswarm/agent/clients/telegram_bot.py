@@ -15,17 +15,19 @@ class TelegramApp:
     def __init__(self, bot_token: str) -> None:
         self._app = Application.builder().token(bot_token).build()
 
-    async def _start(self):
+    async def _start(self) -> None:
         """Start the bot"""
         await self._app.initialize()
         await self._app.start()
-        await self._app.updater.start_polling()
+        if self._app.updater is not None:
+            await self._app.updater.start_polling()
         logger.info("Telegram bot started successfully")
 
-    async def _stop(self):
+    async def _stop(self) -> None:
         """Stop the bot"""
         await self._app.stop()
-        await self._app.updater.stop()
+        if self._app.updater is not None:
+            await self._app.updater.stop()
         await self._app.shutdown()
 
     async def send_message(self, chat_id: int, *, message: str, parse_mode: str = ParseMode.MARKDOWN) -> None:

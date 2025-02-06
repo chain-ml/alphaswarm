@@ -44,7 +44,7 @@ class SendTelegramNotificationTool(Tool):
     def forward(self, message: str, confidence: float, priority: str) -> str:
         message_to_send = self.format_alert_message(message=message, confidence=confidence, priority=priority)
 
-        async def send_message():
+        async def send_message() -> None:
             await self._telegram_app.send_message(chat_id=self.chat_id, message=message_to_send)
 
         self._loop.run_until_complete(send_message())
