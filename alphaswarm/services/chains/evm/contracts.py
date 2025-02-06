@@ -10,7 +10,7 @@ from web3.types import TxReceipt, Wei
 from .evm import EVMClient, EVMSigner
 
 
-class EMVContract:
+class EVMContract:
     def __init__(self, client: EVMClient, address: ChecksumAddress, abi: list[dict]):
         self._client = client
         self._address = address
@@ -26,7 +26,7 @@ class EMVContract:
         return self._address
 
 
-class ERC20Contract(EMVContract):
+class ERC20Contract(EVMContract):
     def __init__(self, client: EVMClient, address: ChecksumAddress) -> None:
         super().__init__(client, address, ERC20_ABI)
         self._details: Optional[TokenInfo] = None
@@ -44,7 +44,7 @@ class ERC20Contract(EMVContract):
             )
         return self._details
 
-    def get_balance(self, owner: ChecksumAddress) -> Decimal:
+    def get_balance(self, owner: ChecksumAddress) -> Wei:
         return self.contract.functions.balanceOf(owner).call()
 
     def get_allowance(self, owner: ChecksumAddress, spender: ChecksumAddress) -> Wei:

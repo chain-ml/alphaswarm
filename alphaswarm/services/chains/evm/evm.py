@@ -11,7 +11,7 @@ from hexbytes import HexBytes
 from web3 import Web3
 from web3.contract import Contract
 from web3.contract.contract import ContractFunction
-from web3.types import TxParams, TxReceipt, Wei
+from web3.types import BlockData, TxParams, TxReceipt, Wei
 
 logger = logging.getLogger(__name__)
 
@@ -126,3 +126,6 @@ class EVMClient:
 
     def wait_for_transaction(self, tx_hash: HexBytes, timeout: int = 120, poll_latency: float = 1) -> TxReceipt:
         return self._client.eth.wait_for_transaction_receipt(tx_hash, timeout, poll_latency)
+
+    def get_block_latest(self) -> BlockData:
+        return self._client.eth.get_block("latest")
