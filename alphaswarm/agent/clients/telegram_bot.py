@@ -36,6 +36,15 @@ class TelegramApp:
             logger.error(f"Failed to send Telegram message: {e}")
             raise e
 
+    async def send_image(self, chat_id: int, *, image_path: str) -> None:
+        """Send an image to a specific chat"""
+        try:
+            with open(image_path, "rb") as image:
+                await self._app.bot.send_photo(chat_id=chat_id, photo=image)
+        except Exception as e:
+            logger.error(f"Failed to send Telegram image: {e}")
+            raise e
+
 
 class TelegramBot(TelegramApp, AlphaSwarmAgentClient[Update]):
     def __init__(self, agent: AlphaSwarmAgent, bot_token: str) -> None:
