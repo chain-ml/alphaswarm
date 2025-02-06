@@ -53,10 +53,11 @@ class MomentumStrategyAgent(AlphaSwarmAgent):
         - Followers: ±10%
 
         ## Alert Format
-        - Token + Direction
-        - Triggered Rules
-        - Key Values (before/after)
-        - Any correlated signals
+        - Token + Token Address + Direction
+        - Triggered Rules (Current Value And Rule Thresholds )
+        - Current Key Values
+        - Link to tweets that could explain why the rule(s) triggered
+        - Any other correlated signals
         """
 
         try:
