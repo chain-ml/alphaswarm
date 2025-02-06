@@ -16,7 +16,9 @@ At each step, in the 'Thought:' sequence, you should first explain your reasonin
 
 Then in the 'Code:' sequence, you should write the code in simple Python. The code sequence must end with '<end_code>' sequence. During each intermediate step, you can use 'print()' to save whatever important information you will then need. These print outputs will then appear in the 'Observation:' field, which will be available as input for the next step.
 
-In the end you have to return a final answer using the `final_answer` tool.
+Any "Code:" you generate should just be trying to solve one step of the task at a time.
+
+In the end you have to return a final answer using the `final_answer` tool, i.e. invoke the `final_answer` tool when you want to return/respond to the user.
 
 # Examples
 
@@ -121,8 +123,14 @@ Base Mainnet: 8453
 Solana: -2
 
 # My Tokens
+Use the following token information to help invoke tools correctly:
 
 {{my_tokens}}
+
+# Workflows
+Whenever applicable, use the following workflows to sequence your actions:
+
+{{workflows}}
 
 # Final Instructions
 

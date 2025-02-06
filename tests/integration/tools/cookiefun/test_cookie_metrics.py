@@ -42,7 +42,7 @@ def test_get_metrics_by_symbol(cookiefun_client: CookieFunClient) -> None:
 def test_get_metrics_paged(cookiefun_client: CookieFunClient) -> None:
     tool = CookieMetricsPaged(cookiefun_client)
     result = tool.forward(interval=Interval.SEVEN_DAYS, page=1, page_size=10)
-    
+
     assert result.current_page == 1
     assert result.total_pages > 0
     assert result.total_count > 0

@@ -6,6 +6,8 @@ import dotenv
 from alphaswarm.agent.agent import AlphaSwarmAgent
 from alphaswarm.agent.clients import TerminalClient
 from alphaswarm.config import BASE_PATH, Config
+from alphaswarm.tools.exchanges.execute_token_swap_tool import ExecuteTokenSwapTool
+from alphaswarm.tools.exchanges.get_token_price_tool import GetTokenPriceTool
 from alphaswarm.tools.telegram import SendTelegramNotificationTool
 from lab.trade_advisor_agent.tools.call_forecasting_agent_tool import CallForecastingAgentTool
 from smolagents import Tool
@@ -19,27 +21,28 @@ class TradeAdvisorAgent(AlphaSwarmAgent):
         chat_id = int(telegram_config.get("chat_id"))
 
         tools: List[Tool] = [
-            SendTelegramNotificationTool(telegram_bot_token=telegram_bot_token, chat_id=chat_id),
             CallForecastingAgentTool(),
+            GetTokenPriceTool(config=config),
+            ExecuteTokenSwapTool(config=config),
+            SendTelegramNotificationTool(telegram_bot_token=telegram_bot_token, chat_id=chat_id),
         ]
 
         my_tokens = {
             "AIXBT (base)": "0x4F9Fd6Be4a90f2620860d680c0d4d5Fb53d1A825",
             "VIRTUAL (base)": "0x0b3e328455c4059EEb9e3f84b5543F74E24e7E1b",
             "VADER (base)": "0x731814e491571A2e9eE3c5b1F7f3b962eE8f4870",
-            # "AI16Z": "HeLp6NuQkmYB4pYWo2zYs22mESHXPQYzXbB8n4V98jwC",
-            # "GRIFFAIN": "8x5VqbHA8D7NkD52uNuS5nnt3PwA8pLD34ymskeSo2Wn",
+            "COOKIE (base)": "0xc0041ef357b183448b235a8ea73ce4e4ec8c265f",
         }
 
-        specialization = """
-        # Trading Signal Generator
+        trading_venues = config.get_trading_venues()
 
-        Evaluate price forecasts and generate high-conviction trading signals.
-        Use forecasting agent for predictions and independently validate signals.
+        specialization = f"""
+        # Trade Proposal Generator
 
-        ## Signal Generation Rules
+        Generate high-conviction trade proposals based on forecasts.
+        Use forecasting agent for predictions and validate thoroughly.
 
-        High Conviction (>80% confidence):
+        ## High Conviction Trade Rules (>80% confidence)
         - 5min: >2% predicted move
         - 1hr: >4% predicted move
         - 6hr: >7% predicted move
@@ -47,26 +50,25 @@ class TradeAdvisorAgent(AlphaSwarmAgent):
         - Full agreement with forecast reasoning
         - Normal volatility verified
 
-        Moderate Conviction (60-80% confidence):
-        - 5min: >3% predicted move
-        - 1hr: >6% predicted move
-        - 6hr: >10% predicted move
-        Requirements:
-        - Mostly agree with analysis
-        - At least one verified catalyst
-
-        ## Signal Format
-        - Token Name + Direction (e.g. "AIXBT ⬆️ Buy Signal")
-        - Timeframe + Expected Move
-        - Confidence Level
-        - Key Supporting Points
-        - Risk Factors
-
-        Do not signal if:
-        - Confidence < 60%
+        Do not propose trades if:
+        - Confidence < 80%
         - Flawed reasoning found
         - Extreme volatility detected
+
+        ## Making and Confirming Trade Proposals
+        You have the ability to assist the user with making trades via the `execute_token_swap` tool.
+        Critically, you must ALWAYS ask for confirmation of inputs before invoking the `execute_token_swap` tool.
+        Since you do not have access to the user's wallet balances, you must propose everything for the user except for the amount of quote token to swap.
+        Let the user tell you how much of the quote token (the token being sold) they want to swap for the base token (the token being bought).
+
+        # Trading Venues
+        You can only trade on the following venues:
+        {trading_venues}
         """
+
+        workflows = "You must always propose trades before executing them."
+
+        hints = "When requesting a forecast, ask for 3 days of history using hourly data."
 
         try:
             system_prompt = open(BASE_PATH / "lab/research_agent_system_prompt.txt", "r").read()
@@ -75,8 +77,13 @@ class TradeAdvisorAgent(AlphaSwarmAgent):
 
         system_prompt = system_prompt.replace("{{my_tokens}}", json.dumps(my_tokens))
         system_prompt = system_prompt.replace("{{specialization}}", specialization)
-
-        super().__init__(tools=tools, model_id="anthropic/claude-3-5-sonnet-20241022", system_prompt=system_prompt)
+        system_prompt = system_prompt.replace("{{workflows}}", workflows)
+        super().__init__(
+            tools=tools,
+            model_id="anthropic/claude-3-5-sonnet-20241022",
+            system_prompt=system_prompt,
+            hints=hints,
+        )
 
 
 async def main() -> None:

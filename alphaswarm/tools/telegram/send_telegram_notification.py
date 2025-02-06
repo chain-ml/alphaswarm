@@ -45,7 +45,10 @@ class SendTelegramNotificationTool(Tool):
         message_to_send = self.format_alert_message(message=message, confidence=confidence, priority=priority)
         asyncio.run(self._telegram_app.send_message(chat_id=self.chat_id, message=message_to_send))
         if image_path:
-            asyncio.run(self._telegram_app.send_image(chat_id=self.chat_id, image_path=image_path))
+            try:
+                asyncio.run(self._telegram_app.send_image(chat_id=self.chat_id, image_path=image_path))
+            except Exception as e:
+                logger.error(f"Error sending image: {e}. Skipping image.")
         return "Message sent successfully"
 
     @classmethod
