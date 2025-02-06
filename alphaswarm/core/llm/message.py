@@ -27,12 +27,12 @@ class TextContentBlock:
     cache_control: Optional[CacheControl] = None
 
     @classmethod
-    def default(cls, text: str) -> Self:
+    def default(cls, text: str) -> TextContentBlock:
         """Creates a default text content block without caching."""
         return cls(type="text", text=text)
 
     @classmethod
-    def with_cache(cls, text: str) -> ContentBlock:
+    def with_cache(cls, text: str) -> TextContentBlock:
         """Creates a text content block with ephemeral caching enabled."""
         return cls(type="text", text=text, cache_control=CacheControl.ephemeral())
 

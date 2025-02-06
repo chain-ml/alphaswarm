@@ -71,4 +71,6 @@ class AlchemyPriceHistoryByAddress(Tool):
     def forward(self, address: str, history: int, interval: str, network: str) -> HistoricalPriceByAddress:
         end_time = datetime.now(timezone.utc)
         start_time = end_time - timedelta(days=history)
-        return self.client.get_historical_prices_by_address(address, network, start_time, end_time, interval)
+        return self.client.get_historical_prices_by_address(
+            address=address, network=network, start_time=start_time, end_time=end_time, interval=interval
+        )

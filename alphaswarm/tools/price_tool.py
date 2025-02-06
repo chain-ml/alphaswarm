@@ -28,6 +28,10 @@ class PriceTool(Tool):
         self.base_url = "https://api.coingecko.com/api/v3"
         self.session = requests.Session()
 
+    def __del__(self) -> None:
+        """Cleanup the session when the tool is destroyed"""
+        self.session.close()
+
     def forward(self, token_id: str) -> str:
         """
         Fetch current price and 24h change for a given token
@@ -59,7 +63,3 @@ class PriceTool(Tool):
             return f"Network error: {str(e)}"
         except Exception as e:
             return f"Error fetching price: {str(e)}"
-
-    def __del__(self) -> None:
-        """Cleanup the session when the tool is destroyed"""
-        self.session.close()

@@ -49,6 +49,7 @@ class ExecuteTokenSwapTool(Tool):
 
     def forward(
         self,
+        *,
         token_quote: str,
         token_base: str,
         amount: Decimal,
