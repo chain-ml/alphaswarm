@@ -1,14 +1,10 @@
 import logging
 from decimal import Decimal
-from typing import Dict
 
-from alphaswarm.config import Config, TokenInfo
-from eth_typing import ChecksumAddress
+from alphaswarm.config import Config
 from solana.rpc import api
 from solana.rpc.types import TokenAccountOpts
 from solders.pubkey import Pubkey  # type: ignore
-
-from .base import Web3Client
 
 logger = logging.getLogger(__name__)
 
@@ -16,22 +12,14 @@ logger = logging.getLogger(__name__)
 SUPPORTED_CHAINS = {"solana", "solana_devnet"}
 
 
-class SolanaClient(Web3Client):
+class SolanaClient:
     """Client for interacting with Solana chains"""
 
-    def __init__(self, config: Config) -> None:
-        super().__init__(config)
-        self._clients: Dict[str, api.Client] = {}  # cache for RPC clients
+    def __init__(self, config: Config, chain: str) -> None:
+        self._config = config
+        self._chain_config = config.get_chain_config(chain)
+        self._client = api.Client(self._chain_config.rpc_url)
         logger.info("Initialized SolanaClient")
-
-    def _get_client(self, chain: str) -> api.Client:
-        """Get or create RPC client for the chain"""
-        client = self._clients.get(chain)
-        if client is None:
-            rpc_url = self.config.get_chain_config(chain).rpc_url
-            client = api.Client(rpc_url)
-            self._clients[chain] = client
-        return client
 
     @staticmethod
     def _validate_chain(chain: str) -> None:
@@ -39,37 +27,22 @@ class SolanaClient(Web3Client):
         if chain not in SUPPORTED_CHAINS:
             raise ValueError(f"Chain '{chain}' is not supported by SolanaClient. Supported chains: {SUPPORTED_CHAINS}")
 
-    def to_checksum_address(self, address: str, chain: str) -> ChecksumAddress:
-        """Convert address to checksum format"""
-        self._validate_chain(chain)
-        raise NotImplementedError("Checksum address not applicable for Solana")
-
-    def get_token_info(self, token_address: str, chain: str) -> TokenInfo:
-        """Get token info by token contract address"""
-        self._validate_chain(chain)
-        raise NotImplementedError("Token info not yet implemented for Solana")
-
-    def get_token_balance(self, token: str, wallet_address: str, chain: str) -> Decimal:
+    def get_token_balance(self, token: str, wallet_address: str) -> Decimal:
         """Get token balance for a wallet address.
 
         Args:
             token: Token name (resolved via Config) or 'SOL' for native SOL
             wallet_address: The wallet address to check balance for
-            chain: The chain to query ('solana' or 'solana_devnet')
 
         Returns:
             Optional[float]: The token balance in human-readable format, or None if error
         """
-        self._validate_chain(chain)
-        client = self._get_client(chain)
-
-        chain_config = self.config.get_chain_config(chain)
-        token_info = chain_config.get_token_info(token)
+        token_info = self._chain_config.get_token_info(token)
 
         # Handle native SOL balance
         if token.upper() == "SOL":
             pubkey = Pubkey.from_string(wallet_address)
-            response = client.get_balance(pubkey)
+            response = self._client.get_balance(pubkey)
             return Decimal(response.value) / 1_000_000_000
 
         token_address = token_info.address
@@ -79,7 +52,7 @@ class SolanaClient(Web3Client):
 
         # Get token accounts
         opts = TokenAccountOpts(mint=token_pubkey)
-        token_accounts = client.get_token_accounts_by_owner_json_parsed(wallet_pubkey, opts)
+        token_accounts = self._client.get_token_accounts_by_owner_json_parsed(wallet_pubkey, opts)
 
         if not token_accounts.value:
             return Decimal(0)  # No token account found means 0 balance

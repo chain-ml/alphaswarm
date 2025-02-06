@@ -1,33 +1,30 @@
 import logging
-from datetime import timedelta
 from decimal import Decimal
-from typing import Dict, List, Optional, Self, Tuple, Union
+from typing import Any, Dict, List, Optional, Self, Tuple, Union
 
 from alphaswarm.config import Config, TokenInfo
+from alphaswarm.services.chains.evm import ZERO_ADDRESS, EMVContract, EVMClient, EVMSigner
 from alphaswarm.services.exchanges.uniswap.constants_v3 import (
     UNISWAP_V3_DEPLOYMENTS,
     UNISWAP_V3_FACTORY_ABI,
     UNISWAP_V3_ROUTER2_ABI,
     UNISWAP_V3_ROUTER_ABI,
 )
-from alphaswarm.services.exchanges.uniswap.uniswap_client_base import ZERO_ADDRESS, UniswapClientBase
-from cchecksum import to_checksum_address
-from eth_defi.confirmation import wait_transactions_to_complete
-from eth_defi.provider.multi_provider import MultiProviderWeb3
+from alphaswarm.services.exchanges.uniswap.uniswap_client_base import UniswapClientBase
 from eth_defi.uniswap_v3.pool import PoolDetails, fetch_pool_details
 from eth_defi.uniswap_v3.price import get_onchain_price
 from eth_typing import ChecksumAddress, HexAddress
-from hexbytes import HexBytes
+from pydantic import BaseModel, Field
+from typing_extensions import Annotated
 from web3 import Web3
+from web3.types import TxReceipt
 
 logger = logging.getLogger(__name__)
 
 
-class FactoryContract:
-    def __init__(self, client: MultiProviderWeb3, address: ChecksumAddress) -> None:
-        self._client = client
-        self._address = address
-        self._contract = client.eth.contract(address=address, abi=UNISWAP_V3_FACTORY_ABI)
+class FactoryContract(EMVContract):
+    def __init__(self, client: EVMClient, address: ChecksumAddress) -> None:
+        super().__init__(client, address, UNISWAP_V3_FACTORY_ABI)
 
     def get_pool_address_or_none(
         self, token0: ChecksumAddress, token1: ChecksumAddress, fee: int
@@ -64,6 +61,33 @@ class PoolContract:
         return result
 
 
+class ExactInputSingleParams(BaseModel):
+    token_in: Annotated[ChecksumAddress, Field(serialization_alias="tokenIn")]
+    token_out: Annotated[ChecksumAddress, Field(serialization_alias="tokenOut")]
+    fee: int
+    recipient: ChecksumAddress
+    deadline: int
+    amount_in: Annotated[int, Field(serialization_alias="amountIn")]
+    amount_out_minimum: Annotated[int, Field(serialization_alias="amountOutMinimum")]
+    sqrt_price_limit_x96: Annotated[int, Field(serialization_alias="sqrtPriceLimitX96")]
+
+    def to_dict(self) -> Dict[str, Any]:
+        return self.model_dump(by_alias=True)
+
+
+class RouterContract(EMVContract):
+    def __init__(self, client: EVMClient, address: ChecksumAddress, abi: List[Dict]) -> None:
+        super().__init__(client, address, abi)
+
+    @classmethod
+    def from_chain(cls, client: EVMClient, address: ChecksumAddress, chain: str) -> Self:
+        router_abi = UNISWAP_V3_ROUTER2_ABI if chain in ["base", "ethereum_sepolia"] else UNISWAP_V3_ROUTER_ABI
+        return cls(client, address, router_abi)
+
+    def exact_input_single(self, signer: EVMSigner, params: ExactInputSingleParams) -> TxReceipt:
+        return self._client.process(self._contract.functions.exactInputSingle(params.to_dict()), signer)
+
+
 class UniswapClientV3(UniswapClientBase):
     def __init__(self, config: Config, chain: str):
         super().__init__(config, chain, "v3")
@@ -72,21 +96,21 @@ class UniswapClientV3(UniswapClientBase):
     @property
     def factory_contract(self) -> FactoryContract:
         if self._factory_contract is None:
-            self._factory_contract = FactoryContract(self._web3, self._factory)
+            self._factory_contract = FactoryContract(self._evm_client, self._factory)
         return self._factory_contract
 
     def _get_router(self, chain: str) -> ChecksumAddress:
-        return to_checksum_address(UNISWAP_V3_DEPLOYMENTS[chain]["router"])
+        return self._evm_client.to_checksum_address(UNISWAP_V3_DEPLOYMENTS[chain]["router"])
 
     def _get_factory(self, chain: str) -> ChecksumAddress:
-        return to_checksum_address(UNISWAP_V3_DEPLOYMENTS[chain]["factory"])
+        return self._evm_client.to_checksum_address(UNISWAP_V3_DEPLOYMENTS[chain]["factory"])
 
     def _swap(
         self, base: TokenInfo, quote: TokenInfo, address: str, quote_wei: int, slippage_bps: int
-    ) -> Dict[HexBytes, Dict]:
+    ) -> List[TxReceipt]:
         """Execute a swap on Uniswap V3."""
         # Handle token approval and get fresh nonce
-        nonce, approval_receipt = self._approve_token_spend(quote, address, quote_wei)
+        approval_receipt = self._approve_token_spend(quote, quote_wei)
 
         # Build a swap transaction
         pool_details = self._get_pool(base, quote)
@@ -132,49 +156,22 @@ class UniswapClientV3(UniswapClientBase):
         logger.info(f"Minimum output with {slippage_bps} bps slippage (raw): {min_output_raw}")
 
         # Build swap parameters for `exactInputSingle`
-        params = {
-            "tokenIn": quote.checksum_address,
-            "tokenOut": base.checksum_address,
-            "fee": pool_details.raw_fee,
-            "recipient": self._web3.to_checksum_address(address),
-            "deadline": int(self._web3.eth.get_block("latest")["timestamp"] + 300),
-            "amountIn": quote_wei,
-            "amountOutMinimum": min_output_raw,
-            "sqrtPriceLimitX96": 0,
-        }
-        logger.info("Built exactInputSingle parameters:")
-        for k, v in params.items():
-            logger.info(f"  {k}: {v}")
+        params = ExactInputSingleParams(
+            token_in=quote.checksum_address,
+            token_out=base.checksum_address,
+            fee=pool_details.raw_fee,
+            recipient=self._evm_client.to_checksum_address(address),
+            deadline=int(self._web3.eth.get_block("latest")["timestamp"] + 300),
+            amount_in=quote_wei,
+            amount_out_minimum=min_output_raw,
+            sqrt_price_limit_x96=0,
+        )
 
         # Build swap transaction with EIP-1559 parameters
-        router_abi = UNISWAP_V3_ROUTER2_ABI if self.chain in ["base", "ethereum_sepolia"] else UNISWAP_V3_ROUTER_ABI
-        router_contract = self._web3.eth.contract(address=self._router, abi=router_abi)
-        swap = router_contract.functions.exactInputSingle(params)
+        router_contract = RouterContract.from_chain(self._evm_client, self._router, self.chain)
+        swap_receipt = router_contract.exact_input_single(self.get_signer(), params)
 
-        # Get gas fees
-        max_fee_per_gas, _, priority_fee, gas_limit = self._get_gas_fees()
-        tx_2 = swap.build_transaction(
-            {
-                "gas": gas_limit,
-                "chainId": self._web3.eth.chain_id,
-                "from": address,
-                "nonce": nonce,
-                "maxFeePerGas": max_fee_per_gas,
-                "maxPriorityFeePerGas": priority_fee,
-            }
-        )
-
-        # Send swap transaction
-        tx_hash_2 = self._web3.eth.send_transaction(tx_2)
-        logger.info(f"Waiting for swap transaction {tx_hash_2.hex()} to be mined...")
-        swap_receipt = wait_transactions_to_complete(
-            self._web3,
-            [tx_hash_2],
-            max_timeout=timedelta(minutes=2.5),
-            confirmation_block_count=1,
-        )
-
-        return {**approval_receipt, **swap_receipt}
+        return [approval_receipt, swap_receipt]
 
     def _get_token_price(self, base_token: TokenInfo, quote_token: TokenInfo) -> Decimal:
         """Get the current price from a Uniswap V3 pool for a token pair.
