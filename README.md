@@ -38,6 +38,8 @@ AlphaSwarm is a starter-kit for building LLM-powered AI agents that interpret na
 - Poetry (package manager)
 - Basic understanding of crypto trading concepts
 
+### Optional: Virtual Environment Setup
+
 ## Getting Started
 
 ### 1. Installation
@@ -46,6 +48,8 @@ First, ensure you have all prerequisites installed:
 - Python 3.11 or higher
 - Poetry (package manager)
 - Basic understanding of crypto trading concepts
+
+Poetry manages its own virtual environments, so a separate virtual environment should not be required. Refer to the [Poetry documentation](https://python-poetry.org/docs/managing-environments/) for more information.
 
 Then follow these steps:
 
