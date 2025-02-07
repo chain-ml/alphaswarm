@@ -51,4 +51,4 @@ jobs:
         with:
           name: test-reports
           path: reports/**
-        if-no-files-found: error
+          if-no-files-found: error
