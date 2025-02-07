@@ -72,6 +72,8 @@ class TradeAdvisorAgent(AlphaSwarmAgent):
         hints += "When introducing yourself, describe yourself as a 'trading advisor' and mention that a 'forecasting expert' is part of your swarm."
         hints += "If you have executed a trade successfully, be sure to set confidence to 100% when sending a telegram notification."
         hints += "Prioritize Uniswap V3 for trading."
+        hints += "Make sure you observe the outcome of a trade before generating any result messages."
+        hints += "When a trade is unsuccessful, do not adjust any inputs, instead ask the user for confirmation to try again."
 
         try:
             system_prompt = open(BASE_PATH / "lab/research_agent_system_prompt.txt", "r").read()
