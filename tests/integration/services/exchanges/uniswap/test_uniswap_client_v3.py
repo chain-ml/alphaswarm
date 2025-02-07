@@ -10,17 +10,20 @@ BASE_WETH_USDC_005 = "0xd0b53D9277642d899DF5C87A3966A349A798F224"
 
 @pytest.fixture
 def base_client(default_config: Config) -> UniswapClientV3:
-    return UniswapClientV3(default_config, chain="base")
+    chain_config = default_config.get_chain_config(chain="base")
+    return UniswapClientV3(chain_config=chain_config, settings=default_config.get_venue_settings_uniswap_v3())
 
 
 @pytest.fixture
 def eth_client(default_config: Config) -> UniswapClientV3:
-    return UniswapClientV3(default_config, chain="ethereum")
+    chain_config = default_config.get_chain_config(chain="ethereum")
+    return UniswapClientV3(chain_config=chain_config, settings=default_config.get_venue_settings_uniswap_v3())
 
 
 @pytest.fixture
 def eth_sepolia_client(default_config: Config) -> UniswapClientV3:
-    return UniswapClientV3(default_config, chain="ethereum_sepolia")
+    chain_config = default_config.get_chain_config(chain="ethereum_sepolia")
+    return UniswapClientV3(chain_config=chain_config, settings=default_config.get_venue_settings_uniswap_v3())
 
 
 def test_get_price(base_client: UniswapClientV3) -> None:

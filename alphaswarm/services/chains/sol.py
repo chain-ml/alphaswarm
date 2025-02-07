@@ -1,10 +1,11 @@
 import logging
 from decimal import Decimal
+from typing import Any, Dict
 
-from alphaswarm.config import Config
+from alphaswarm.config import ChainConfig
 from solana.rpc import api
 from solana.rpc.types import TokenAccountOpts
-from solders.pubkey import Pubkey  # type: ignore
+from solders.pubkey import Pubkey
 
 logger = logging.getLogger(__name__)
 
@@ -15,11 +16,11 @@ SUPPORTED_CHAINS = {"solana", "solana_devnet"}
 class SolanaClient:
     """Client for interacting with Solana chains"""
 
-    def __init__(self, config: Config, chain: str) -> None:
-        self._config = config
-        self._chain_config = config.get_chain_config(chain)
+    def __init__(self, chain_config: ChainConfig) -> None:
+        self._validate_chain(chain_config.chain)
+        self._chain_config = chain_config
         self._client = api.Client(self._chain_config.rpc_url)
-        logger.info("Initialized SolanaClient")
+        logger.info(f"Initialized SolanaClient on chain '{self._chain_config.chain}'")
 
     @staticmethod
     def _validate_chain(chain: str) -> None:
@@ -46,7 +47,6 @@ class SolanaClient:
             return Decimal(response.value) / 1_000_000_000
 
         token_address = token_info.address
-
         token_pubkey = Pubkey.from_string(token_address)
         wallet_pubkey = Pubkey.from_string(wallet_address)
 
@@ -72,21 +72,19 @@ class SolanaClient:
         if not isinstance(token_amount, dict):
             raise ValueError("'tokenAmount' is not a dict")
 
-        amount_json = token_amount["amount"]
-        if isinstance(amount_json, (str, int, float)):
-            balance = Decimal(amount_json)
-        elif amount_json is None:
-            balance = Decimal(0)  # or handle None how you like
-        else:
-            raise TypeError(f"Unexpected type for amount: {type(amount_json)}")
-
-        decimals_json = token_amount["decimals"]
-        if isinstance(decimals_json, (str, int, float)):
-            decimals = Decimal(decimals_json)
-        elif amount_json is None:
-            decimals = Decimal(0)  # or handle None how you like
-        else:
-            raise TypeError(f"Unexpected type for decimals: {type(decimals_json)}")
+        balance = self._get_decimal(token_amount, "amount")
+        decimals = self._get_decimal(token_amount, "decimals")
 
         # Convert to human-readable format
         return balance / 10**decimals
+
+    @staticmethod
+    def _get_decimal(values: Dict[str, Any], key: str) -> Decimal:
+        """Helper function to convert JSON value to Decimal"""
+        value = values.get(key, Decimal(0))
+        if isinstance(value, (str, int)):
+            return Decimal(value)
+        elif isinstance(value, float):
+            return Decimal(str(value))
+        else:
+            raise TypeError(f"Unexpected type for value {key} : {type(value)}")

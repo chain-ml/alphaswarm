@@ -4,6 +4,7 @@ import pytest
 
 from alphaswarm.config import Config
 from alphaswarm.services.alchemy import AlchemyClient
+from alphaswarm.services.cookiefun import CookieFunClient
 from tests.unit.conftest import default_config
 from alphaswarm.services.cookiefun import CookieFunClient
 
@@ -14,7 +15,7 @@ __all__ = ["default_config"]
 def alchemy_client(default_config: Config) -> AlchemyClient:
     # this helps with rate limit
     time.sleep(1)
-    return AlchemyClient()
+    return AlchemyClient.from_env()
 
 
 @pytest.fixture

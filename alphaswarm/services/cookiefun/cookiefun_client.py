@@ -74,14 +74,19 @@ class CookieFunClient:
     BASE_URL = "https://api.cookie.fun/v2/agents"
 
     def __init__(
-        self, base_url: str = BASE_URL, api_key: Optional[str] = None, config: Optional[Config] = None, **kwargs
-    ):
+        self,
+        base_url: str = BASE_URL,
+        api_key: Optional[str] = None,
+        config: Optional[Config] = None,
+        **kwargs: Any,
+    ) -> None:
         """Initialize the Cookie.fun API client
 
         Args:
             base_url: Base URL for the API
             api_key: API key for authentication
             config: Config instance for token lookups
+            kwargs: Additional keyword arguments
 
         Raises:
             ValueError: If COOKIE_FUN_API_KEY environment variable is not set

@@ -2,7 +2,7 @@ import logging
 from decimal import Decimal
 from typing import List
 
-from alphaswarm.config import Config, TokenInfo
+from alphaswarm.config import ChainConfig, TokenInfo
 from eth_account import Account
 from eth_account.datastructures import SignedTransaction
 from eth_defi.token import TokenDetails, fetch_erc20_details
@@ -37,19 +37,18 @@ class EVMSigner:
 class EVMClient:
     """Client for interacting with EVM-compatible chains"""
 
-    def __init__(self, config: Config, chain: str) -> None:
-        self._config = config
-        self._chain = chain
-        self._chain_config = self._config.get_chain_config(chain)
+    def __init__(self, chain_config: ChainConfig) -> None:
+        self._validate_chain(chain_config.chain)
+        self._chain_config = chain_config
         self._client = Web3(Web3.HTTPProvider(self._chain_config.rpc_url))
         self._gas_limit = (
             self._chain_config.gas_settings.gas_limit if self._chain_config.gas_settings else DEFAULT_GAS_LIMIT
         )
-        logger.info("Initialized EVMClient")
+        logger.info(f"Initialized EVMClient on chain {self._chain_config.chain}")
 
     @property
     def chain(self) -> str:
-        return self._chain
+        return self._chain_config.chain
 
     @property
     def client(self) -> Web3:
@@ -74,7 +73,7 @@ class EVMClient:
         token_details: TokenDetails = self.get_token_details(token_address)
         symbol = token_details.symbol
         decimals = token_details.decimals
-        return TokenInfo(symbol=symbol, address=token_address, decimals=decimals, chain=self._chain, is_native=False)
+        return TokenInfo(symbol=symbol, address=token_address, decimals=decimals, chain=self.chain, is_native=False)
 
     def get_token_info_by_name(self, name: str) -> TokenInfo:
         return self._chain_config.get_token_info(name)

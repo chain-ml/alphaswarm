@@ -1,3 +1,5 @@
+UNISWAP_V2_VERSION = "v2"
+
 # Uniswap V2 Factory ABI - minimal interface needed for pair management
 UNISWAP_V2_FACTORY_ABI = [
     {

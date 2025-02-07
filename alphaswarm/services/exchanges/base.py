@@ -3,7 +3,7 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from decimal import Decimal
-from typing import List, Optional, Tuple
+from typing import List, Optional, Tuple, Type, TypeVar, Union
 
 from alphaswarm.config import ChainConfig, Config, TokenInfo
 from hexbytes import HexBytes
@@ -26,23 +26,60 @@ class SwapResult:
         return cls(success=True, base_amount=base_amount, quote_amount=quote_amount, tx_hash=tx_hash.hex())
 
 
+@dataclass
+class Slippage:
+    """
+    Represents slippage tolerance for trades
+    Attributes:
+        bps (int): Basis points (1 bps = 0.01%)
+    """
+
+    base_point: int = 10000
+
+    def __init__(self, bps: int = 100) -> None:
+        if not 0 <= bps <= self.base_point:
+            raise ValueError("Slippage must be between 0 and 10000 basis points (0% to 100%)")
+        self.bps = bps
+
+    @classmethod
+    def from_percentage(cls, percentage: Union[float, Decimal]) -> Slippage:
+        """Create Slippage from percentage value (e.g., 100.0 for 1%)"""
+        bps = int(float(percentage) * 100)
+        return cls(bps=bps)
+
+    def to_percentage(self) -> float:
+        """Convert basis points to percentage"""
+        return self.bps / 100.0
+
+    def to_multiplier(self) -> Decimal:
+        """Convert to multiplier for price calculations (e.g., 0.99 for 1% slippage)"""
+        return Decimal(1) - (Decimal(self.bps) / Decimal(self.base_point))
+
+    def calculate_minimum_amount(self, amount: Union[int, str, Decimal]) -> int:
+        """Calculate minimum amount after slippage"""
+        return int(Decimal(amount) * self.to_multiplier())
+
+    def __str__(self) -> str:
+        return f"{self.bps} bps"
+
+    def __repr__(self) -> str:
+        return f"Slippage(bps={self.bps})"
+
+
+T = TypeVar("T", bound="DEXClient")
+
+
 class DEXClient(ABC):
     """Base class for DEX clients"""
 
     @abstractmethod
-    def __init__(self, config: Config, chain: str) -> None:
+    def __init__(self, chain_config: ChainConfig) -> None:
         """Initialize the DEX client with configuration"""
-        self._config = config
-        self._chain = chain
-        self._chain_config = config.get_chain_config(chain=self._chain)
-
-    @property
-    def config(self) -> Config:
-        return self._config
+        self._chain_config = chain_config
 
     @property
     def chain(self) -> str:
-        return self._chain
+        return self._chain_config.chain
 
     @property
     def chain_config(self) -> ChainConfig:
@@ -104,5 +141,19 @@ class DEXClient(ABC):
 
         Returns:
             List of tuples containing (base_token, quote_token) for each valid trading pair
+        """
+        pass
+
+    @classmethod
+    @abstractmethod
+    def from_config(cls: Type[T], config: Config, chain: str) -> T:
+        """Create a DEX client instance from configuration
+
+        Args:
+            config: Chain-specific configuration
+            chain: Chain name (e.g., "ethereum", "base")
+
+        Returns:
+            An instance of the DEX client
         """
         pass
