@@ -1,6 +1,6 @@
 # AlphaSwarm
 
-AlphaSwarm is a developer framework for autonomous crypto trading agents that leverages LLM-powered AI agents to process market signals and execute trading strategies. It enables both automated trading alerts and autonomous trading by analyzing on-chain data, social metrics, and market conditions in real-time.
+AlphaSwarm is a starter-kit for building LLM-powered AI agents that interpret natural language trading strategies, analyze real-time market signals, and autonomously execute trades across multiple chains.
 
 ## Features
 
