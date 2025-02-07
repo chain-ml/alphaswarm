@@ -46,6 +46,7 @@ jobs:
         run: make ci-all-tests
 
       - name: upload test results
+        if: success() || failure()
         uses: actions/upload-artifact@v4
         with:
           name: test-reports
