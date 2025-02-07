@@ -1,6 +1,6 @@
 import logging
 from decimal import Decimal
-from typing import Dict
+from typing import Any, Dict
 
 from alphaswarm.config import ChainConfig
 from solana.rpc import api
@@ -79,7 +79,7 @@ class SolanaClient:
         return balance / 10**decimals
 
     @staticmethod
-    def _get_decimal(values: Dict[str, any], key: str) -> Decimal:
+    def _get_decimal(values: Dict[str, Any], key: str) -> Decimal:
         """Helper function to convert JSON value to Decimal"""
         value = values.get(key, Decimal(0))
         if isinstance(value, (str, int)):
