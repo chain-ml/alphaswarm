@@ -1,6 +1,6 @@
 # AlphaSwarm
 
-AlphaSwarm is a starter-kit for building LLM-powered AI agents that interpret natural language trading strategies, analyze real-time market signals, and autonomously execute trades across multiple chains.
+AlphaSwarm is a starter kit for building LLM-powered AI agents that interpret natural language trading strategies, analyze real-time market signals, and autonomously execute trades across multiple chains.
 
 ## Features
 
@@ -185,13 +185,13 @@ python examples/basic_example_01_quote.py
 - Connects to Ethereum Sepolia network to execute a token swap
 - Demonstrates how to initiate a token swap (3 USDC for WETH) using natural language
 
-Execute the token swap:
+Run the example:
 ```bash
 # Make sure you've configured your .env file first!
 python examples/basic_example_02_swap.py
 ```
 
-### Strategy Example: Check trading strategy and optionally execute it
+#### Strategy Example: Check trading strategy and optionally execute it
 
 [Basic Example 03 - Strategy](examples/basic_example_03_strategy.py) dives into the optional execution of a trading strategy given input signals that:
 - Initializes the Alphaswarm agent with both strategy analysis and token swap tools
@@ -200,7 +200,11 @@ python examples/basic_example_02_swap.py
 - Evaluates the trading strategy conditions using real-time market data when triggered
 - Conditionally executes trades only when strategy conditions are met
 
-Create a new file or reference existing one `examples/basic_example_03_strategy.py`:
+Run the example:
+```bash
+# Make sure you've configured your .env file first!
+python examples/basic_example_03_strategy.py
+```
 
 ### More Examples
 
