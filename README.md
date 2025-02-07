@@ -92,44 +92,43 @@ Before running the framework, you'll need to obtain several API keys:
 cp .env.example .env
 ```
 
-2. Configure the required variables in your `.env` file:
+2. Configure the required variables in your `.env` file.
 
-```bash
-# LLM Configuration (at least one required)
-OPENAI_API_KEY=your_openai_key      # Required for OpenAI models
-ANTHROPIC_API_KEY=your_anthropic_key # Required for Anthropic models
+Required environment variables:
 
-# Alchemy Configuration
-ALCHEMY_API_KEY=your_alchemy_key    # Required for blockchain data access
+LLM Configuration (at least one required):
+- `OPENAI_API_KEY`: Your OpenAI API key for using OpenAI models
+- `ANTHROPIC_API_KEY`: Your Anthropic API key for using Claude models
 
-# Chain Configuration
-## Ethereum (only required if using Ethereum)
-ETH_RPC_URL=your_ethereum_rpc       # Required for Ethereum trading
-ETH_WALLET_ADDRESS=your_eth_address # Required for ETH trading
-ETH_PRIVATE_KEY=your_eth_key       # Required for ETH trading
+Blockchain Access:
+- `ALCHEMY_API_KEY`: Your Alchemy API key for accessing blockchain data
 
-## Base (only required if using Base)
-BASE_RPC_URL=your_base_rpc          # Required for Base trading
-BASE_WALLET_ADDRESS=your_base_address # Required for Base trading
-BASE_PRIVATE_KEY=your_base_key      # Required for Base trading      
-```
+Ethereum Configuration (only if using Ethereum):
+- `ETH_RPC_URL`: RPC endpoint URL for connecting to Ethereum network
+- `ETH_WALLET_ADDRESS`: Your Ethereum wallet address for trading
+- `ETH_PRIVATE_KEY`: Private key for your Ethereum wallet
 
-3. Optional configurations:
+Base Configuration (only if using Base):
+- `BASE_RPC_URL`: RPC endpoint URL for connecting to Base network  
+- `BASE_WALLET_ADDRESS`: Your Base wallet address for trading
+- `BASE_PRIVATE_KEY`: Private key for your Base wallet
 
-```bash
-# Testing
-ETH_SEPOLIA_RPC_URL=your_sepolia_rpc  # For Ethereum testnet
+Optional configurations:
 
-# Notifications
-TELEGRAM_BOT_TOKEN=your_bot_token      # Required for alerts
-TELEGRAM_CHAT_ID=your_chat_id          # Required for alerts
-TELEGRAM_SERVER_IP=0.0.0.0             # Default: 0.0.0.0
-TELEGRAM_SERVER_PORT=8000              # Default: 8000
+Testing environment variables:
+- `ETH_SEPOLIA_RPC_URL`: Your Sepolia testnet RPC endpoint URL
+- `ETH_SEPOLIA_WALLET_ADDRESS`: Your Ethereum wallet address for Sepolia testnet
+- `ETH_SEPOLIA_PRIVATE_KEY`: Private key for your Sepolia testnet wallet
 
-# Logging
-LOG_LEVEL=INFO                         # Default: INFO
-LOG_FORMAT="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-```
+Notification settings:
+- `TELEGRAM_BOT_TOKEN`: Required for sending alerts via Telegram bot
+- `TELEGRAM_CHAT_ID`: Required chat ID for receiving Telegram alerts
+- `TELEGRAM_SERVER_IP`: IP address for Telegram server (defaults to 0.0.0.0)
+- `TELEGRAM_SERVER_PORT`: Port for Telegram server (defaults to 8000)
+
+Logging configuration:
+- `LOG_LEVEL`: Sets logging verbosity level (defaults to INFO)
+- `LOG_FORMAT`: Custom format for log messages (default: "%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 
 #### Security Notes
 
