@@ -46,6 +46,8 @@ pytest = "^8.3.4"
 types-requests = ">=2.31.0.6"
 python-dotenv = "^1.0.1"
 eth-typing = "3.5.2"
+pytest-html = "^4.1.1"
+pytest-cov = "^6.0.0"
 
 [tool.poetry]
 include = [
