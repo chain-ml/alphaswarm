@@ -71,8 +71,7 @@ log_cli_date_format = "%Y-%m-%d %H:%M:%S%z"
 line-length = 120
 
 [tool.mypy]
-exclude = "(?x)(venv|docs|tmp|examples)"
-mypy_path = "./stubs:src"
+exclude = "(?x)(venv|docs|tmp)"
 
 explicit_package_bases = "true"
 no_implicit_optional = true
