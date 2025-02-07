@@ -254,3 +254,23 @@ class LLMFunctionTemplated(LLMFunctionBase[T_Response]):
     def _format(template: str, params: Optional[Dict[str, Any]] = None) -> str:
         """Format the template string with the given optional parameters."""
         return template.format(**params) if params is not None else template
+
+
+class LLMFunctionInput(BaseModel):
+    def to_prompt(self) -> str:
+        """Convert the input to a prompt string."""
+        return self.model_dump_json(indent=2)
+
+    def to_messages(self) -> List[Message]:
+        """Convert the input to a list of messages."""
+        return [Message.user(self.to_prompt())]
+
+
+class PythonLLMFunction(LLMFunctionBase[T_Response]):
+    """LLM function defined solely in Python code."""
+
+    def __init__(self, model_id: str, response_model: Type[T_Response], max_retries: int = 3) -> None:
+        super().__init__(model_id=model_id, response_model=response_model, max_retries=max_retries)
+
+    def execute_with_completion(self, input_obj: LLMFunctionInput, **kwargs: Any) -> LLMFunctionResponse[T_Response]:
+        return super()._execute_with_completion(messages=input_obj.to_messages(), **kwargs)
