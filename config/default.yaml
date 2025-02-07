@@ -73,6 +73,9 @@ chain_config:
       REKT:
         address: "0xdd3B11eF34cd511a2DA159034a05fcb94D806686"
         decimals: 18
+      VVV:
+        address: "0xacfe6019ed1a7dc6f7b508c02d1b04ec88cc21bf"
+        decimals: 18
   
   ethereum_sepolia:
     wallet_address:

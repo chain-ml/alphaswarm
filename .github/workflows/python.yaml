@@ -43,12 +43,5 @@ jobs:
           ALCHEMY_API_KEY: ${{ secrets.ALCHEMY_API_KEY }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-        run: make ci-all-tests
-
-      - name: Upload test results
-        if: success() || failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: test-reports
-          path: reports/**
-          if-no-files-found: error
+          COOKIE_FUN_API_KEY: ${{ secrets.COOKIE_FUN_API_KEY }}
+        run: make all-tests
