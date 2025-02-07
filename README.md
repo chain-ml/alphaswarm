@@ -2,6 +2,23 @@
 
 AlphaSwarm is a developer framework for autonomous crypto trading agents that leverages LLM-powered AI agents to process market signals and execute trading strategies. It enables both automated trading alerts and autonomous trading by analyzing on-chain data, social metrics, and market conditions in real-time.
 
+**You are on the `research` branch of AlphaSwarm!** 
+
+## Cookie.fun Hackathon Submission (February 7, 2025)
+
+As part of the [Cookie.fun Hackathon](https://www.cookie.fun/en/d/tags/cookie-defai-hackathon), we've built two agents in the `lab` directory of this branch to highlight an advanced use case for Cookie.fun and AlphaSwarm: 
+
+1. A Forecasting Expert agent that uses Cookie.fun alongside other tools to *analyze market conditions* before generating a forecast
+2. A Trade Advisor agent that collaborates with the Forecasting Expert to *make trading decisions* and execute trades on Uniswap V3
+
+First, watch the [demo video](https://drive.google.com/file/d/1lIZabg972wMAJkUqz3e5bYuznV4z36gt/preview) to see the Trade Advisor agent in action. 
+
+Then you can try it out for yourself by running from the root directory:
+
+```bash
+python lab/trade_advisor_agent/trade_advisor_agent.py
+```
+
 ## Features
 
 ### AI-Powered Trading with Agents
