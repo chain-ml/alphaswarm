@@ -68,7 +68,7 @@ class TradeAdvisorAgent(AlphaSwarmAgent):
 
         workflows = "You must always propose trades before executing them."
 
-        hints = "When requesting a forecast, ask for 3 days of history using hourly data."
+        hints = "When requesting a forecast over a horizon `h`, request to use `10*h` units of historical data."
 
         try:
             system_prompt = open(BASE_PATH / "lab/research_agent_system_prompt.txt", "r").read()

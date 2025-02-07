@@ -60,6 +60,9 @@ class MomentumStrategyAgent(AlphaSwarmAgent):
         - Any other correlated signals
         """
 
+        hints = """Quantize decimal values when presenting them to the user for readability. Use following code:
+        `formatted_value = decimal_value.quantize(Decimal("0.0001"))`  # from decimal import Decimal"""
+
         try:
             system_prompt = open(CONFIG_PATH / "trading_strategy_agent_system_prompt.txt", "r").read()
         except FileNotFoundError:
@@ -72,6 +75,7 @@ class MomentumStrategyAgent(AlphaSwarmAgent):
             tools=tools,
             model_id="anthropic/claude-3-5-sonnet-20241022",
             system_prompt=system_prompt,
+            hints=hints,
         )
 
 
