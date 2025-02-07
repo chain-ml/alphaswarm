@@ -75,7 +75,5 @@ db.sqlite3-journal
 .env.local
 .env.*.local
 
-# Temporary files
-*.png
 # Data Processing
 *.png

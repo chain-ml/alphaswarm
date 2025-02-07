@@ -34,7 +34,7 @@ class CookieMetricsByTwitter(Tool):
 
 class CookieMetricsByContract(Tool):
     name = "CookieMetricsByContract"
-    description = "Retrieve AI agent metrics such as mindshare, market cap, price, liquidity, volume, holders, average impressions, average engagements, followers, and top tweets by contract address from Cookie.fun."
+    description = "Retrieve AI agent metrics such as mindshare, market cap, price, liquidity, volume, holders, average impressions, average engagements, followers, and top tweets by contract address from Cookie.fun"
     inputs = {
         "address": {
             "type": "string",

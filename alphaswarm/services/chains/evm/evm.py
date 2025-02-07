@@ -107,7 +107,7 @@ class EVMClient:
         return self._client.eth.contract(address=address, abi=abi)
 
     def _build_transaction(self, function: ContractFunction, wallet_address: ChecksumAddress) -> TxParams:
-        latest_block = self._client.eth.get_block("latest")
+        latest_block = self.get_block_latest()
         base_fee = latest_block["baseFeePerGas"]
         priority_fee = self._client.eth.max_priority_fee
         max_fee_per_gas = self._client.to_wei(base_fee * 2 + priority_fee, "wei")
@@ -118,7 +118,7 @@ class EVMClient:
                 "from": wallet_address,
                 "maxFeePerGas": max_fee_per_gas,
                 "maxPriorityFeePerGas": priority_fee,
-                "nonce": self._client.eth.get_transaction_count(wallet_address),
+                "nonce": self._client.eth.get_transaction_count(wallet_address, "pending"),
             }
         )
 
