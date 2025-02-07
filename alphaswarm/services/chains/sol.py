@@ -1,5 +1,6 @@
 import logging
 from decimal import Decimal
+from typing import Dict
 
 from alphaswarm.config import ChainConfig
 from solana.rpc import api
@@ -72,21 +73,21 @@ class SolanaClient:
         if not isinstance(token_amount, dict):
             raise ValueError("'tokenAmount' is not a dict")
 
-        amount_json = token_amount["amount"]
-        if isinstance(amount_json, (str, int, float)):
-            balance = Decimal(amount_json)
-        elif amount_json is None:
-            balance = Decimal(0)  # or handle None how you like
-        else:
-            raise TypeError(f"Unexpected type for amount: {type(amount_json)}")
-
-        decimals_json = token_amount["decimals"]
-        if isinstance(decimals_json, (str, int, float)):
-            decimals = Decimal(decimals_json)
-        elif amount_json is None:
-            decimals = Decimal(0)  # or handle None how you like
-        else:
-            raise TypeError(f"Unexpected type for decimals: {type(decimals_json)}")
+        balance = self._get_decimal(token_amount, "amount")
+        decimals = self._get_decimal(token_amount, "decimals")
 
         # Convert to human-readable format
         return balance / 10**decimals
+
+    @staticmethod
+    def _get_decimal(values: Dict[str, any], key: str) -> Decimal:
+        """Helper function to convert JSON value to Decimal"""
+        value = values[key]
+        if isinstance(value, (str, int)):
+            return Decimal(value)
+        elif isinstance(value, float):
+            return Decimal.from_float(value)
+        elif value is None:
+            return Decimal(0)
+        else:
+            raise TypeError(f"Unexpected type for value {key} : {type(value)}")
