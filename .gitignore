@@ -74,3 +74,6 @@ db.sqlite3-journal
 # API keys and secrets
 .env.local
 .env.*.local
+
+# Data Processing
+*.png
