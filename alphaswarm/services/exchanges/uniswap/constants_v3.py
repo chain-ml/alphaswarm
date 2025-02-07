@@ -1,3 +1,5 @@
+UNISWAP_V3_VERSION = "v3"
+
 # Uniswap V3 Factory ABI - minimal interface needed for pool management
 UNISWAP_V3_FACTORY_ABI = [
     {

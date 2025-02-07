@@ -1,4 +1,5 @@
 from datetime import UTC, datetime
+from typing import Any
 
 import requests
 from smolagents import Tool
@@ -22,10 +23,14 @@ class PriceTool(Tool):
     }
     output_type = "object"
 
-    def __init__(self, *args, **kwargs) -> None:
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
         self.base_url = "https://api.coingecko.com/api/v3"
         self.session = requests.Session()
+
+    def __del__(self) -> None:
+        """Cleanup the session when the tool is destroyed"""
+        self.session.close()
 
     def forward(self, token_id: str) -> str:
         """
@@ -58,7 +63,3 @@ class PriceTool(Tool):
             return f"Network error: {str(e)}"
         except Exception as e:
             return f"Error fetching price: {str(e)}"
-
-    def __del__(self):
-        """Cleanup the session when the tool is destroyed"""
-        self.session.close()

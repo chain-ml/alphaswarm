@@ -47,7 +47,7 @@ class ChatMessage:
 
 class AlphaSwarmAgentClient(ABC, Generic[T_Context]):
 
-    def __init__(self, agent: AlphaSwarmAgent, client_id: str):
+    def __init__(self, agent: AlphaSwarmAgent, client_id: str, max_history: int = 50) -> None:
         self._agent = agent
         self._agent_lock = asyncio.Lock()
         self._client_id = client_id
@@ -55,7 +55,7 @@ class AlphaSwarmAgentClient(ABC, Generic[T_Context]):
 
         # Message history buffer (client_id -> list of messages)
         self._message_buffer: Dict[int, List[ChatMessage]] = defaultdict(list)
-        self.max_history = 50
+        self.max_history = max_history
 
     @property
     def id(self) -> str:
@@ -113,7 +113,7 @@ class AlphaSwarmAgentClient(ABC, Generic[T_Context]):
                 self._message_buffer[channel_id].append(error_message)
                 await self.on_agent_error(context, error_message)
 
-    async def start(self):
+    async def start(self) -> None:
         """Start the client with proper registration"""
         if self._lock:
             raise RuntimeError("Client already started")
@@ -131,7 +131,7 @@ class AlphaSwarmAgentClient(ABC, Generic[T_Context]):
         finally:
             await self.stop()
 
-    async def stop(self):
+    async def stop(self) -> None:
         """Stop the client and cleanup"""
         if not self._lock:
             raise RuntimeError("Client not started")

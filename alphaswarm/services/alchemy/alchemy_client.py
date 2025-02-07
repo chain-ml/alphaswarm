@@ -1,8 +1,10 @@
+from __future__ import annotations
+
 import logging
 import os
 from datetime import datetime, timezone
 from decimal import Decimal
-from typing import Dict, List, Optional
+from typing import Dict, Final, List
 
 import requests
 from alphaswarm.services.api_exception import ApiException
@@ -36,21 +38,13 @@ NETWORKS = ["eth-mainnet", "base-mainnet", "solana-mainnet", "eth-sepolia", "bas
 class AlchemyClient:
     """Alchemy API data source for historical token prices"""
 
-    DEFAULT_BASE_URL = "https://api.g.alchemy.com"
-    ENDPOINT_TOKENS_HISTORICAL = "/prices/v1/{api_key}/tokens/historical"
+    DEFAULT_BASE_URL: Final[str] = "https://api.g.alchemy.com"
+    ENDPOINT_TOKENS_HISTORICAL: Final[str] = "/prices/v1/{api_key}/tokens/historical"
 
-    def __init__(
-        self,
-        base_url: str = DEFAULT_BASE_URL,
-        api_key: Optional[str] = None,
-        **kwargs,
-    ) -> None:
+    def __init__(self, *, api_key: str, base_url: str = DEFAULT_BASE_URL) -> None:
         """Initialize Alchemy data source"""
         self.base_url = base_url
-        self.api_key = api_key or os.getenv("ALCHEMY_API_KEY")
-        if not self.api_key:
-            raise ValueError("ALCHEMY_API_KEY not found in environment variables")
-
+        self.api_key = api_key
         self.headers = {"accept": "application/json", "content-type": "application/json"}
 
     def _make_request(self, endpoint: str, data: Dict) -> Dict:
@@ -91,6 +85,7 @@ class AlchemyClient:
 
     def get_historical_prices_by_address(
         self,
+        *,
         address: str,
         network: str,
         start_time: datetime,
@@ -121,3 +116,11 @@ class AlchemyClient:
         }
         response = self._make_request(self.ENDPOINT_TOKENS_HISTORICAL, data)
         return HistoricalPriceByAddress(**response)
+
+    @staticmethod
+    def from_env() -> AlchemyClient:
+        api_key = os.getenv("ALCHEMY_API_KEY")
+        if not api_key:
+            raise RuntimeError("ALCHEMY_API_KEY not found in environment variables")
+
+        return AlchemyClient(api_key=api_key)

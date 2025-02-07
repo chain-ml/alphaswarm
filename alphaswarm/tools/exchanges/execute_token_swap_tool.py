@@ -1,5 +1,6 @@
 import logging
 from decimal import Decimal
+from typing import Any
 
 from alphaswarm.config import Config
 from alphaswarm.services.exchanges import DEXFactory, SwapResult
@@ -41,13 +42,14 @@ class ExecuteTokenSwapTool(Tool):
     }
     output_type = "object"
 
-    def __init__(self, config: Config, *args, **kwargs) -> None:
+    def __init__(self, config: Config, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
         self.config = config
         # Initialize with None, we'll get the appropriate client when needed
 
     def forward(
         self,
+        *,
         token_quote: str,
         token_base: str,
         amount: Decimal,
@@ -61,14 +63,8 @@ class ExecuteTokenSwapTool(Tool):
 
         # Get wallet address and private key from chain config
         chain_config = self.config.get_chain_config(chain)
-
-        # Get token info and create TokenInfo objects
-        try:
-            token_config = chain_config.tokens
-            base_token_info = token_config[token_base]
-            quote_token_info = token_config[token_quote]
-        except KeyError as e:
-            raise RuntimeError("Token not found in config") from e
+        base_token_info = chain_config.get_token_info(token_base)
+        quote_token_info = chain_config.get_token_info(token_quote)
 
         # Log token details
         logger.info(
