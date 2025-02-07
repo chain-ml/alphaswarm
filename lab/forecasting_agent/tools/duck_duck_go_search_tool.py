@@ -1,3 +1,5 @@
+from typing import Any
+
 from smolagents import Tool
 
 
@@ -7,7 +9,7 @@ class DuckDuckGoSearchTool(Tool):
     inputs = {"query": {"type": "string", "description": "The search query to perform."}}
     output_type = "string"
 
-    def __init__(self, *args, max_results: int = 10, **kwargs) -> None:
+    def __init__(self, *args: Any, max_results: int = 10, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
         self.max_results = max_results
         try:

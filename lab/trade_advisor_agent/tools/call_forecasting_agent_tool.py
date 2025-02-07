@@ -17,7 +17,7 @@ class CallForecastingAgentTool(Tool):
     }
     output_type = "string"
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
 
         # Initialize the forecasting agent

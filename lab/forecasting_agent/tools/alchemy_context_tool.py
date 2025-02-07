@@ -26,7 +26,7 @@ class AlchemyContextTool(Tool):
 
     @classmethod
     def get_alchemy_context(cls, symbol: str) -> str:
-        client = AlchemyClient()
+        client = AlchemyClient.from_env()
         end_date = datetime.now(timezone.utc)
 
         start_date_for_1d = end_date - timedelta(days=30)

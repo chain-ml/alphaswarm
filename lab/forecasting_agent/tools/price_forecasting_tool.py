@@ -1,7 +1,7 @@
 import os
 from datetime import datetime
 from decimal import Decimal
-from typing import List, Optional
+from typing import Any, List, Optional
 
 import matplotlib.dates as mdates
 import matplotlib.pyplot as plt
@@ -71,7 +71,7 @@ class PriceForecastingTool(Tool):
     }
     output_type = "object"
 
-    def __init__(self, *args, **kwargs) -> None:
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
 
         # Init the LLMFunction

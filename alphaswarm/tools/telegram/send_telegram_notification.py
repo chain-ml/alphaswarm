@@ -45,11 +45,6 @@ class SendTelegramNotificationTool(Tool):
     def __del__(self) -> None:
         if self._loop and self._loop.is_running():
             self._loop.close()
-        self._loop = asyncio.new_event_loop()
-
-    def __del__(self) -> None:
-        if self._loop and self._loop.is_running():
-            self._loop.close()
 
     def forward(self, message: str, confidence: float, priority: str, image_path: Optional[str] = None) -> str:
         message_to_send = self.format_alert_message(message=message, confidence=confidence, priority=priority)
