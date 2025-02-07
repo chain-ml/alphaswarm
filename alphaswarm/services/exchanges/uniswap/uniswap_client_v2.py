@@ -6,6 +6,7 @@ from typing import List, Tuple
 
 from alphaswarm.config import ChainConfig, Config, TokenInfo
 from alphaswarm.services.chains.evm import ZERO_ADDRESS
+from alphaswarm.services.exchanges.base import Slippage
 from alphaswarm.services.exchanges.uniswap.constants_v2 import (
     UNISWAP_V2_DEPLOYMENTS,
     UNISWAP_V2_FACTORY_ABI,
@@ -49,9 +50,9 @@ class UniswapClientV2(UniswapClientBase):
         logger.info(f"Expected output: {expected_output_decimal} {base.symbol}")
 
         # Convert expected output to raw integer and apply slippage
-        slippage_multiplier = Decimal(1) - (Decimal(slippage_bps) / Decimal(10000))
-        min_output_raw = base.convert_to_wei(expected_output_decimal) * slippage_multiplier
-        logger.info(f"Minimum output with {slippage_bps} bps slippage (raw): {min_output_raw}")
+        slippage = Slippage(slippage_bps)
+        min_output_raw = slippage.calculate_minimum_amount(base.convert_to_wei(expected_output_decimal))
+        logger.info(f"Minimum output with {slippage} slippage (raw): {min_output_raw}")
 
         # Build swap path
         path = [quote.checksum_address, base.checksum_address]

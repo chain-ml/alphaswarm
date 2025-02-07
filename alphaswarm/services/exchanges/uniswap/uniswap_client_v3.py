@@ -6,6 +6,7 @@ from typing import Any, Dict, List, Optional, Self, Tuple, Union
 
 from alphaswarm.config import ChainConfig, Config, TokenInfo, UniswapV3Settings
 from alphaswarm.services.chains.evm import ZERO_ADDRESS, EVMClient, EVMContract, EVMSigner
+from alphaswarm.services.exchanges.base import Slippage
 from alphaswarm.services.exchanges.uniswap.constants_v3 import (
     UNISWAP_V3_DEPLOYMENTS,
     UNISWAP_V3_FACTORY_ABI,
@@ -168,23 +169,23 @@ class UniswapClientV3(UniswapClientBase):
         logger.info(f"Pool liquidity: {pool_liquidity}")
 
         # Estimate price impact (simplified)
-        price_impact = (quote_wei * 10000) / pool_liquidity  # in bps
+        price_impact = (quote_wei * Slippage.base_point) / pool_liquidity  # in bps
         logger.info(f"Estimated price impact: {price_impact:.2f} bps")
 
         # Check if price impact is too high relative to slippage
+        slippage = Slippage(slippage_bps)
         # Price impact should be significantly lower than slippage to leave room for market moves
         if price_impact > (slippage_bps * 0.67):  # If price impact is more than 2/3 of slippage
             logger.warning(
-                f"WARNING: Price impact ({price_impact:.2f} bps) is more than 2/3 of slippage tolerance ({slippage_bps} bps)"
+                f"WARNING: Price impact ({price_impact:.2f} bps) is more than 2/3 of slippage tolerance ({slippage})"
             )
             logger.warning(
                 "This leaves little room for market price changes between transaction submission and execution"
             )
 
         # Apply slippage
-        slippage_multiplier = Decimal(1) - (Decimal(slippage_bps) / Decimal(10000))
-        min_output_raw = int(raw_output * slippage_multiplier)
-        logger.info(f"Minimum output with {slippage_bps} bps slippage (raw): {min_output_raw}")
+        min_output_raw = slippage.calculate_minimum_amount(raw_output)
+        logger.info(f"Minimum output with {slippage} slippage (raw): {min_output_raw}")
 
         # Build swap parameters for `exactInputSingle`
         params = ExactInputSingleParams(
