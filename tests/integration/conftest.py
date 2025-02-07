@@ -14,10 +14,4 @@ __all__ = ["default_config"]
 def alchemy_client(default_config: Config) -> AlchemyClient:
     # this helps with rate limit
     time.sleep(1)
-    return AlchemyClient()
-
-
-@pytest.fixture
-def cookiefun_client(default_config: Config) -> CookieFunClient:
-    """Create CookieFun client for testing"""
-    return CookieFunClient()
+    return AlchemyClient.from_env()

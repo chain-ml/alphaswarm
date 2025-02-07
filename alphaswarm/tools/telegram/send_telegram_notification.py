@@ -14,7 +14,11 @@ class SendTelegramNotificationTool(Tool):
     Returns a string describing whether the notification was sent successfully or not."""
 
     inputs = {
-        "message": {"type": "string", "description": "The message to send.", "required": True},
+        "message": {
+            "type": "string",
+            "description": "The message to send. When sending alert message, ALWAYS include token symbol or address in the message.",
+            "required": True,
+        },
         "confidence": {"type": "number", "description": "The confidence score, between 0 and 1.", "required": True},
         "priority": {
             "type": "string",
@@ -31,10 +35,20 @@ class SendTelegramNotificationTool(Tool):
         self.chat_id = chat_id
 
         self._telegram_app = TelegramApp(bot_token=self.token)
+        self._loop = asyncio.new_event_loop()
+
+    def __del__(self) -> None:
+        if self._loop and self._loop.is_running():
+            self._loop.close()
 
     def forward(self, message: str, confidence: float, priority: str) -> str:
         message_to_send = self.format_alert_message(message=message, confidence=confidence, priority=priority)
-        asyncio.run(self._telegram_app.send_message(chat_id=self.chat_id, message=message_to_send))
+
+        async def send_message() -> None:
+            await self._telegram_app.send_message(chat_id=self.chat_id, message=message_to_send)
+
+        self._loop.run_until_complete(send_message())
+
         return "Message sent successfully"
 
     @classmethod

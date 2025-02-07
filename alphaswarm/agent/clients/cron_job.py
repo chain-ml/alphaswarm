@@ -13,8 +13,8 @@ class CronJobClient(AlphaSwarmAgentClient[Any]):
         client_id: str,
         interval_seconds: int,
         message_generator: Callable[[], str],
-        response_handler: Callable[[str], Any] = print,
-    ):
+        response_handler: Callable[[str], None] = print,
+    ) -> None:
         super().__init__(agent, client_id)
         self.interval_seconds = interval_seconds
         self.message_generator = message_generator

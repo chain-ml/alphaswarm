@@ -7,7 +7,7 @@ from alphaswarm.config import Config, TokenInfo
 
 
 @pytest.fixture
-def token_info():
+def token_info() -> TokenInfo:
     return TokenInfo(symbol="TK", address="0x123", decimals=18, chain="test", is_native=False)
 
 

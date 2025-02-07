@@ -7,7 +7,7 @@ from ..agent_client import AlphaSwarmAgentClient, ChatMessage, Context
 
 class TerminalClient(AlphaSwarmAgentClient[Any]):
 
-    def __init__(self, client_id: str, agent: AlphaSwarmAgent):
+    def __init__(self, client_id: str, agent: AlphaSwarmAgent) -> None:
         super().__init__(agent, client_id)
         self._client_id = client_id
 

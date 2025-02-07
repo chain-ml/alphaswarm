@@ -1,14 +1,11 @@
 import logging
 from decimal import Decimal
-from typing import Dict
+from typing import Any, Dict
 
-from alphaswarm.config import Config, TokenInfo
-from eth_typing import ChecksumAddress
+from alphaswarm.config import ChainConfig
 from solana.rpc import api
 from solana.rpc.types import TokenAccountOpts
-from solders.pubkey import Pubkey  # type: ignore
-
-from .base import Web3Client
+from solders.pubkey import Pubkey
 
 logger = logging.getLogger(__name__)
 
@@ -16,22 +13,14 @@ logger = logging.getLogger(__name__)
 SUPPORTED_CHAINS = {"solana", "solana_devnet"}
 
 
-class SolanaClient(Web3Client):
+class SolanaClient:
     """Client for interacting with Solana chains"""
 
-    def __init__(self, config: Config) -> None:
-        super().__init__(config)
-        self._clients: Dict[str, api.Client] = {}  # cache for RPC clients
-        logger.info("Initialized SolanaClient")
-
-    def _get_client(self, chain: str) -> api.Client:
-        """Get or create RPC client for the chain"""
-        client = self._clients.get(chain)
-        if client is None:
-            rpc_url = self.config.get_chain_config(chain).rpc_url
-            client = api.Client(rpc_url)
-            self._clients[chain] = client
-        return client
+    def __init__(self, chain_config: ChainConfig) -> None:
+        self._validate_chain(chain_config.chain)
+        self._chain_config = chain_config
+        self._client = api.Client(self._chain_config.rpc_url)
+        logger.info(f"Initialized SolanaClient on chain '{self._chain_config.chain}'")
 
     @staticmethod
     def _validate_chain(chain: str) -> None:
@@ -39,47 +28,31 @@ class SolanaClient(Web3Client):
         if chain not in SUPPORTED_CHAINS:
             raise ValueError(f"Chain '{chain}' is not supported by SolanaClient. Supported chains: {SUPPORTED_CHAINS}")
 
-    def to_checksum_address(self, address: str, chain: str) -> ChecksumAddress:
-        """Convert address to checksum format"""
-        self._validate_chain(chain)
-        raise NotImplementedError("Checksum address not applicable for Solana")
-
-    def get_token_info(self, token_address: str, chain: str) -> TokenInfo:
-        """Get token info by token contract address"""
-        self._validate_chain(chain)
-        raise NotImplementedError("Token info not yet implemented for Solana")
-
-    def get_token_balance(self, token: str, wallet_address: str, chain: str) -> Decimal:
+    def get_token_balance(self, token: str, wallet_address: str) -> Decimal:
         """Get token balance for a wallet address.
 
         Args:
             token: Token name (resolved via Config) or 'SOL' for native SOL
             wallet_address: The wallet address to check balance for
-            chain: The chain to query ('solana' or 'solana_devnet')
 
         Returns:
             Optional[float]: The token balance in human-readable format, or None if error
         """
-        self._validate_chain(chain)
-        client = self._get_client(chain)
-
-        chain_config = self.config.get_chain_config(chain)
-        token_info = chain_config.get_token_info(token)
+        token_info = self._chain_config.get_token_info(token)
 
         # Handle native SOL balance
         if token.upper() == "SOL":
             pubkey = Pubkey.from_string(wallet_address)
-            response = client.get_balance(pubkey)
+            response = self._client.get_balance(pubkey)
             return Decimal(response.value) / 1_000_000_000
 
         token_address = token_info.address
-
         token_pubkey = Pubkey.from_string(token_address)
         wallet_pubkey = Pubkey.from_string(wallet_address)
 
         # Get token accounts
         opts = TokenAccountOpts(mint=token_pubkey)
-        token_accounts = client.get_token_accounts_by_owner_json_parsed(wallet_pubkey, opts)
+        token_accounts = self._client.get_token_accounts_by_owner_json_parsed(wallet_pubkey, opts)
 
         if not token_accounts.value:
             return Decimal(0)  # No token account found means 0 balance
@@ -99,21 +72,19 @@ class SolanaClient(Web3Client):
         if not isinstance(token_amount, dict):
             raise ValueError("'tokenAmount' is not a dict")
 
-        amount_json = token_amount["amount"]
-        if isinstance(amount_json, (str, int, float)):
-            balance = Decimal(amount_json)
-        elif amount_json is None:
-            balance = Decimal(0)  # or handle None how you like
-        else:
-            raise TypeError(f"Unexpected type for amount: {type(amount_json)}")
-
-        decimals_json = token_amount["decimals"]
-        if isinstance(decimals_json, (str, int, float)):
-            decimals = Decimal(decimals_json)
-        elif amount_json is None:
-            decimals = Decimal(0)  # or handle None how you like
-        else:
-            raise TypeError(f"Unexpected type for decimals: {type(decimals_json)}")
+        balance = self._get_decimal(token_amount, "amount")
+        decimals = self._get_decimal(token_amount, "decimals")
 
         # Convert to human-readable format
         return balance / 10**decimals
+
+    @staticmethod
+    def _get_decimal(values: Dict[str, Any], key: str) -> Decimal:
+        """Helper function to convert JSON value to Decimal"""
+        value = values.get(key, Decimal(0))
+        if isinstance(value, (str, int)):
+            return Decimal(value)
+        elif isinstance(value, float):
+            return Decimal(str(value))
+        else:
+            raise TypeError(f"Unexpected type for value {key} : {type(value)}")

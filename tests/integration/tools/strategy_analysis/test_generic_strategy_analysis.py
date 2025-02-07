@@ -1,10 +1,12 @@
 import json
 from alphaswarm.tools.strategy_analysis.generic.generic_analysis import GenericStrategyAnalysisTool
+from alphaswarm.tools.strategy_analysis.strategy import Strategy
 
 
-def test_generic_strategy_analysis():
+def test_generic_strategy_analysis() -> None:
     """Test the generic strategy analysis with basic WETH price data"""
-    tool = GenericStrategyAnalysisTool()
+    strategy = Strategy.from_file(filename="momentum_strategy_config.md")
+    tool = GenericStrategyAnalysisTool(strategy=strategy)
 
     # Sample token data with realistic price changes
     token_data = {

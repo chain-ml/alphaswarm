@@ -1,9 +1,8 @@
 import logging
 from decimal import Decimal
-from typing import Optional
+from typing import Any
 
 from alphaswarm.config import Config
-from alphaswarm.services.chains import Web3Client, Web3ClientFactory
 from alphaswarm.services.exchanges import DEXFactory, SwapResult
 from smolagents import Tool
 
@@ -43,22 +42,14 @@ class ExecuteTokenSwapTool(Tool):
     }
     output_type = "object"
 
-    def __init__(self, config: Config, *args, **kwargs) -> None:
+    def __init__(self, config: Config, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
         self.config = config
         # Initialize with None, we'll get the appropriate client when needed
-        self.web3_client: Optional[Web3Client] = None
-
-    def _get_web3_client(self, chain: str) -> Web3Client:
-        """Get the appropriate Web3Client for the chain"""
-        if not self.web3_client:
-            self.web3_client = Web3ClientFactory.get_instance().get_client(chain, self.config)
-        if not self.web3_client:
-            raise RuntimeError(f"Failed to get Web3Client for chain {chain}")
-        return self.web3_client
 
     def forward(
         self,
+        *,
         token_quote: str,
         token_base: str,
         amount: Decimal,
@@ -72,14 +63,8 @@ class ExecuteTokenSwapTool(Tool):
 
         # Get wallet address and private key from chain config
         chain_config = self.config.get_chain_config(chain)
-
-        # Get token info and create TokenInfo objects
-        try:
-            token_config = chain_config.tokens
-            base_token_info = token_config[token_base]
-            quote_token_info = token_config[token_quote]
-        except KeyError as e:
-            raise RuntimeError("Token not found in config") from e
+        base_token_info = chain_config.get_token_info(token_base)
+        quote_token_info = chain_config.get_token_info(token_quote)
 
         # Log token details
         logger.info(

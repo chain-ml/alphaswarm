@@ -3,10 +3,10 @@ from __future__ import annotations
 import logging
 import os
 from decimal import Decimal
-from pathlib import Path
 from typing import Any, Dict, List, Optional, Sequence, Union
 
 import yaml
+from alphaswarm import BASE_PATH
 from eth_typing import ChecksumAddress
 from pydantic.dataclasses import dataclass
 from typing_extensions import deprecated
@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 
 NATIVE_TOKENS = {"ethereum": ["ETH"], "ethereum_sepolia": ["ETH"], "base": ["ETH"], "solana": ["SOL"]}
 
-BASE_PATH = Path(__file__).parent.parent
+
 CONFIG_PATH = BASE_PATH / "config"
 
 
@@ -227,7 +227,7 @@ class Config:
         """Get list of supported networks for current environment"""
         return self._config["network_environments"].get(self._network_env, [])
 
-    def get(self, key_path: str, default=None) -> Any:
+    def get(self, key_path: str, default: Any = None) -> Any:
         """Get configuration value using dot notation"""
         try:
             keys = key_path.split(".")
