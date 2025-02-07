@@ -1,11 +1,9 @@
 import time
 from _pytest.fixtures import fixture
-import pytest
 
 from alphaswarm.config import Config
 from alphaswarm.services.alchemy import AlchemyClient
 from tests.unit.conftest import default_config
-from alphaswarm.services.cookiefun import CookieFunClient
 
 __all__ = ["default_config"]
 

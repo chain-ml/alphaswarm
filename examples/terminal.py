@@ -21,6 +21,7 @@ from alphaswarm.tools.cookie.cookie_metrics import (
     CookieMetricsPaged,
 )
 
+
 async def main() -> None:
     dotenv.load_dotenv()
     config = Config()
