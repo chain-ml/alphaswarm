@@ -4,7 +4,7 @@ from pathlib import Path
 from typing import Any, Dict, List
 
 from alphaswarm import BASE_PATH
-from alphaswarm.core.llm.llm_function import LLMFunctionFromPromptFiles
+from alphaswarm.core.llm import LLMFunctionTemplated
 from pydantic import BaseModel, Field
 from smolagents import Tool
 
@@ -55,7 +55,7 @@ class GenericStrategyAnalysisTool(Tool):
 
         # Init the LLMFunction
         prompts_path = TOOLS_PATH / "strategy_analysis" / "generic" / "prompts"
-        self._llm_function = LLMFunctionFromPromptFiles(
+        self._llm_function = LLMFunctionTemplated.from_files(
             model_id=strategy.model_id,
             response_model=StrategyAnalysis,
             system_prompt_path=str(prompts_path / "system_prompt.md"),
