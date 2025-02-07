@@ -47,7 +47,6 @@ class SolanaClient:
             return Decimal(response.value) / 1_000_000_000
 
         token_address = token_info.address
-
         token_pubkey = Pubkey.from_string(token_address)
         wallet_pubkey = Pubkey.from_string(wallet_address)
 
@@ -82,12 +81,10 @@ class SolanaClient:
     @staticmethod
     def _get_decimal(values: Dict[str, any], key: str) -> Decimal:
         """Helper function to convert JSON value to Decimal"""
-        value = values[key]
+        value = values.get(key, Decimal(0))
         if isinstance(value, (str, int)):
             return Decimal(value)
         elif isinstance(value, float):
-            return Decimal.from_float(value)
-        elif value is None:
-            return Decimal(0)
+            return Decimal(str(value))
         else:
             raise TypeError(f"Unexpected type for value {key} : {type(value)}")
