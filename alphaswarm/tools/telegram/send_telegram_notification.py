@@ -56,6 +56,8 @@ class SendTelegramNotificationTool(Tool):
 
         async def send_message() -> None:
             await self._telegram_app.send_message(chat_id=self.chat_id, message=message_to_send)
+            if image_path:
+                await self._telegram_app.send_image(chat_id=self.chat_id, image_path=image_path)
 
         self._loop.run_until_complete(send_message())
 

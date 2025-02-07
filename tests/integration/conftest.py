@@ -6,7 +6,6 @@ from alphaswarm.config import Config
 from alphaswarm.services.alchemy import AlchemyClient
 from alphaswarm.services.cookiefun import CookieFunClient
 from tests.unit.conftest import default_config
-from alphaswarm.services.cookiefun import CookieFunClient
 
 __all__ = ["default_config"]
 

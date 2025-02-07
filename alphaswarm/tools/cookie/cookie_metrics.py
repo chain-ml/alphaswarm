@@ -115,10 +115,12 @@ class CookieMetricsPaged(Tool):
 
     def forward(self, interval: str, page: int, page_size: int) -> PagedAgentsResponse:
         return self.client.get_agents_paged(Interval(interval), page, page_size)
+
+
 import logging
 from typing import Optional
 
-from alphaswarm.services.cookiefun.cookiefun_client import AgentMetrics, CookieFunClient, Interval, PagedAgentsResponse
+from alphaswarm.services.cookiefun.cookiefun_client import AgentMetrics, CookieFunClient, PagedAgentsResponse
 from smolagents import Tool
 
 # Set up logging

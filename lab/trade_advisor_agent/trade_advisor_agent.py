@@ -42,16 +42,16 @@ class TradeAdvisorAgent(AlphaSwarmAgent):
         Generate high-conviction trade proposals based on forecasts.
         Use forecasting agent for predictions and validate thoroughly.
 
-        ## High Conviction Trade Rules (>80% confidence)
-        - 5min: >2% predicted move
-        - 1hr: >4% predicted move
-        - 6hr: >7% predicted move
+        ## High Conviction Trade Rules (>=70% confidence)
+        - 5min: >1% predicted move
+        - 1hr: >2% predicted move
+        - 6hr: >3% predicted move
         Requirements:
         - Full agreement with forecast reasoning
         - Normal volatility verified
 
         Do not propose trades if:
-        - Confidence < 80%
+        - Confidence < 70%
         - Flawed reasoning found
         - Extreme volatility detected
 
@@ -69,6 +69,7 @@ class TradeAdvisorAgent(AlphaSwarmAgent):
         workflows = "You must always propose trades before executing them."
 
         hints = "When requesting a forecast over a horizon `h`, request to use `10*h` units of historical data."
+        hints += "When introducing yourself, describe yourself as a 'trading advisor' and mention that a 'forecasting expert' is part of your swarm."
 
         try:
             system_prompt = open(BASE_PATH / "lab/research_agent_system_prompt.txt", "r").read()
