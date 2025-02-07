@@ -46,6 +46,8 @@ pytest = "^8.3.4"
 types-requests = ">=2.31.0.6"
 python-dotenv = "^1.0.1"
 eth-typing = "3.5.2"
+pytest-html = "^4.1.1"
+pytest-cov = "^6.0.0"
 
 [tool.poetry]
 include = [
@@ -69,8 +71,7 @@ log_cli_date_format = "%Y-%m-%d %H:%M:%S%z"
 line-length = 120
 
 [tool.mypy]
-exclude = "(?x)(venv|docs|tmp|examples)"
-mypy_path = "./stubs:src"
+exclude = "(?x)(venv|docs|tmp)"
 
 explicit_package_bases = "true"
 no_implicit_optional = true
