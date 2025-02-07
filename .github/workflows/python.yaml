@@ -43,4 +43,10 @@ jobs:
           ALCHEMY_API_KEY: ${{ secrets.ALCHEMY_API_KEY }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-        run: make all-tests
+        run: make ci-all-tests
+
+      - name: upload test results
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-reports
+          path: reports/**
