@@ -98,7 +98,7 @@ cp .env.example .env
 
 2. Configure the required variables in your `.env` file.
 
-Required environment variables:
+#### Required environment variables:
 
 LLM Configuration (at least one required):
 - `OPENAI_API_KEY`: Your OpenAI API key for using OpenAI models
@@ -117,7 +117,7 @@ Base Configuration (only if using Base):
 - `BASE_WALLET_ADDRESS`: Your Base wallet address for trading
 - `BASE_PRIVATE_KEY`: Private key for your Base wallet
 
-Optional configurations:
+#### Optional configurations:
 
 Testing environment variables:
 - `ETH_SEPOLIA_RPC_URL`: Your Sepolia testnet RPC endpoint URL
