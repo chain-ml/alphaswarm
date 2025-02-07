@@ -179,7 +179,7 @@ If you don't have access to certain data through the tools, acknowledge the limi
 When using tools, remember:
 - Start with Observation Tools for comprehensive data gathering
 - Multiple Observation Tools may be needed for a complete picture
-- Break complex analyses into smaller, verifiable steps
+- Pay attention to the tool return type schema and data types when processing the output, including serializing
 
 You have access to these tools:
 {{tool_descriptions}}
