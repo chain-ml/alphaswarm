@@ -20,12 +20,6 @@ from alphaswarm.tools.strategy_analysis.strategy import Strategy
 from alphaswarm.tools.telegram import SendTelegramNotificationTool
 from alphaswarm.utils import read_text_file_to_string
 from smolagents import Tool
-from alphaswarm.tools.cookie.cookie_metrics import (
-    CookieMetricsByContract,
-    CookieMetricsBySymbol,
-    CookieMetricsByTwitter,
-    CookieMetricsPaged,
-)
 
 
 async def main() -> None:
