@@ -158,42 +158,15 @@ Note: Always verify contract addresses from official sources.
 
 ### Quick Start
 
-#### Basic Example
+In all examples below, set your Anthropic API key in the `.env` file or change the model ID to an OpenAI model if using openAI.
 
-In a first "hello world" example we are going to get the price of a token pair from available DEXes on Base.
-Set your Anthropic API key in the `.env` file or change the model ID to an OpenAI model if using openAI.
+#### Basic Example: Quote for a token pair
 
-Create a new file or reference existing one `examples/basic_example_01_quote.py` in your project directory:
-
-```python
-import dotenv
-from alphaswarm.agent.agent import AlphaSwarmAgent
-from alphaswarm.config import Config
-from alphaswarm.tools.exchanges.get_token_price_tool import GetTokenPriceTool
-
-dotenv.load_dotenv()
-config = Config()
-
-# Initialize tools
-tools = [
-    GetTokenPriceTool(config),  # Get the price of a token pair from available DEXes
-]
-
-# Create the agent
-agent = AlphaSwarmAgent(tools=tools, model_id="anthropic/claude-3-5-sonnet-20241022")
-
-
-# Interact with the agent
-async def main():
-    response = await agent.process_message("What's the current price of AIXBT in USDC on Base?")
-    print(response)
-
-
-if __name__ == "__main__":
-    import asyncio
-
-    asyncio.run(main())
-```
+[Basic Example 01 - Quote](examples/basic_example_01_quote.py) is a first "hello world" example that:
+- Initializes the Alphaswarm agent with a token price checking tool
+- Uses Claude 3 Sonnet to process natural language queries
+- Connects to Base network to fetch real-time token prices
+- Demonstrates how to query token pair prices (AIXBT/USDC) using natural language
 
 Run the example:
 ```bash
@@ -201,42 +174,13 @@ Run the example:
 python examples/basic_example_01_quote.py
 ```
 
-#### Follow-up Example: Execute a token swap
+#### Basic Example: Execute a token swap
 
-In a follow-up example we are going to execute a token swap on a supported DEX on Ethereum Sepolia.
-Set your Anthropic API key in the `.env` file or change the model ID to an OpenAI model if using openAI.
-
-Create a new file or reference existing one `examples/basic_example_02_swap.py`:
-
-```python
-import dotenv
-from alphaswarm.agent.agent import AlphaSwarmAgent
-from alphaswarm.config import Config
-from alphaswarm.tools.exchanges.execute_token_swap_tool import ExecuteTokenSwapTool
-
-dotenv.load_dotenv()
-config = Config(network_env="test")  # Use a testnet environment (as defined in config/default.yaml)
-
-# Initialize tools
-tools = [
-    ExecuteTokenSwapTool(config),  # Execute a token swap on a supported DEX (Uniswap V2/V3 on Ethereum and Base chains)
-]
-
-# Create the agent
-agent = AlphaSwarmAgent(tools=tools, model_id="anthropic/claude-3-5-sonnet-20241022")
-
-
-# Interact with the agent
-async def main():
-    response = await agent.process_message("Swap 3 USDC for WETH on Ethereum Sepolia")
-    print(response)
-
-
-if __name__ == "__main__":
-    import asyncio
-
-    asyncio.run(main())
-```
+[Basic Example 02 - Swap](examples/basic_example_02_swap.py) is a follow up example that:
+- Initializes the Alphaswarm agent with a token swap tool
+- Uses Claude 3 Sonnet to process natural language queries
+- Connects to Ethereum Sepolia network to execute a token swap
+- Demonstrates how to initiate a token swap (3 USDC for WETH) using natural language
 
 Execute the token swap:
 ```bash
@@ -244,54 +188,16 @@ Execute the token swap:
 python examples/basic_example_02_swap.py
 ```
 
-### Strategy Example: Check a trading strategy and optionally execute it
+### Strategy Example: Check trading strategy and optionally execute it
 
-In a follow-up example we are going to check a trading strategy and optionally execute it.
-Set your Anthropic API key in the `.env` file or change the model ID to an OpenAI model if using openAI.
+[Basic Example 03 - Strategy](examples/basic_example_03_strategy.py) dives into the optional execution of a trading strategy given input signals that:
+- Initializes the Alphaswarm agent with both strategy analysis and token swap tools
+- Uses Claude 3 Sonnet to process natural language queries
+- Defines a simple trading strategy: Swap 3 USDC for WETH on Ethereum Sepolia when price below 10000 USDC per WETH
+- Evaluates the trading strategy conditions using real-time market data when triggered
+- Conditionally executes trades only when strategy conditions are met
 
 Create a new file or reference existing one `examples/basic_example_03_strategy.py`:
-
-```python
-import dotenv
-from alphaswarm.agent.agent import AlphaSwarmAgent
-from alphaswarm.config import Config
-from alphaswarm.tools.exchanges.execute_token_swap_tool import ExecuteTokenSwapTool
-from alphaswarm.tools.strategy_analysis.generic.generic_analysis import GenericStrategyAnalysisTool
-from alphaswarm.tools.strategy_analysis.strategy import Strategy
-
-dotenv.load_dotenv()
-config = Config(network_env="test")  # Use a testnet environment (as defined in config/default.yaml)
-
-# Initialize tools
-strategy = Strategy(rules="Swap 3 USDC for WETH on Ethereum Sepolia when price below 10000 USDC per WETH", model_id="anthropic/claude-3-5-sonnet-20241022")
-
-tools = [
-    GenericStrategyAnalysisTool(strategy), # Check a trading strategy
-    ExecuteTokenSwapTool(config),  # Execute a token swap on a supported DEX (Uniswap V2/V3 on Ethereum and Base chains)
-]
-
-# Create the agent
-agent = AlphaSwarmAgent(tools=tools, model_id="anthropic/claude-3-5-sonnet-20241022")
-
-
-# Interact with the agent
-async def main():
-    response = await agent.process_message("Check strategy and initiate a trade if applicable")
-    print(response)
-
-
-if __name__ == "__main__":
-    import asyncio
-
-    asyncio.run(main())
-
-```
-
-Execute the token swap conditionally based on whether the strategy is applicable:
-```bash
-# Make sure you've configured your .env file first!
-python examples/basic_example_03_strategy.py
-```
 
 ### More Examples
 
