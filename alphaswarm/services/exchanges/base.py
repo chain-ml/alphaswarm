@@ -53,9 +53,9 @@ class Slippage:
 
     def to_multiplier(self) -> Decimal:
         """Convert to multiplier for price calculations (e.g., 0.99 for 1% slippage)"""
-        return Decimal(1.0) - (Decimal(self.bps) / Decimal(self.base_point))
+        return Decimal(1) - (Decimal(self.bps) / Decimal(self.base_point))
 
-    def calculate_minimum_amount(self, amount: Union[int, float, Decimal]) -> int:
+    def calculate_minimum_amount(self, amount: Union[int, str, Decimal]) -> int:
         """Calculate minimum amount after slippage"""
         return int(Decimal(amount) * self.to_multiplier())
 
