@@ -12,6 +12,11 @@ class TerminalClient(AlphaSwarmAgentClient[Any]):
         self._client_id = client_id
 
     async def on_agent_response(self, ctx: Context, message: ChatMessage) -> None:
+        token_counts = self._agent._agent.monitor.get_total_token_counts()
+        print(f"Total input tokens: {token_counts['input']}")
+        print(f"Total output tokens: {token_counts['output']}")
+        print(f"Total tokens used: {token_counts['input'] + token_counts['output']}")
+        print("\n\n")
         print(f"Response: {message.content}")
 
     async def on_agent_error(self, ctx: Context, error: ChatMessage) -> None:
