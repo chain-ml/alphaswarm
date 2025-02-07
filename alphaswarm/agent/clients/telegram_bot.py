@@ -15,17 +15,21 @@ class TelegramApp:
     def __init__(self, bot_token: str) -> None:
         self._app = Application.builder().token(bot_token).build()
 
-    async def _start(self):
+    async def _start(self) -> None:
         """Start the bot"""
         await self._app.initialize()
         await self._app.start()
-        await self._app.updater.start_polling()
+        updater = self._app.updater
+        if updater:
+            await updater.start_polling()
         logger.info("Telegram bot started successfully")
 
-    async def _stop(self):
+    async def _stop(self) -> None:
         """Stop the bot"""
+        updater = self._app.updater
+        if updater:
+            await updater.stop()
         await self._app.stop()
-        await self._app.updater.stop()
         await self._app.shutdown()
 
     async def send_message(self, chat_id: int, *, message: str, parse_mode: str = ParseMode.MARKDOWN) -> None:
@@ -34,6 +38,15 @@ class TelegramApp:
             await self._app.bot.send_message(chat_id=chat_id, text=message, parse_mode=parse_mode)
         except Exception as e:
             logger.error(f"Failed to send Telegram message: {e}")
+            raise e
+
+    async def send_image(self, chat_id: int, *, image_path: str) -> None:
+        """Send an image to a specific chat"""
+        try:
+            with open(image_path, "rb") as image:
+                await self._app.bot.send_photo(chat_id=chat_id, photo=image)
+        except Exception as e:
+            logger.error(f"Failed to send Telegram image: {e}")
             raise e
 
 

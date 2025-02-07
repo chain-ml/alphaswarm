@@ -8,6 +8,8 @@ satisfy any constraints, and respect any scenarios.
 Your output must include:
 - Your reasoning about the forecast
 - Your predictions for the prices at the forecast horizon
-- Each prediction must include a timestamp and a price
+- Each prediction must include a timestamp and a price with lower and upper confidence bounds
 
 Your reasoning must be detailed and include all relevant factors that influence the forecast.
+For the first forecast data point, use the last timestamp in the historical data 
+so there is no gap between the historical data and the forecast (keep lower and upper confidence bounds the same as the last historical data point).

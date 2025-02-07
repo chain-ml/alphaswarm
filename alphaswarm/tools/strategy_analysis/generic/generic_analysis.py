@@ -49,7 +49,7 @@ class GenericStrategyAnalysisTool(Tool):
     }
     output_type = "object"
 
-    def __init__(self, strategy: Strategy, *args, **kwargs) -> None:
+    def __init__(self, strategy: Strategy, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
         self.strategy = strategy
 

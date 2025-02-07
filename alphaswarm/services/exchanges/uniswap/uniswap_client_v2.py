@@ -1,13 +1,17 @@
+from __future__ import annotations
+
 import logging
 from decimal import Decimal
 from typing import List, Tuple
 
-from alphaswarm.config import Config, TokenInfo
+from alphaswarm.config import ChainConfig, Config, TokenInfo
 from alphaswarm.services.chains.evm import ZERO_ADDRESS
+from alphaswarm.services.exchanges.base import Slippage
 from alphaswarm.services.exchanges.uniswap.constants_v2 import (
     UNISWAP_V2_DEPLOYMENTS,
     UNISWAP_V2_FACTORY_ABI,
     UNISWAP_V2_ROUTER_ABI,
+    UNISWAP_V2_VERSION,
 )
 from alphaswarm.services.exchanges.uniswap.uniswap_client_base import UniswapClientBase
 from eth_defi.uniswap_v2.pair import fetch_pair_details
@@ -18,14 +22,15 @@ logger = logging.getLogger(__name__)
 
 
 class UniswapClientV2(UniswapClientBase):
-    def __init__(self, config: Config, chain: str):
-        super().__init__(config, chain, "v2")
+    def __init__(self, chain_config: ChainConfig) -> None:
+        super().__init__(chain_config=chain_config, version=UNISWAP_V2_VERSION)
+        self._web3 = self._evm_client.client
 
-    def _get_router(self, chain: str) -> ChecksumAddress:
-        return self._evm_client.to_checksum_address(UNISWAP_V2_DEPLOYMENTS[chain]["router"])
+    def _get_router(self) -> ChecksumAddress:
+        return self._evm_client.to_checksum_address(UNISWAP_V2_DEPLOYMENTS[self.chain]["router"])
 
-    def _get_factory(self, chain: str) -> ChecksumAddress:
-        return self._evm_client.to_checksum_address(UNISWAP_V2_DEPLOYMENTS[chain]["factory"])
+    def _get_factory(self) -> ChecksumAddress:
+        return self._evm_client.to_checksum_address(UNISWAP_V2_DEPLOYMENTS[self.chain]["factory"])
 
     def _swap(
         self, base: TokenInfo, quote: TokenInfo, address: str, raw_quote_amount: int, slippage_bps: int
@@ -40,21 +45,21 @@ class UniswapClientV2(UniswapClientBase):
             raise ValueError(f"No V2 price found for {base.symbol}/{quote.symbol}")
 
         # Calculate expected output
-        input_amount_decimal = Decimal(raw_quote_amount) / (Decimal(10) ** quote.decimals)
+        input_amount_decimal = quote.convert_from_wei(raw_quote_amount)
         expected_output_decimal = input_amount_decimal * price
         logger.info(f"Expected output: {expected_output_decimal} {base.symbol}")
 
         # Convert expected output to raw integer and apply slippage
-        slippage_multiplier = Decimal(1) - (Decimal(slippage_bps) / Decimal(10000))
-        min_output_raw = int(expected_output_decimal * (10**base.decimals) * slippage_multiplier)
-        logger.info(f"Minimum output with {slippage_bps} bps slippage (raw): {min_output_raw}")
+        slippage = Slippage(slippage_bps)
+        min_output_raw = slippage.calculate_minimum_amount(base.convert_to_wei(expected_output_decimal))
+        logger.info(f"Minimum output with {slippage} slippage (raw): {min_output_raw}")
 
         # Build swap path
         path = [quote.checksum_address, base.checksum_address]
 
         # Build swap transaction with EIP-1559 parameters
         router_contract = self._web3.eth.contract(address=self._router, abi=UNISWAP_V2_ROUTER_ABI)
-        deadline = int(self._web3.eth.get_block("latest")["timestamp"] + 300)  # 5 minutes
+        deadline = int(self._evm_client.get_block_latest()["timestamp"] + 300)  # 5 minutes
 
         swap = router_contract.functions.swapExactTokensForTokens(
             raw_quote_amount,  # amount in
@@ -126,3 +131,7 @@ class UniswapClientV2(UniswapClientBase):
                     continue
 
         return markets
+
+    @classmethod
+    def from_config(cls, config: Config, chain: str) -> UniswapClientV2:
+        return cls(config.get_chain_config(chain))

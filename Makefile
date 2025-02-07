@@ -39,3 +39,7 @@ unit-tests:
 	poetry run pytest tests/unit
 
 all-tests: unit-tests integration-tests
+
+ci-all-tests:
+	poetry run pytest tests/unit tests/integration --cov=alphaswarm --cov-report=html:reports/coverage \
+		--html=reports/pytest-report.html --self-contained-html

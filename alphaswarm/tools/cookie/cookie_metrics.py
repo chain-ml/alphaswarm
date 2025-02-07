@@ -34,7 +34,7 @@ class CookieMetricsByTwitter(Tool):
 
 class CookieMetricsByContract(Tool):
     name = "CookieMetricsByContract"
-    description = "Retrieve AI agent metrics such as mindshare, market cap, price, liquidity, volume, holders, average impressions, average engagements, followers, and top tweets by contract address from Cookie.fun"
+    description = "Retrieve AI agent metrics such as mindshare, market cap, price, liquidity, volume, holders, average impressions, average engagements, followers, and top tweets by contract address from Cookie.fun."
     inputs = {
         "address": {
             "type": "string",
@@ -86,7 +86,9 @@ class CookieMetricsBySymbol(Tool):
 
 class CookieMetricsPaged(Tool):
     name = "CookieMetricsPaged"
-    description = "Retrieve paged list of AI agents ordered by mindshare from Cookie.fun. Important for getting a list of trending AI agents. page_size is the number of agents per page. If asked for example for Top 10 agents, page_size should be 10."
+    description = """Retrieve paged list of market data and statistics for `page_size` AI agent tokens ordered by mindshare from Cookie.fun. 
+    Outputs an object of type PagedAgentsResponse, which has a field `data` containing a list of AgentMetrics data objects.
+    """
     inputs = {
         "interval": {
             "type": "string",

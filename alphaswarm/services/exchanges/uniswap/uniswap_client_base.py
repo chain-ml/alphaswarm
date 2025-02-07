@@ -3,11 +3,9 @@ from abc import abstractmethod
 from decimal import Decimal
 from typing import List, Tuple
 
-from alphaswarm.config import Config, TokenInfo
+from alphaswarm.config import ChainConfig, TokenInfo
 from alphaswarm.services.chains.evm import ERC20Contract, EVMClient, EVMSigner
 from alphaswarm.services.exchanges.base import DEXClient, SwapResult
-from eth_account import Account
-from eth_account.signers.local import LocalAccount
 from eth_typing import ChecksumAddress, HexAddress
 from web3.types import TxReceipt
 
@@ -16,13 +14,12 @@ logger = logging.getLogger(__name__)
 
 
 class UniswapClientBase(DEXClient):
-    def __init__(self, config: Config, chain: str, version: str) -> None:
-        super().__init__(config, chain)
+    def __init__(self, chain_config: ChainConfig, version: str) -> None:
+        super().__init__(chain_config)
         self.version = version
-        self._evm_client = EVMClient(self.config, self.chain)
-        self._web3 = self._evm_client.client
-        self._router = self._get_router(self.chain)
-        self._factory = self._get_factory(self.chain)
+        self._evm_client = EVMClient(chain_config)
+        self._router = self._get_router()
+        self._factory = self._get_factory()
 
         logger.info(f"Created {self.__class__.__name__} instance for chain {self.chain}")
 
@@ -30,12 +27,16 @@ class UniswapClientBase(DEXClient):
     def get_signer(self) -> EVMSigner:
         return EVMSigner(self.chain_config.private_key)
 
+    @property
+    def wallet_address(self) -> ChecksumAddress:
+        return EVMClient.to_checksum_address(self.chain_config.wallet_address)
+
     @abstractmethod
-    def _get_router(self, chain: str) -> ChecksumAddress:
+    def _get_router(self) -> ChecksumAddress:
         pass
 
     @abstractmethod
-    def _get_factory(self, chain: str) -> ChecksumAddress:
+    def _get_factory(self) -> ChecksumAddress:
         pass
 
     @abstractmethod
@@ -113,24 +114,19 @@ class UniswapClientBase(DEXClient):
         Note:
             Private key is read from environment variables via config for the specified chain.
         """
-        private_key = self._config.get_chain_config(self.chain).private_key
         logger.info(f"Initiating token swap for {quote_token.symbol} to {base_token.symbol}")
-
-        # Set up account
-        account: LocalAccount = Account.from_key(private_key)
-        wallet_address = account.address
-        logger.info(f"Wallet address: {wallet_address}")
+        logger.info(f"Wallet address: {self.wallet_address}")
 
         # Create contract instances
         base_contract = ERC20Contract(self._evm_client, base_token.checksum_address)
         quote_contract = ERC20Contract(self._evm_client, quote_token.checksum_address)
 
         # Gas balance
-        gas_balance = self._evm_client.get_native_balance(account.address)
+        gas_balance = self._evm_client.get_native_balance(self.wallet_address)
 
         # Log balances
-        base_balance = base_token.convert_from_wei(base_contract.get_balance(wallet_address))
-        quote_balance = quote_token.convert_from_wei(quote_contract.get_balance(wallet_address))
+        base_balance = base_token.convert_from_wei(base_contract.get_balance(self.wallet_address))
+        quote_balance = quote_token.convert_from_wei(quote_contract.get_balance(self.wallet_address))
         eth_balance = Decimal(gas_balance) / (10**18)
 
         logger.info(f"Balance of {base_token.symbol}: {base_balance:,.8f}")
@@ -144,12 +140,12 @@ class UniswapClientBase(DEXClient):
         # 1) ERC-20.approve()
         # 2) swap (various functions)
 
-        receipts = self._swap(base_token, quote_token, wallet_address, quote_wei, slippage_bps)
+        receipts = self._swap(base_token, quote_token, self.wallet_address, quote_wei, slippage_bps)
 
         # Get the actual amount of base token received from the swap receipt
         swap_receipt = receipts[1]
         base_amount = self._get_final_swap_amount_received(
-            swap_receipt, base_token.checksum_address, wallet_address, base_token.decimals
+            swap_receipt, base_token.checksum_address, self.wallet_address, base_token.decimals
         )
 
         return SwapResult.build_success(
