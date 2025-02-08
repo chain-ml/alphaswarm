@@ -312,8 +312,9 @@ class Config:
             # Check if the pair is in supported_pairs for this chain
             chain_venue_config = venue_config[chain]
             pair_str = f"{base_token}_{quote_token}"
+            inverted_pair_str = f"{quote_token}_{base_token}"
             supported_pairs = chain_venue_config.get("supported_pairs", [])
-            if pair_str in supported_pairs:
+            if pair_str in supported_pairs or inverted_pair_str in supported_pairs:
                 venues.append(venue_name)
 
         return venues
