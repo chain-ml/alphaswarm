@@ -33,36 +33,36 @@ class UniswapClientV2(UniswapClientBase):
         return self._evm_client.to_checksum_address(UNISWAP_V2_DEPLOYMENTS[self.chain]["factory"])
 
     def _swap(
-        self, base: TokenInfo, quote: TokenInfo, address: str, raw_quote_amount: int, slippage_bps: int
+        self, token_out: TokenInfo, token_in: TokenInfo, address: str, wei_in: int, slippage_bps: int
     ) -> List[TxReceipt]:
         """Execute a swap on Uniswap V2."""
         # Handle token approval and get fresh nonce
-        approval_receipt = self._approve_token_spend(quote, raw_quote_amount)
+        approval_receipt = self._approve_token_spend(token_in, wei_in)
 
         # Get price from V2 pair to calculate minimum output
-        price = self._get_token_price(token_out=base, token_in=quote)
+        price = self._get_token_price(token_out=token_out, token_in=token_in)
         if not price:
-            raise ValueError(f"No V2 price found for {base.symbol}/{quote.symbol}")
+            raise ValueError(f"No V2 price found for {token_out.symbol}/{token_in.symbol}")
 
         # Calculate expected output
-        input_amount_decimal = quote.convert_from_wei(raw_quote_amount)
+        input_amount_decimal = token_in.convert_from_wei(wei_in)
         expected_output_decimal = input_amount_decimal * price
-        logger.info(f"Expected output: {expected_output_decimal} {base.symbol}")
+        logger.info(f"Expected output: {expected_output_decimal} {token_out.symbol}")
 
         # Convert expected output to raw integer and apply slippage
         slippage = Slippage(slippage_bps)
-        min_output_raw = slippage.calculate_minimum_amount(base.convert_to_wei(expected_output_decimal))
+        min_output_raw = slippage.calculate_minimum_amount(token_out.convert_to_wei(expected_output_decimal))
         logger.info(f"Minimum output with {slippage} slippage (raw): {min_output_raw}")
 
         # Build swap path
-        path = [quote.checksum_address, base.checksum_address]
+        path = [token_in.checksum_address, token_out.checksum_address]
 
         # Build swap transaction with EIP-1559 parameters
         router_contract = self._web3.eth.contract(address=self._router, abi=UNISWAP_V2_ROUTER_ABI)
         deadline = int(self._evm_client.get_block_latest()["timestamp"] + 300)  # 5 minutes
 
         swap = router_contract.functions.swapExactTokensForTokens(
-            raw_quote_amount,  # amount in
+            wei_in,  # amount in
             min_output_raw,  # minimum amount out
             path,  # swap path
             address,  # recipient

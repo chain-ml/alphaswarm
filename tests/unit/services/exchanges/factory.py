@@ -14,7 +14,7 @@ class MockDex(DEXClient):
         return MockDex(chain_config=config.get_chain_config(chain))
 
     def swap(
-        self, base_token: TokenInfo, quote_token: TokenInfo, quote_amount: Decimal, slippage_bps: int = 100
+        self, token_out: TokenInfo, token_in: TokenInfo, amount_in: Decimal, slippage_bps: int = 100
     ) -> SwapResult:
         raise NotImplementedError("For test only")
 

@@ -41,7 +41,7 @@ class UniswapClientBase(DEXClient):
 
     @abstractmethod
     def _swap(
-        self, base: TokenInfo, quote: TokenInfo, address: str, quote_wei: int, slippage_bps: int
+        self, token_out: TokenInfo, token_in: TokenInfo, address: str, wei_in: int, slippage_bps: int
     ) -> List[TxReceipt]:
         pass
 
@@ -95,70 +95,56 @@ class UniswapClientBase(DEXClient):
 
     def swap(
         self,
-        base_token: TokenInfo,
-        quote_token: TokenInfo,
-        quote_amount: Decimal,
+        token_out: TokenInfo,
+        token_in: TokenInfo,
+        amount_in: Decimal,
         slippage_bps: int = 100,
     ) -> SwapResult:
-        """Execute a token swap on Uniswap.
-
-        Args:
-            base_token: TokenInfo object for the token being sold
-            quote_token: TokenInfo object for the token being bought
-            quote_amount: Amount of quote_token to spend (output amount)
-            slippage_bps: Maximum allowed slippage in basis points (1 bp = 0.01%)
-
-        Returns:
-            SwapResult: Result object containing success status, transaction hash and any error details
-
-        Note:
-            Private key is read from environment variables via config for the specified chain.
-        """
-        logger.info(f"Initiating token swap for {quote_token.symbol} to {base_token.symbol}")
+        logger.info(f"Initiating token swap for {token_in.symbol} to {token_out.symbol}")
         logger.info(f"Wallet address: {self.wallet_address}")
 
         # Create contract instances
-        base_contract = ERC20Contract(self._evm_client, base_token.checksum_address)
-        quote_contract = ERC20Contract(self._evm_client, quote_token.checksum_address)
+        token_out_contract = ERC20Contract(self._evm_client, token_out.checksum_address)
+        token_in_contract = ERC20Contract(self._evm_client, token_in.checksum_address)
 
         # Gas balance
         gas_balance = self._evm_client.get_native_balance(self.wallet_address)
 
         # Log balances
-        base_balance = base_token.convert_from_wei(base_contract.get_balance(self.wallet_address))
-        quote_balance = quote_token.convert_from_wei(quote_contract.get_balance(self.wallet_address))
+        out_balance = token_out.convert_from_wei(token_out_contract.get_balance(self.wallet_address))
+        in_balance = token_in.convert_from_wei(token_in_contract.get_balance(self.wallet_address))
         eth_balance = Decimal(gas_balance) / (10**18)
 
-        logger.info(f"Balance of {base_token.symbol}: {base_balance:,.8f}")
-        logger.info(f"Balance of {quote_token.symbol}: {quote_balance:,.8f}")
+        logger.info(f"Balance of {token_out.symbol}: {out_balance:,.8f}")
+        logger.info(f"Balance of {token_in.symbol}: {in_balance:,.8f}")
         logger.info(f"ETH balance for gas: {eth_balance:,.6f}")
-        quote_wei = quote_token.convert_to_wei(quote_amount)
+        wei_in = token_in.convert_to_wei(amount_in)
 
-        assert quote_balance > 0, f"Cannot perform swap, as you have zero {quote_token.symbol} needed to swap"
+        assert in_balance > 0, f"Cannot perform swap, as you have zero {token_in.symbol} needed to swap"
 
         # Each DEX trade is two transactions
         # 1) ERC-20.approve()
         # 2) swap (various functions)
 
-        receipts = self._swap(base_token, quote_token, self.wallet_address, quote_wei, slippage_bps)
+        receipts = self._swap(token_out, token_in, self.wallet_address, wei_in, slippage_bps)
 
         # Get the actual amount of base token received from the swap receipt
         swap_receipt = receipts[1]
-        base_amount = self._get_final_swap_amount_received(
-            swap_receipt, base_token.checksum_address, self.wallet_address, base_token.decimals
+        amount_out = self._get_final_swap_amount_received(
+            swap_receipt, token_out.checksum_address, self.wallet_address, token_out.decimals
         )
 
         return SwapResult.build_success(
-            base_amount=base_amount,
-            quote_amount=quote_amount,
-            tx_hash=swap_receipt["transactionHash"],  # Return the swap tx hash, not the approve tx
+            amount_out=amount_out,
+            amount_in=amount_in,
+            tx_hash=swap_receipt["transactionHash"],  # Return the swap tx hash, not the approved tx
         )
 
-    def _approve_token_spend(self, quote: TokenInfo, raw_amount: int) -> TxReceipt:
+    def _approve_token_spend(self, token: TokenInfo, raw_amount: int) -> TxReceipt:
         """Handle token approval and return fresh nonce and approval receipt.
 
         Args:
-            quote: Quote token info
+            token: token info
             raw_amount: Raw amount to approve
 
         Returns:
@@ -167,8 +153,8 @@ class UniswapClientBase(DEXClient):
         Raises:
             ValueError: If approval transaction fails
         """
-        quote_contract = ERC20Contract(self._evm_client, quote.checksum_address)
-        tx_receipt = quote_contract.approve(self.get_signer(), self._router, raw_amount)
+        token_contract = ERC20Contract(self._evm_client, token.checksum_address)
+        tx_receipt = token_contract.approve(self.get_signer(), self._router, raw_amount)
         return tx_receipt
 
     def get_token_price(self, token_out: TokenInfo, token_in: TokenInfo) -> Decimal:

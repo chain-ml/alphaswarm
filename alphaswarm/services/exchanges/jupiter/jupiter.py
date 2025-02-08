@@ -38,12 +38,11 @@ class JupiterClient(DEXClient):
 
     def swap(
         self,
-        base_token: TokenInfo,
-        quote_token: TokenInfo,
-        quote_amount: Decimal,
+        token_out: TokenInfo,
+        token_in: TokenInfo,
+        amount_in: Decimal,
         slippage_bps: int = 100,
     ) -> SwapResult:
-        """Execute a token swap on Jupiter (Not Implemented)"""
         raise NotImplementedError("Jupiter swap functionality is not yet implemented")
 
     def get_token_price(self, token_out: TokenInfo, token_in: TokenInfo) -> Decimal:

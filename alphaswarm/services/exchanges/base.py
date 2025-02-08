@@ -12,18 +12,18 @@ from hexbytes import HexBytes
 @dataclass
 class SwapResult:
     success: bool
-    base_amount: Decimal
-    quote_amount: Decimal
+    amount_out: Decimal
+    amount_in: Decimal
     tx_hash: Optional[str] = None
     error: Optional[str] = None
 
     @classmethod
-    def build_error(cls, error: str, base_amount: Decimal) -> SwapResult:
-        return cls(success=False, base_amount=base_amount, quote_amount=Decimal(0), error=error)
+    def build_error(cls, error: str, amount_out: Decimal) -> SwapResult:
+        return cls(success=False, amount_out=amount_out, amount_in=Decimal(0), error=error)
 
     @classmethod
-    def build_success(cls, base_amount: Decimal, quote_amount: Decimal, tx_hash: HexBytes) -> SwapResult:
-        return cls(success=True, base_amount=base_amount, quote_amount=quote_amount, tx_hash=tx_hash.hex())
+    def build_success(cls, amount_out: Decimal, amount_in: Decimal, tx_hash: HexBytes) -> SwapResult:
+        return cls(success=True, amount_out=amount_out, amount_in=amount_in, tx_hash=tx_hash.hex())
 
 
 @dataclass
@@ -106,17 +106,17 @@ class DEXClient(ABC):
     @abstractmethod
     def swap(
         self,
-        base_token: TokenInfo,
-        quote_token: TokenInfo,
-        quote_amount: Decimal,
+        token_out: TokenInfo,
+        token_in: TokenInfo,
+        amount_in: Decimal,
         slippage_bps: int = 100,
     ) -> SwapResult:
         """Execute a token swap on the DEX
 
         Args:
-            base_token: TokenInfo object for the token being sold
-            quote_token: TokenInfo object for the token being bought
-            quote_amount: Amount of quote_token to spend (output amount)
+            token_out (TokenInfo): The token to be bought (going out from the pool)
+            token_in (TokenInfo): The token to be sold (going into the pool)
+            amount_in: Amount of token_in to spend
             slippage_bps: Maximum allowed slippage in basis points (1 bp = 0.01%)
 
         Returns:

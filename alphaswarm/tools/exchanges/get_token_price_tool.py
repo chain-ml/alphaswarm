@@ -27,7 +27,7 @@ class TokenPriceResult:
 
 class GetTokenPriceTool(Tool):
     name = "get_token_price"
-    description = "Get the current price of a token pair from available DEXes. For Solana tokens like GIGA/SOL, make sure to set chain='solana'. For Base tokens, set chain='base'. Examples: 'Get the price of ETH in USDC on ethereum', 'Get the price of GIGA in SOL on solana'"
+    description = "Get the current price of a token pair from available DEXes. Result is expressed in amount of token_out per token_in. Examples: 'Get the price of ETH in USDC on ethereum', 'Get the price of GIGA in SOL on solana'"
     inputs = {
         "token_out": {
             "type": "string",

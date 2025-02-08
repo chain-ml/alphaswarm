@@ -102,5 +102,5 @@ def test_swap_eth_sepolia(eth_sepolia_client: UniswapClientV3) -> None:
     print(f"1 {usdc.symbol} is {quote} {weth.symbol}")
 
     # Buy X Weth for 1 USDC
-    result = eth_sepolia_client.swap(weth, usdc, Decimal(100))
+    result = eth_sepolia_client.swap(token_out=weth, token_in=usdc, amount_in=Decimal(100))
     print(result)

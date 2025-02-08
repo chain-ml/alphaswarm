@@ -15,15 +15,15 @@ class ExecuteTokenSwapTool(Tool):
     name = "execute_token_swap"
     description = "Execute a token swap on a supported DEX (Uniswap V2/V3 on Ethereum and Base chains)."
     inputs = {
-        "token_quote": {
+        "token_out": {
             "type": "string",
-            "description": "The quote token symbol (e.g., 'USDC', 'ETH', 'WETH') - the token being sold",
+            "description": "The token being bought (out from the pool)",
         },
-        "token_base": {
+        "token_in": {
             "type": "string",
-            "description": "The base token symbol (e.g., 'USDC', 'ETH', 'WETH') - the token being bought",
+            "description": "The token being sold (in the pool)",
         },
-        "amount": {"type": "number", "description": "The amount of quote token to swap", "required": True},
+        "amount_in": {"type": "number", "description": "The amount token_in to be sold", "required": True},
         "chain": {
             "type": "string",
             "description": "The chain to execute the swap on (e.g., 'ethereum', 'ethereum_sepolia', 'base')",
@@ -50,9 +50,9 @@ class ExecuteTokenSwapTool(Tool):
     def forward(
         self,
         *,
-        token_quote: str,
-        token_base: str,
-        amount: Decimal,
+        token_out: str,
+        token_in: str,
+        amount_in: Decimal,
         chain: str = "ethereum",
         dex_type: str = "uniswap_v3",
         slippage_bps: int = 100,
@@ -63,18 +63,18 @@ class ExecuteTokenSwapTool(Tool):
 
         # Get wallet address and private key from chain config
         chain_config = self.config.get_chain_config(chain)
-        base_token_info = chain_config.get_token_info(token_base)
-        quote_token_info = chain_config.get_token_info(token_quote)
+        token_in_info = chain_config.get_token_info(token_in)
+        token_out_info = chain_config.get_token_info(token_out)
 
         # Log token details
         logger.info(
-            f"Swapping {amount} {quote_token_info.symbol} ({quote_token_info.address}) for {base_token_info.symbol} ({base_token_info.address}) on {chain}"
+            f"Swapping {amount_in} {token_in_info.symbol} ({token_in_info.address}) for {token_out_info.symbol} ({token_out_info.address}) on {chain}"
         )
 
         # Execute swap
         return dex_client.swap(
-            base_token=base_token_info,
-            quote_token=quote_token_info,
-            quote_amount=amount,
+            token_out=token_out_info,
+            token_in=token_in_info,
+            amount_in=amount_in,
             slippage_bps=slippage_bps,
         )
