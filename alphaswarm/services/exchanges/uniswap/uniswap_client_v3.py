@@ -205,28 +205,13 @@ class UniswapClientV3(UniswapClientBase):
 
         return [approval_receipt, swap_receipt]
 
-    def _get_token_price(self, base_token: TokenInfo, quote_token: TokenInfo) -> Decimal:
-        """Get the current price from a Uniswap V3 pool for a token pair.
+    def _get_token_price(self, token_out: TokenInfo, token_in: TokenInfo) -> Decimal:
+        pool = self._get_pool(token_out, token_in)
+        return self._get_token_price_from_pool(token_out, pool)
 
-        Finds the first available pool for the token pair and gets the current price.
-        The price is returned in terms of base/quote (how much quote token per base token).
-
-        Args:
-            base_token: Base token info (token being priced)
-            quote_token: Quote token info (denominator token)
-
-        Returns:
-            Decimal: Current price in base/quote terms, or None if no pool exists
-            or there was an error getting the price
-
-        Note:
-            Uses the pool with the most liquidity.
-        """
-        pool = self._get_pool(base_token, quote_token)
-        return self._get_token_price_from_pool(quote_token, pool)
-
-    def _get_token_price_from_pool(self, quote_token: TokenInfo, pool: PoolContract) -> Decimal:
-        return pool.get_price_for_token_in(quote_token.checksum_address)
+    @staticmethod
+    def _get_token_price_from_pool(token_out: TokenInfo, pool: PoolContract) -> Decimal:
+        return pool.get_price_for_token_out(token_out.checksum_address)
 
     def _get_pool_by_address(self, address: Union[str, HexAddress]) -> PoolContract:
         return PoolContract(self._evm_client, EVMClient.to_checksum_address(address))

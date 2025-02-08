@@ -46,7 +46,7 @@ class UniswapClientBase(DEXClient):
         pass
 
     @abstractmethod
-    def _get_token_price(self, base_token: TokenInfo, quote_token: TokenInfo) -> Decimal:
+    def _get_token_price(self, token_out: TokenInfo, token_in: TokenInfo) -> Decimal:
         pass
 
     @abstractmethod
@@ -171,24 +171,12 @@ class UniswapClientBase(DEXClient):
         tx_receipt = quote_contract.approve(self.get_signer(), self._router, raw_amount)
         return tx_receipt
 
-    def get_token_price(self, base_token: TokenInfo, quote_token: TokenInfo) -> Decimal:
-        """Get token price using the appropriate Uniswap version.
-
-        Gets the current price from either Uniswap V2 or V3 pools based on the client version.
-        The price is returned in terms of base/quote (how much quote token per base token).
-
-        Args:
-            base_token (TokenInfo): Base token info (token being priced)
-            quote_token (TokenInfo): Quote token info (denominator token)
-
-        Returns:
-            Decimal: Current price in base/quote terms
-        """
+    def get_token_price(self, token_out: TokenInfo, token_in: TokenInfo) -> Decimal:
         logger.debug(
-            f"Getting price for {base_token.symbol}/{quote_token.symbol} on {self.chain} using Uniswap {self.version}"
+            f"Getting price for {token_out.symbol}/{token_in.symbol} on {self.chain} using Uniswap {self.version}"
         )
 
-        return self._get_token_price(base_token=base_token, quote_token=quote_token)
+        return self._get_token_price(token_out=token_out, token_in=token_in)
 
     def get_markets_for_tokens(self, tokens: List[TokenInfo]) -> List[Tuple[TokenInfo, TokenInfo]]:
         """Get list of valid trading pairs between the provided tokens.

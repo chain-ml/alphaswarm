@@ -76,3 +76,9 @@ def test_token_info_convert_from_wei(token_info: TokenInfo) -> None:
     expected = "1.000000000000000001"
     actual = token_info.convert_from_wei(wei)
     assert str(actual) == expected
+
+
+def test_get_trading_venues_for_chain(default_config: Config) -> None:
+    result = default_config.get_trading_venues_for_chain(chain="ethereum")
+
+    assert set(result) == {"uniswap_v2", "uniswap_v3"}

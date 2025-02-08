@@ -277,12 +277,14 @@ class Config:
         """Get all trading venues configuration"""
         return self._config.get("trading_venues", {})
 
-    def get_trading_venues_for_chain(self, chain: str) -> Optional[Dict[str, Any]]:
+    def get_trading_venues_for_chain(self, chain: str) -> List[str]:
         """Get all trading venues configuration for a chain"""
-        try:
-            return self._config.get("trading_venues", {}).get(chain, {})
-        except KeyError:
-            return None
+        result = []
+        for name, value in self.get_trading_venues().items():
+            if isinstance(value, dict) and value.get(chain) is not None:
+                result.append(name)
+
+        return result
 
     def get_trading_venues_for_token_pair(
         self, base_token: str, quote_token: str, chain: str, specific_venue: Optional[str] = None

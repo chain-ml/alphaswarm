@@ -27,11 +27,12 @@ def eth_sepolia_client(default_config: Config) -> UniswapClientV3:
 
 
 def test_get_price(base_client: UniswapClientV3) -> None:
-    token0 = base_client.chain_config.get_token_info("USDC")
-    token1 = base_client.chain_config.get_token_info("WETH")
-    token1_per_token0 = base_client.get_token_price(base_token=token1, quote_token=token0)
+    usdc = base_client.chain_config.get_token_info("USDC")
+    weth = base_client.chain_config.get_token_info("WETH")
+    usdc_per_weth = base_client.get_token_price(token_out=usdc, token_in=weth)
 
-    print(f"1 {token1.symbol} is {token1_per_token0} {token0.symbol}")
+    print(f"1 {weth.symbol} is {usdc_per_weth} {usdc.symbol}")
+    assert usdc_per_weth > 1000
 
 
 def test_quote_from_pool(base_client: UniswapClientV3) -> None:
@@ -97,7 +98,7 @@ def test_swap_eth_sepolia(eth_sepolia_client: UniswapClientV3) -> None:
     pool = eth_sepolia_client._get_pool(usdc, weth)
     print(f"find pool {pool.address}")
 
-    quote = eth_sepolia_client._get_token_price_from_pool(quote_token=usdc, pool=pool)
+    quote = eth_sepolia_client._get_token_price_from_pool(token_out=weth, pool=pool)
     print(f"1 {usdc.symbol} is {quote} {weth.symbol}")
 
     # Buy X Weth for 1 USDC

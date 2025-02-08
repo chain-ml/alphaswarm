@@ -86,25 +86,23 @@ class DEXClient(ABC):
         return self._chain_config
 
     @abstractmethod
-    def get_token_price(self, base_token: TokenInfo, quote_token: TokenInfo) -> Decimal:
-        """Get current token price.
+    def get_token_price(self, token_out: TokenInfo, token_in: TokenInfo) -> Decimal:
+        """Get price/conversion rate for the pair of tokens.
 
-        Gets the current price from either Uniswap V2 or V3 pools based on the client version.
-        The price is returned in terms of base/quote (how much quote token per base token).
+        The price is returned in terms of token_out/token_in (how much token out per token in).
 
         Args:
-            base_token (TokenInfo): Base token info (token being priced)
-            quote_token (TokenInfo): Quote token info (denominator token)
+            token_out (TokenInfo): The token to be bought (going out from the pool)
+            token_in (TokenInfo): The token to be sold (going into the pool)
 
         Example:
             eth_token = TokenInfo(address="0x...", decimals=18, symbol="ETH", chain="ethereum")
             usdc_token = TokenInfo(address="0x...", decimals=6, symbol="USDC", chain="ethereum")
             get_token_price(eth_token, usdc_token)
-            Returns: The price of 1 ETH in USDC
+            Returns: The amount of ETH for 1 USDC
         """
         pass
 
-    # TODO: using `float` for the amount is potentially dangerous because of precision limitation and rounding issues.
     @abstractmethod
     def swap(
         self,

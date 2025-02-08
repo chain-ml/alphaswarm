@@ -1,7 +1,7 @@
 import logging
 from datetime import UTC, datetime
 from decimal import Decimal
-from typing import List, Optional, Sequence
+from typing import List, Optional
 
 from alphaswarm.config import Config
 from alphaswarm.services.exchanges import DEXFactory
@@ -19,8 +19,8 @@ class TokenPrice:
 
 @dataclass
 class TokenPriceResult:
-    base_token: str
-    quote_token: str
+    token_out: str
+    token_in: str
     timestamp: str
     prices: List[TokenPrice]
 
@@ -29,13 +29,13 @@ class GetTokenPriceTool(Tool):
     name = "get_token_price"
     description = "Get the current price of a token pair from available DEXes. For Solana tokens like GIGA/SOL, make sure to set chain='solana'. For Base tokens, set chain='base'. Examples: 'Get the price of ETH in USDC on ethereum', 'Get the price of GIGA in SOL on solana'"
     inputs = {
-        "base_token": {
+        "token_out": {
             "type": "string",
-            "description": "Base token symbol (e.g., 'ETH', 'GIGA'). The token we want to buy.",
+            "description": "The token we want to buy",
         },
-        "quote_token": {
+        "token_in": {
             "type": "string",
-            "description": "Quote token symbol (e.g., 'USDC', 'SOL'). The token we want to sell.",
+            "description": "The token we want to sell",
         },
         "dex_type": {
             "type": "string",
@@ -55,50 +55,40 @@ class GetTokenPriceTool(Tool):
         super().__init__()
         self.config = config
 
-    def _find_venues_for_pair(
-        self, base_token: str, quote_token: str, chain: str, specific_venue: Optional[str] = None
-    ) -> Sequence[str]:
-        """Find all venues that support a given token pair on a chain"""
-        return self.config.get_trading_venues_for_token_pair(base_token, quote_token, chain, specific_venue)
-
     def forward(
-        self, base_token: str, quote_token: str, dex_type: Optional[str] = None, chain: str = "ethereum"
+        self, token_out: str, token_in: str, dex_type: Optional[str] = None, chain: str = "ethereum"
     ) -> TokenPriceResult:
         """Get token price from DEX(es)"""
         # TODO: Debug "ERROR - Error getting price: Event loop is closed" when invoked.
-        logger.debug(f"Getting price for {base_token}/{quote_token} on {chain}")
-
-        # Find available venues for this pair
-        venues = self._find_venues_for_pair(base_token, quote_token, chain, dex_type)
-        if len(venues) == 0:
-            logger.warning(f"No venues found for pair {base_token}_{quote_token} on {chain}")
-            raise RuntimeError(f"No venues found for pair {base_token}_{quote_token} on {chain}")
+        logger.debug(f"Getting price for {token_out}/{token_in} on {chain}")
 
         # Get token info and create TokenInfo objects
         chain_config = self.config.get_chain_config(chain)
-        base_token_info = chain_config.tokens[base_token]
-        quote_token_info = chain_config.tokens[quote_token]
+        token_out_info = chain_config.tokens[token_out]
+        token_in_info = chain_config.tokens[token_in]
 
-        logger.debug(f"Token info - Base: {base_token}, Quote: {quote_token}")
+        logger.debug(f"Token info - Out: {token_out}, In: {token_in}")
 
         # Get prices from all available venues
+        venues = self.config.get_trading_venues_for_chain(chain) if dex_type is None else [dex_type]
         prices = []
         for venue in venues:
             try:
                 dex = DEXFactory.create(dex_name=venue, config=self.config, chain=chain)
-                price = dex.get_token_price(base_token_info, quote_token_info)
+
+                price = dex.get_token_price(token_out_info, token_in_info)
                 prices.append(TokenPrice(price=price, source=venue))
             except Exception:
                 logger.exception(f"Error getting price from {venue}")
 
         if len(prices) == 0:
-            logger.warning(f"No valid prices found for {base_token}/{quote_token}")
-            raise RuntimeError(f"No valid prices found for {base_token}/{quote_token}")
+            logger.warning(f"No valid prices found for {token_out}/{token_in}")
+            raise RuntimeError(f"No valid prices found for {token_out}/{token_in}")
 
         # Get current timestamp
         timestamp = datetime.now(UTC).strftime("%Y-%m-%d %H:%M UTC")
 
         # If we have multiple prices, return them all
-        result = TokenPriceResult(base_token=base_token, quote_token=quote_token, timestamp=timestamp, prices=prices)
+        result = TokenPriceResult(token_out=token_out, token_in=token_in, timestamp=timestamp, prices=prices)
         logger.debug(f"Returning result: {result}")
         return result
