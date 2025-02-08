@@ -75,9 +75,9 @@ Note: Poetry manages its own virtual environments, so a separate virtual environ
 
 Before running the framework, you'll need to obtain several API keys:
 
-1. **LLM API Key** (at least one required):
-   - [OpenAI API Key](https://platform.openai.com/) or
+1. **LLM API Key**:
    - [Anthropic API Key](https://www.anthropic.com/)
+   - OpenAI coming soon...
 
 2. **Blockchain Access**:
    - [Alchemy API Key](https://www.alchemy.com/) (required for blockchain data)
@@ -99,7 +99,6 @@ cp .env.example .env
 #### Required environment variables:
 
 LLM Configuration (at least one required):
-- `OPENAI_API_KEY`: Your OpenAI API key for using OpenAI models
 - `ANTHROPIC_API_KEY`: Your Anthropic API key for using Claude models
 
 Blockchain Access:
