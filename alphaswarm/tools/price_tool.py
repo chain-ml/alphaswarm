@@ -22,7 +22,7 @@ class PriceTool(Tool):
         "chain": {
             "type": "string",
             "required": True,
-            "description": "Blockchain to use. Must be 'solana' for Solana tokens, 'base' for Base tokens, 'ethereum' for Ethereum tokens.",
+            "description": "Blockchain to use. For example, 'solana' for Solana tokens, 'base' for Base tokens, 'ethereum' for Ethereum tokens.",
         },
     }
     output_type = "string"
