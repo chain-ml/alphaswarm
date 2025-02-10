@@ -98,7 +98,7 @@ class DEXClient(ABC):
         Example:
             eth_token = TokenInfo(address="0x...", decimals=18, symbol="ETH", chain="ethereum")
             usdc_token = TokenInfo(address="0x...", decimals=6, symbol="USDC", chain="ethereum")
-            get_token_price(eth_token, usdc_token)
+            get_token_price(token_out=eth_token, token_in=usdc_token)
             Returns: The amount of ETH for 1 USDC
         """
         pass
