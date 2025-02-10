@@ -36,9 +36,9 @@ class LLMFunctionBase(Generic[T_Response], abc.ABC):
         """Initialize the LLM function instance.
 
         Args:
-            model_id (str): LiteLLM model ID to use
-            response_model (Type[BaseModel]): Pydantic model class for structuring responses
-            max_retries (int): Maximum number of retry attempts
+            model_id: LiteLLM model ID to use
+            response_model: Pydantic model class for structuring responses
+            max_retries: Maximum number of retry attempts
         """
         self.model_id = model_id
         self.response_model = response_model
@@ -81,7 +81,7 @@ class LLMFunctionBase(Generic[T_Response], abc.ABC):
 
 
 class LLMFunction(LLMFunctionBase[T_Response]):
-    """LLM function with interface for both string messages and Message objects."""
+    """Default LLM function with interface for both string messages and Message objects."""
 
     def __init__(
         self,
@@ -94,11 +94,11 @@ class LLMFunction(LLMFunctionBase[T_Response]):
         """Initialize an LLMFunction instance.
 
         Args:
-            model_id (str): LiteLLM model ID to use
-            response_model (Type[BaseModel]): Pydantic model class for structuring responses
-            system_message (Optional[str]): Optional system message
-            messages (Optional[Sequence[Message]]): Optional sequence of pre-formatted messages
-            max_retries (int): Maximum number of retry attempts
+            model_id: LiteLLM model ID to use
+            response_model: Pydantic model class for structuring responses
+            system_message: Optional system message
+            messages: Optional sequence of pre-formatted messages
+            max_retries: Maximum number of retry attempts
 
         Raises:
             ValueError: If both system_message and messages are not provided
@@ -112,8 +112,8 @@ class LLMFunction(LLMFunctionBase[T_Response]):
         """Execute the LLM function with the given messages.
 
         Args:
-            user_message (Optional[str]): Optional string message from the user
-            messages (Optional[Sequence[Message]]): Optional sequence of pre-formatted messages
+            user_message: Optional string message from the user
+            messages: Optional sequence of pre-formatted messages
             **kwargs: Additional keyword arguments to pass to the LLM client
 
         Returns:
@@ -122,22 +122,22 @@ class LLMFunction(LLMFunctionBase[T_Response]):
         all_messages = self.starter_messages + self._validate_messages(
             user_message, messages, role="user", allow_empty=True
         )
-        return super()._execute_with_completion(messages=all_messages, **kwargs)
+        return self._execute_with_completion(messages=all_messages, **kwargs)
 
     @staticmethod
     def _validate_messages(
         str_message: Optional[str],
         messages: Optional[Sequence[Message]],
-        role: Literal["system", "user"],
+        role: Literal["system", "user", "assistant"],
         allow_empty: bool,
     ) -> List[Message]:
         """Convert a string message and/or a list of messages to a proper list of messages.
 
         Args:
-            str_message (Optional[str]): Optional string message to convert
-            messages (Optional[Sequence[Message]]): Optional sequence of pre-formatted messages
-            role (Literal["system", "user"]): The role for the string message
-            allow_empty (bool): Whether to allow returning an empty list when no messages are provided
+            str_message: Optional string message to convert
+            messages: Optional sequence of pre-formatted messages
+            role: The role for the string message
+            allow_empty: Whether to allow returning an empty list when no messages are provided
 
         Returns:
             List of validated messages in the correct format
@@ -173,12 +173,12 @@ class LLMFunctionTemplated(LLMFunctionBase[T_Response]):
         """Initialize an LLMFunctionTemplated instance.
 
         Args:
-            model_id (str): LiteLLM model ID to use
-            response_model (Type[BaseModel]): Pydantic model class for structuring responses
-            system_prompt_template (str): Template for the system message
-            user_prompt_template (Optional[str]): Template for the user message
-            system_prompt_params (Optional[Dict[str, Any]]): Parameters for formatting the system prompt
-            max_retries (int): Maximum number of retry attempts
+            model_id: LiteLLM model ID to use
+            response_model: Pydantic model class for structuring responses
+            system_prompt_template: Template for the system message
+            user_prompt_template: Optional template for the user message
+            system_prompt_params: Parameters for formatting the system prompt if any
+            max_retries: Maximum number of retry attempts
         """
         super().__init__(model_id=model_id, response_model=response_model, max_retries=max_retries)
         self.system_prompt_template = system_prompt_template
@@ -193,7 +193,7 @@ class LLMFunctionTemplated(LLMFunctionBase[T_Response]):
         """Execute the LLM function using the loaded prompt templates.
 
         Args:
-            user_prompt_params (Optional[Dict[str, Any]]): Optional parameters to format the user prompt template
+            user_prompt_params: Optional parameters to format the user prompt template
             **kwargs: Additional keyword arguments to pass to the LLM client
 
         Returns:
@@ -226,12 +226,12 @@ class LLMFunctionTemplated(LLMFunctionBase[T_Response]):
         """Create an instance from template files.
 
         Args:
-            model_id (str): LiteLLM model ID to use
-            response_model (Type[BaseModel]): Pydantic model class for structuring responses
-            system_prompt_path (str): Path to the system prompt template file
-            user_prompt_path (Optional[str]): Path to the user prompt template file
-            system_prompt_params (Optional[Dict[str, Any]]): Parameters for formatting the system prompt
-            max_retries (int): Maximum number of retry attempts
+            model_id: LiteLLM model ID to use
+            response_model: Pydantic model class for structuring responses
+            system_prompt_path: Path to the system prompt template file
+            user_prompt_path: Path to the user prompt template file
+            system_prompt_params: Parameters for formatting the system prompt
+            max_retries: Maximum number of retry attempts
         """
         with open(system_prompt_path, "r", encoding="utf-8") as f:
             system_prompt_template = f.read()
@@ -257,6 +257,8 @@ class LLMFunctionTemplated(LLMFunctionBase[T_Response]):
 
 
 class LLMFunctionInput(BaseModel):
+    """Input object for Python LLM functions."""
+
     def to_prompt(self) -> str:
         """Convert the input to a prompt string."""
         return self.model_dump_json(indent=2)
@@ -269,8 +271,14 @@ class LLMFunctionInput(BaseModel):
 class PythonLLMFunction(LLMFunctionBase[T_Response]):
     """LLM function defined solely in Python code."""
 
-    def __init__(self, model_id: str, response_model: Type[T_Response], max_retries: int = 3) -> None:
-        super().__init__(model_id=model_id, response_model=response_model, max_retries=max_retries)
-
     def execute_with_completion(self, input_obj: LLMFunctionInput, **kwargs: Any) -> LLMFunctionResponse[T_Response]:
-        return super()._execute_with_completion(messages=input_obj.to_messages(), **kwargs)
+        """Execute the Python LLM function with the given input object.
+
+        Args:
+            input_obj: Input object, implemented to_prompt() and to_messages() methods
+            **kwargs: Additional keyword arguments to pass to the LLM client
+
+        Returns:
+            A structured response matching the provided response_model type and the completion object
+        """
+        return self._execute_with_completion(messages=input_obj.to_messages(), **kwargs)
