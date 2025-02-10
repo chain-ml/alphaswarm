@@ -42,7 +42,7 @@ class PriceTool(Tool):
 
         Args:
             address: Contract address of the token
-            chain: Blockchain to use. Must be 'solana' for Solana tokens, 'base' for Base tokens, 'ethereum' for Ethereum tokens.
+            chain: Blockchain to use
         """
         try:
             # Normalize address to lowercase for consistent comparison
