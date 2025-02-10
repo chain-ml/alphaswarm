@@ -1,5 +1,6 @@
 import os
 from decimal import Decimal
+from typing import List, Optional
 
 import pytest
 
@@ -15,17 +16,50 @@ def test_config_default_from_env(default_config: Config) -> None:
     assert default_config.get("chain_config.ethereum.rpc_url") == os.environ.get("ETH_RPC_URL")
 
 
-def test_config_token_info(default_config: Config) -> None:
-    actual = default_config.get_chain_config("ethereum").get_token_info("ETH")
+def address_name_pairs() -> List[tuple]:
+    return [
+        ("0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2", "WETH"),
+        ("0x0000000000000000000000000000000000000000", None),
+    ]
+
+
+@pytest.mark.parametrize("address,name", [pair for pair in address_name_pairs() if pair[1] is not None])
+def test_config_token_info(address: str, name: str, default_config: Config) -> None:
+    if name is None:
+        return
+
+    actual = default_config.get_chain_config("ethereum").get_token_info(name)
     assert actual.address == "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"
     assert actual.decimals == 18
-    assert actual.is_native
+    assert not actual.is_native
+
+
+@pytest.mark.parametrize("address,name", address_name_pairs())
+def test_config_token_info_from_address_or_none(address: str, name: Optional[str], default_config: Config) -> None:
+    actual = default_config.get_chain_config("ethereum").get_token_info_by_address_or_none(address)
+    if name is None:
+        assert actual is None
+    else:
+        assert actual is not None
+        assert actual.address == address
+        assert actual.symbol == name
+
+
+@pytest.mark.parametrize("address,name", address_name_pairs())
+def test_config_token_info_from_address(address: str, name: Optional[str], default_config: Config) -> None:
+    if name is None:
+        with pytest.raises(ValueError):
+            default_config.get_chain_config("ethereum").get_token_info_by_address(address)
+    else:
+        actual = default_config.get_chain_config("ethereum").get_token_info_by_address(address)
+        assert actual.address == address
+        assert actual.symbol == name
 
 
 def test_config_chain_config(default_config: Config) -> None:
     actual = default_config.get_chain_config("ethereum")
-    assert actual.tokens["ETH"].is_native
-    assert actual.tokens["ETH"].symbol == "ETH"
+    assert not actual.tokens["WETH"].is_native
+    assert actual.tokens["WETH"].symbol == "WETH"
     assert actual.wallet_address == os.environ.get("ETH_WALLET_ADDRESS")
 
 

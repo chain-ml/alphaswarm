@@ -27,25 +27,28 @@ class TokenPriceResult:
 
 class GetTokenPriceTool(Tool):
     name = "get_token_price"
-    description = "Get the current price of a token pair from available DEXes. Result is expressed in amount of token_out per token_in. Examples: 'Get the price of ETH in USDC on ethereum', 'Get the price of GIGA in SOL on solana'"
+    description = (
+        "Get the current price of a token pair from available DEXes. "
+        "Returns a list of TokenPriceResult object. "
+        "Result is expressed in amount of token_out per token_in. "
+        "Examples: 'Get the price of ETH in USDC on ethereum', 'Get the price of GIGA in SOL on solana'"
+    )
     inputs = {
         "token_out": {
             "type": "string",
-            "description": "The token we want to buy",
+            "description": "The address of the token we want to buy",
         },
         "token_in": {
             "type": "string",
-            "description": "The token we want to sell",
-        },
-        "dex_type": {
-            "type": "string",
-            "description": "Type of DEX to use (e.g. 'uniswap_v2', 'uniswap_v3', 'jupiter'). If not provided, will check all available venues.",
-            "nullable": True,
+            "description": "The address of the token we want to sell",
         },
         "chain": {
             "type": "string",
             "description": "Blockchain to use. Must be 'solana' for Solana tokens, 'base' for Base tokens, 'ethereum' for Ethereum tokens, 'ethereum_sepolia' for Ethereum Sepolia tokens.",
-            "default": "ethereum",
+        },
+        "dex_type": {
+            "type": "string",
+            "description": "Type of DEX to use (e.g. 'uniswap_v2', 'uniswap_v3', 'jupiter'). If not provided, will check all available venues.",
             "nullable": True,
         },
     }
@@ -56,18 +59,14 @@ class GetTokenPriceTool(Tool):
         self.config = config
 
     def forward(
-        self, token_out: str, token_in: str, dex_type: Optional[str] = None, chain: str = "ethereum"
+        self,
+        token_out: str,
+        token_in: str,
+        chain: str,
+        dex_type: Optional[str] = None,
     ) -> TokenPriceResult:
         """Get token price from DEX(es)"""
-        # TODO: Debug "ERROR - Error getting price: Event loop is closed" when invoked.
         logger.debug(f"Getting price for {token_out}/{token_in} on {chain}")
-
-        # Get token info and create TokenInfo objects
-        chain_config = self.config.get_chain_config(chain)
-        token_out_info = chain_config.tokens[token_out]
-        token_in_info = chain_config.tokens[token_in]
-
-        logger.debug(f"Token info - Out: {token_out}, In: {token_in}")
 
         # Get prices from all available venues
         venues = self.config.get_trading_venues_for_chain(chain) if dex_type is None else [dex_type]
@@ -76,7 +75,7 @@ class GetTokenPriceTool(Tool):
             try:
                 dex = DEXFactory.create(dex_name=venue, config=self.config, chain=chain)
 
-                price = dex.get_token_price(token_out_info, token_in_info)
+                price = dex.get_token_price(token_out=token_out, token_in=token_in)
                 prices.append(TokenPrice(price=price, source=venue))
             except Exception:
                 logger.exception(f"Error getting price from {venue}")
