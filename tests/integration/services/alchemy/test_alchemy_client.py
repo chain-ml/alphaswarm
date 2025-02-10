@@ -69,7 +69,7 @@ def test_get_transfers_invalid_chain(alchemy_client: AlchemyClient) -> None:
         alchemy_client.get_transfers(wallet="0x123", chain="invalid_chain", incoming=False)
 
 
-# @pytest.mark.skip("Needs a wallet")
+@pytest.mark.skip("Needs a wallet")
 def test_get_token_balances(alchemy_client: AlchemyClient, eth_sepolia_config: ChainConfig) -> None:
     # Test outgoing transfers
     balances = alchemy_client.get_token_balances(
