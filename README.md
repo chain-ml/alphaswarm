@@ -1,6 +1,6 @@
 # AlphaSwarm
 
-AlphaSwarm is a developer framework for autonomous crypto trading agents that leverages LLM-powered AI agents to process market signals and execute trading strategies. It enables both automated trading alerts and autonomous trading by analyzing on-chain data, social metrics, and market conditions in real-time.
+AlphaSwarm is a starter kit for building LLM-powered AI agents that interpret natural language trading strategies, analyze real-time market signals, and autonomously execute trades across multiple chains.
 
 ## Features
 
@@ -69,13 +69,15 @@ poetry install
 poetry install --with dev
 ```
 
+Note: Poetry manages its own virtual environments, so a separate virtual environment should not be required. Refer to the [Poetry documentation](https://python-poetry.org/docs/managing-environments/) for more information.
+
 ### 2. API Keys Setup
 
 Before running the framework, you'll need to obtain several API keys:
 
-1. **LLM API Key** (at least one required):
-   - [OpenAI API Key](https://platform.openai.com/) or
+1. **LLM API Key**:
    - [Anthropic API Key](https://www.anthropic.com/)
+   - OpenAI coming soon...
 
 2. **Blockchain Access**:
    - [Alchemy API Key](https://www.alchemy.com/) (required for blockchain data)
@@ -92,44 +94,42 @@ Before running the framework, you'll need to obtain several API keys:
 cp .env.example .env
 ```
 
-2. Configure the required variables in your `.env` file:
+2. Configure the required variables in your `.env` file.
 
-```bash
-# LLM Configuration (at least one required)
-OPENAI_API_KEY=your_openai_key      # Required for OpenAI models
-ANTHROPIC_API_KEY=your_anthropic_key # Required for Anthropic models
+#### Required environment variables:
 
-# Alchemy Configuration
-ALCHEMY_API_KEY=your_alchemy_key    # Required for blockchain data access
+LLM Configuration (at least one required):
+- `ANTHROPIC_API_KEY`: Your Anthropic API key for using Claude models
 
-# Chain Configuration
-## Ethereum (only required if using Ethereum)
-ETH_RPC_URL=your_ethereum_rpc       # Required for Ethereum trading
-ETH_WALLET_ADDRESS=your_eth_address # Required for ETH trading
-ETH_PRIVATE_KEY=your_eth_key       # Required for ETH trading
+Blockchain Access:
+- `ALCHEMY_API_KEY`: Your Alchemy API key for accessing blockchain data
 
-## Base (only required if using Base)
-BASE_RPC_URL=your_base_rpc          # Required for Base trading
-BASE_WALLET_ADDRESS=your_base_address # Required for Base trading
-BASE_PRIVATE_KEY=your_base_key      # Required for Base trading      
-```
+Ethereum Configuration (only if using Ethereum):
+- `ETH_RPC_URL`: RPC endpoint URL for connecting to Ethereum network
+- `ETH_WALLET_ADDRESS`: Your Ethereum wallet address for trading
+- `ETH_PRIVATE_KEY`: Private key for your Ethereum wallet
 
-3. Optional configurations:
+Base Configuration (only if using Base):
+- `BASE_RPC_URL`: RPC endpoint URL for connecting to Base network  
+- `BASE_WALLET_ADDRESS`: Your Base wallet address for trading
+- `BASE_PRIVATE_KEY`: Private key for your Base wallet
 
-```bash
-# Testing
-ETH_SEPOLIA_RPC_URL=your_sepolia_rpc  # For Ethereum testnet
+#### Optional configurations:
 
-# Notifications
-TELEGRAM_BOT_TOKEN=your_bot_token      # Required for alerts
-TELEGRAM_CHAT_ID=your_chat_id          # Required for alerts
-TELEGRAM_SERVER_IP=0.0.0.0             # Default: 0.0.0.0
-TELEGRAM_SERVER_PORT=8000              # Default: 8000
+Testing environment variables:
+- `ETH_SEPOLIA_RPC_URL`: Your Sepolia testnet RPC endpoint URL
+- `ETH_SEPOLIA_WALLET_ADDRESS`: Your Ethereum wallet address for Sepolia testnet
+- `ETH_SEPOLIA_PRIVATE_KEY`: Private key for your Sepolia testnet wallet
 
-# Logging
-LOG_LEVEL=INFO                         # Default: INFO
-LOG_FORMAT="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-```
+Notification settings:
+- `TELEGRAM_BOT_TOKEN`: Required for sending alerts via Telegram bot
+- `TELEGRAM_CHAT_ID`: Required chat ID for receiving Telegram alerts
+- `TELEGRAM_SERVER_IP`: IP address for Telegram server (defaults to 0.0.0.0)
+- `TELEGRAM_SERVER_PORT`: Port for Telegram server (defaults to 8000)
+
+Logging configuration:
+- `LOG_LEVEL`: Sets logging verbosity level (defaults to INFO)
+- `LOG_FORMAT`: Custom format for log messages (default: "%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 
 #### Security Notes
 
@@ -158,42 +158,15 @@ Note: Always verify contract addresses from official sources.
 
 ### Quick Start
 
-#### Basic Example
+In all examples below, set your Anthropic API key in the `.env` file or change the model ID to an OpenAI model if using openAI.
 
-In a first "hello world" example we are going to get the price of a token pair from available DEXes on Base.
-Set your Anthropic API key in the `.env` file or change the model ID to an OpenAI model if using openAI.
+#### Basic Example: Quote for a token pair
 
-Create a new file or reference existing one `examples/basic_example_01_quote.py` in your project directory:
-
-```python
-import dotenv
-from alphaswarm.agent.agent import AlphaSwarmAgent
-from alphaswarm.config import Config
-from alphaswarm.tools.exchanges.get_token_price_tool import GetTokenPriceTool
-
-dotenv.load_dotenv()
-config = Config()
-
-# Initialize tools
-tools = [
-    GetTokenPriceTool(config),  # Get the price of a token pair from available DEXes
-]
-
-# Create the agent
-agent = AlphaSwarmAgent(tools=tools, model_id="anthropic/claude-3-5-sonnet-20241022")
-
-
-# Interact with the agent
-async def main():
-    response = await agent.process_message("What's the current price of AIXBT in USDC on Base?")
-    print(response)
-
-
-if __name__ == "__main__":
-    import asyncio
-
-    asyncio.run(main())
-```
+[Basic Example 01 - Quote](examples/basic_example_01_quote.py) is a first "hello world" example that:
+- Initializes the Alphaswarm agent with a token price checking tool
+- Uses Claude 3 Sonnet to process natural language queries
+- Connects to Base network to fetch real-time token prices
+- Demonstrates how to query token pair prices (AIXBT/USDC) using natural language
 
 Run the example:
 ```bash
@@ -201,93 +174,30 @@ Run the example:
 python examples/basic_example_01_quote.py
 ```
 
-#### Follow-up Example: Execute a token swap
+#### Basic Example: Execute a token swap
 
-In a follow-up example we are going to execute a token swap on a supported DEX on Ethereum Sepolia.
-Set your Anthropic API key in the `.env` file or change the model ID to an OpenAI model if using openAI.
+[Basic Example 02 - Swap](examples/basic_example_02_swap.py) is a follow up example that:
+- Initializes the Alphaswarm agent with a token swap tool
+- Uses Claude 3 Sonnet to process natural language queries
+- Connects to Ethereum Sepolia network to execute a token swap
+- Demonstrates how to initiate a token swap (3 USDC for WETH) using natural language
 
-Create a new file or reference existing one `examples/basic_example_02_swap.py`:
-
-```python
-import dotenv
-from alphaswarm.agent.agent import AlphaSwarmAgent
-from alphaswarm.config import Config
-from alphaswarm.tools.exchanges.execute_token_swap_tool import ExecuteTokenSwapTool
-
-dotenv.load_dotenv()
-config = Config(network_env="test")  # Use a testnet environment (as defined in config/default.yaml)
-
-# Initialize tools
-tools = [
-    ExecuteTokenSwapTool(config),  # Execute a token swap on a supported DEX (Uniswap V2/V3 on Ethereum and Base chains)
-]
-
-# Create the agent
-agent = AlphaSwarmAgent(tools=tools, model_id="anthropic/claude-3-5-sonnet-20241022")
-
-
-# Interact with the agent
-async def main():
-    response = await agent.process_message("Swap 3 USDC for WETH on Ethereum Sepolia")
-    print(response)
-
-
-if __name__ == "__main__":
-    import asyncio
-
-    asyncio.run(main())
-```
-
-Execute the token swap:
+Run the example:
 ```bash
 # Make sure you've configured your .env file first!
 python examples/basic_example_02_swap.py
 ```
 
-### Strategy Example: Check a trading strategy and optionally execute it
+#### Strategy Example: Check trading strategy and optionally execute it
 
-In a follow-up example we are going to check a trading strategy and optionally execute it.
-Set your Anthropic API key in the `.env` file or change the model ID to an OpenAI model if using openAI.
+[Basic Example 03 - Strategy](examples/basic_example_03_strategy.py) dives into the optional execution of a trading strategy given input signals that:
+- Initializes the Alphaswarm agent with both strategy analysis and token swap tools
+- Uses Claude 3 Sonnet to process natural language queries
+- Defines a simple trading strategy: Swap 3 USDC for WETH on Ethereum Sepolia when price below 10000 USDC per WETH
+- Evaluates the trading strategy conditions using real-time market data when triggered
+- Conditionally executes trades only when strategy conditions are met
 
-Create a new file or reference existing one `examples/basic_example_03_strategy.py`:
-
-```python
-import dotenv
-from alphaswarm.agent.agent import AlphaSwarmAgent
-from alphaswarm.config import Config
-from alphaswarm.tools.exchanges.execute_token_swap_tool import ExecuteTokenSwapTool
-from alphaswarm.tools.strategy_analysis.generic.generic_analysis import GenericStrategyAnalysisTool
-from alphaswarm.tools.strategy_analysis.strategy import Strategy
-
-dotenv.load_dotenv()
-config = Config(network_env="test")  # Use a testnet environment (as defined in config/default.yaml)
-
-# Initialize tools
-strategy = Strategy(rules="Swap 3 USDC for WETH on Ethereum Sepolia when price below 10000 USDC per WETH", model_id="anthropic/claude-3-5-sonnet-20241022")
-
-tools = [
-    GenericStrategyAnalysisTool(strategy), # Check a trading strategy
-    ExecuteTokenSwapTool(config),  # Execute a token swap on a supported DEX (Uniswap V2/V3 on Ethereum and Base chains)
-]
-
-# Create the agent
-agent = AlphaSwarmAgent(tools=tools, model_id="anthropic/claude-3-5-sonnet-20241022")
-
-
-# Interact with the agent
-async def main():
-    response = await agent.process_message("Check strategy and initiate a trade if applicable")
-    print(response)
-
-
-if __name__ == "__main__":
-    import asyncio
-
-    asyncio.run(main())
-
-```
-
-Execute the token swap conditionally based on whether the strategy is applicable:
+Run the example:
 ```bash
 # Make sure you've configured your .env file first!
 python examples/basic_example_03_strategy.py
