@@ -34,8 +34,12 @@ AlphaSwarm is a starter kit for building LLM-powered AI agents that interpret na
 
 ## Prerequisites
 
-- [Python 3.11](https://www.python.org/downloads/) or higher
+- Python 3.11 or higher
+   - Download and install Python from [here](https://www.python.org/downloads/)
+   - Verify installation with `python --version`
 - [Poetry](https://python-poetry.org/docs/) (package manager)
+   - Install Poetry with `pipx install poetry`
+   - Verify installation with `poetry --version`
 - Basic understanding of crypto trading concepts
 
 ## Getting Started
@@ -52,12 +56,7 @@ git clone https://github.com/chain-ml/alphaswarm.git
 cd alphaswarm
 ```
 
-2. Install Poetry if you haven't already:
-```bash
-pipx install poetry
-```
-
-3. Install dependencies:
+2. Install dependencies:
 ```bash
 # For basic installation
 poetry install
@@ -82,7 +81,7 @@ Before running the framework, you'll need to obtain several API keys:
    - RPC URLs from [Alchemy](https://www.alchemy.com/) or [Infura](https://www.infura.io/) or another RPC provider of choice
 
 3. **Optional - Telegram Bot** (for notifications):
-   - Create a bot through [BotFather](https://t.me/botfather) with `/newbot` and save bot token
+   - Create a bot through [BotFather](https://t.me/botfather) with `/newbot` and securely save the bot token
    - To get chat ID, run `examples/telegram_bot.py` and message `/start` or `/id` to your bot
 
 ### 3. Environment Configuration
@@ -99,6 +98,7 @@ cp .env.example .env
 LLM Configuration (at least one required):
 - `ANTHROPIC_API_KEY`: Your Anthropic API key if using Claude models (default)
 - `OPENAI_API_KEY`: Your OpenAI API key if using GPT models
+- For any other provider ensure to follow the same pattern
 
 Blockchain Access:
 - `ALCHEMY_API_KEY`: Your Alchemy API key for accessing blockchain data
