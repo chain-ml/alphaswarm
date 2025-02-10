@@ -33,36 +33,36 @@ class UniswapClientV2(UniswapClientBase):
         return self._evm_client.to_checksum_address(UNISWAP_V2_DEPLOYMENTS[self.chain]["factory"])
 
     def _swap(
-        self, base: TokenInfo, quote: TokenInfo, address: str, raw_quote_amount: int, slippage_bps: int
+        self, token_out: TokenInfo, token_in: TokenInfo, address: str, wei_in: int, slippage_bps: int
     ) -> List[TxReceipt]:
         """Execute a swap on Uniswap V2."""
         # Handle token approval and get fresh nonce
-        approval_receipt = self._approve_token_spend(quote, raw_quote_amount)
+        approval_receipt = self._approve_token_spending(token_in, wei_in)
 
         # Get price from V2 pair to calculate minimum output
-        price = self._get_token_price(base_token=base, quote_token=quote)
+        price = self._get_token_price(token_out=token_out, token_in=token_in)
         if not price:
-            raise ValueError(f"No V2 price found for {base.symbol}/{quote.symbol}")
+            raise ValueError(f"No V2 price found for {token_out.symbol}/{token_in.symbol}")
 
         # Calculate expected output
-        input_amount_decimal = quote.convert_from_wei(raw_quote_amount)
+        input_amount_decimal = token_in.convert_from_wei(wei_in)
         expected_output_decimal = input_amount_decimal * price
-        logger.info(f"Expected output: {expected_output_decimal} {base.symbol}")
+        logger.info(f"Expected output: {expected_output_decimal} {token_out.symbol}")
 
         # Convert expected output to raw integer and apply slippage
         slippage = Slippage(slippage_bps)
-        min_output_raw = slippage.calculate_minimum_amount(base.convert_to_wei(expected_output_decimal))
+        min_output_raw = slippage.calculate_minimum_amount(token_out.convert_to_wei(expected_output_decimal))
         logger.info(f"Minimum output with {slippage} slippage (raw): {min_output_raw}")
 
         # Build swap path
-        path = [quote.checksum_address, base.checksum_address]
+        path = [token_in.checksum_address, token_out.checksum_address]
 
         # Build swap transaction with EIP-1559 parameters
         router_contract = self._web3.eth.contract(address=self._router, abi=UNISWAP_V2_ROUTER_ABI)
         deadline = int(self._evm_client.get_block_latest()["timestamp"] + 300)  # 5 minutes
 
         swap = router_contract.functions.swapExactTokensForTokens(
-            raw_quote_amount,  # amount in
+            wei_in,  # amount in
             min_output_raw,  # minimum amount out
             path,  # swap path
             address,  # recipient
@@ -73,35 +73,20 @@ class UniswapClientV2(UniswapClientBase):
         swap_receipt = self._evm_client.process(swap, self.get_signer())
         return [approval_receipt, swap_receipt]
 
-    def _get_token_price(self, base_token: TokenInfo, quote_token: TokenInfo) -> Decimal:
-        """Get the current price from a Uniswap V2 pool for a token pair.
-
-        Finds the V2 pool for the token pair and gets the current mid price.
-        The price is returned in terms of base/quote.
-
-        Args:
-            base_token: Base token info (token being priced)
-            quote_token: Quote token info (denominator token)
-
-        Returns:
-            Decimal: Current mid price in base/quote terms, or None if no pool exists
-            or there was an error getting the price
-        """
+    def _get_token_price(self, token_out: TokenInfo, token_in: TokenInfo) -> Decimal:
         # Create factory contract instance
         factory_contract = self._web3.eth.contract(address=self._factory, abi=UNISWAP_V2_FACTORY_ABI)
 
         # Get pair address from factory using checksum addresses
-        pair_address = factory_contract.functions.getPair(
-            base_token.checksum_address, quote_token.checksum_address
-        ).call()
+        pair_address = factory_contract.functions.getPair(token_out.checksum_address, token_in.checksum_address).call()
 
         if pair_address == ZERO_ADDRESS:
-            logger.warning(f"No V2 pair found for {base_token.symbol}/{quote_token.symbol}")
-            raise RuntimeError(f"No V2 pair found for {base_token.symbol}/{quote_token.symbol}")
+            logger.warning(f"No V2 pair found for {token_out.symbol}/{token_in.symbol}")
+            raise RuntimeError(f"No V2 pair found for {token_out.symbol}/{token_in.symbol}")
 
-        # Get V2 pair details - we want price in base/quote terms
-        # If base_token is token1, we need reverse=True to get base/quote
-        reverse = base_token.checksum_address.lower() > quote_token.checksum_address.lower()
+        # Get V2 pair details - if reverse false, mid_price = token1_amount / token0_amount
+        # token0 of the pair has the lowest address. Reverse if needed
+        reverse = token_out.checksum_address.lower() < token_in.checksum_address.lower()
         pair = fetch_pair_details(self._web3, pair_address, reverse_token_order=reverse)
         price = pair.get_current_mid_price()
 
