@@ -62,7 +62,9 @@ async def main() -> None:
     # Optional hints
     hints = read_text_file_to_string(CONFIG_PATH / "trading_strategy_agent_hints.txt")
 
-    agent = AlphaSwarmAgent(tools=tools, system_prompt=system_prompt, hints=hints)
+    agent = AlphaSwarmAgent(
+        tools=tools, model_id="anthropic/claude-3-5-sonnet-20241022", system_prompt=system_prompt, hints=hints
+    )
 
     terminal = TerminalClient("AlphaSwarm terminal", agent)
     await asyncio.gather(
