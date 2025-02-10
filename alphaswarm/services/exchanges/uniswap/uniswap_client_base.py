@@ -120,7 +120,8 @@ class UniswapClientBase(DEXClient):
         logger.info(f"ETH balance for gas: {eth_balance:,.6f}")
         wei_in = token_in.convert_to_wei(amount_in)
 
-        assert in_balance > 0, f"Cannot perform swap, as you have zero {token_in.symbol} needed to swap"
+        if in_balance < amount_in:
+            raise ValueError(f"Cannot perform swap, as you have {in_balance} {token_in.symbol}. Need at least {amount_in}")
 
         # Each DEX trade is two transactions
         # 1) ERC-20.approve()
