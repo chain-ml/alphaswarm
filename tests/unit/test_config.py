@@ -16,7 +16,7 @@ def test_config_default_from_env(default_config: Config) -> None:
 
 
 def test_config_token_info(default_config: Config) -> None:
-    actual = default_config.get_token_info(chain="ethereum", token="ETH")
+    actual = default_config.get_chain_config("ethereum").get_token_info("ETH")
     assert actual.address == "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"
     assert actual.decimals == 18
     assert actual.is_native
