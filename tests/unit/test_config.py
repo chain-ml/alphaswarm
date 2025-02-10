@@ -16,7 +16,7 @@ def test_config_default_from_env(default_config: Config) -> None:
 
 
 def test_config_token_info(default_config: Config) -> None:
-    actual = default_config.get_token_info(chain="ethereum", token="ETH")
+    actual = default_config.get_chain_config("ethereum").get_token_info("ETH")
     assert actual.address == "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"
     assert actual.decimals == 18
     assert actual.is_native
@@ -76,3 +76,9 @@ def test_token_info_convert_from_wei(token_info: TokenInfo) -> None:
     expected = "1.000000000000000001"
     actual = token_info.convert_from_wei(wei)
     assert str(actual) == expected
+
+
+def test_get_trading_venues_for_chain(default_config: Config) -> None:
+    result = default_config.get_trading_venues_for_chain(chain="ethereum")
+
+    assert set(result) == {"uniswap_v2", "uniswap_v3"}

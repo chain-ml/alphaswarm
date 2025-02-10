@@ -14,14 +14,14 @@ class MockDex(DEXClient):
         return MockDex(chain_config=config.get_chain_config(chain))
 
     def swap(
-        self, base_token: TokenInfo, quote_token: TokenInfo, quote_amount: Decimal, slippage_bps: int = 100
+        self, token_out: TokenInfo, token_in: TokenInfo, amount_in: Decimal, slippage_bps: int = 100
     ) -> SwapResult:
         raise NotImplementedError("For test only")
 
     def get_markets_for_tokens(self, tokens: List[TokenInfo]) -> List[Tuple[TokenInfo, TokenInfo]]:
         raise NotImplementedError("For test only")
 
-    def get_token_price(self, base_token: TokenInfo, quote_token: TokenInfo) -> Decimal:
+    def get_token_price(self, token_out: TokenInfo, token_in: TokenInfo) -> Decimal:
         raise NotImplementedError("For test only")
 
     def __init__(self, chain_config: ChainConfig) -> None:
