@@ -18,8 +18,8 @@ class SwapResult:
     error: Optional[str] = None
 
     @classmethod
-    def build_error(cls, error: str, amount_out: Decimal) -> SwapResult:
-        return cls(success=False, amount_out=amount_out, amount_in=Decimal(0), error=error)
+    def build_error(cls, error: str, amount_in: Decimal) -> SwapResult:
+        return cls(success=False, amount_out=Decimal(0), amount_in=amount_in, error=error)
 
     @classmethod
     def build_success(cls, amount_out: Decimal, amount_in: Decimal, tx_hash: HexBytes) -> SwapResult:
