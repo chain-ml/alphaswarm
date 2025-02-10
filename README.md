@@ -34,18 +34,15 @@ AlphaSwarm is a starter kit for building LLM-powered AI agents that interpret na
 
 ## Prerequisites
 
-- Python 3.11 or higher
-- Poetry (package manager)
+- [Python 3.11](https://www.python.org/downloads/) or higher
+- [Poetry](https://python-poetry.org/docs/) (package manager)
 - Basic understanding of crypto trading concepts
 
 ## Getting Started
 
 ### 1. Installation
 
-First, ensure you have all prerequisites installed:
-- Python 3.11 or higher
-- Poetry (package manager)
-- Basic understanding of crypto trading concepts
+First, ensure you have all prerequisites installed, including Python and poetry.
 
 Then follow these steps:
 
@@ -76,16 +73,17 @@ Note: Poetry manages its own virtual environments, so a separate virtual environ
 Before running the framework, you'll need to obtain several API keys:
 
 1. **LLM API Key**:
-   - [Anthropic API Key](https://www.anthropic.com/)
-   - OpenAI coming soon...
+   - [Anthropic API Key](https://docs.anthropic.com/en/api/getting-started) if using Claude models (default)
+   - [OpenAI API Key](https://platform.openai.com/docs/quickstart) if using GPT models
+   - or any other LLM provider [supported by LiteLLM](https://models.litellm.ai/)
 
 2. **Blockchain Access**:
    - [Alchemy API Key](https://www.alchemy.com/) (required for blockchain data)
    - RPC URLs from [Alchemy](https://www.alchemy.com/) or [Infura](https://www.infura.io/) or another RPC provider of choice
 
 3. **Optional - Telegram Bot** (for notifications):
-   - Create a bot through [BotFather](https://t.me/botfather)
-   - Get your chat ID by messaging `/id` to your bot
+   - Create a bot through [BotFather](https://t.me/botfather) with `/newbot` and save bot token
+   - To get chat ID, run `examples/telegram_bot.py` and message `/start` or `/id` to your bot
 
 ### 3. Environment Configuration
 
@@ -99,7 +97,8 @@ cp .env.example .env
 #### Required environment variables:
 
 LLM Configuration (at least one required):
-- `ANTHROPIC_API_KEY`: Your Anthropic API key for using Claude models
+- `ANTHROPIC_API_KEY`: Your Anthropic API key if using Claude models (default)
+- `OPENAI_API_KEY`: Your OpenAI API key if using GPT models
 
 Blockchain Access:
 - `ALCHEMY_API_KEY`: Your Alchemy API key for accessing blockchain data
@@ -143,7 +142,6 @@ Logging configuration:
 The framework uses YAML configuration files to define trading venues, token pairs, and other application-specific and trading-related settings. The main configuration file is `config/default.yaml`.
 
 Key configuration sections:
-- **LLM Configuration**: Model settings, provider details, and parameters
 - **Network Environments**: Production and test network configurations
 - **Trading Venues**: Supported DEXs with their supported pairs and settings for each chain
 - **Chain Configuration**: 
