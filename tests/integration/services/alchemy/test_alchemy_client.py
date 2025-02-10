@@ -62,3 +62,27 @@ def test_get_outcoming_transfer(alchemy_client: AlchemyClient, eth_sepolia_confi
 
     assert len(transfers) > 0
     assert transfers[0].to_address.lower() == eth_sepolia_config.wallet_address.lower()
+
+
+def test_get_transfers_invalid_chain(alchemy_client: AlchemyClient) -> None:
+    with pytest.raises(ValueError, match="Unsupported chain invalid_chain"):
+        alchemy_client.get_transfers(wallet="0x123", chain="invalid_chain", incoming=False)
+
+
+# @pytest.mark.skip("Needs a wallet")
+def test_get_token_balances(alchemy_client: AlchemyClient, eth_sepolia_config: ChainConfig) -> None:
+    # Test outgoing transfers
+    balances = alchemy_client.get_token_balances(
+        wallet=eth_sepolia_config.wallet_address, chain=eth_sepolia_config.chain
+    )
+
+    assert len(balances) > 0
+    assert balances[0].value > 0
+
+
+def test_get_token_balances_invalid_chain(alchemy_client: AlchemyClient) -> None:
+    with pytest.raises(ValueError, match="Unsupported chain invalid_chain"):
+        alchemy_client.get_transfers(
+            wallet="0x123",
+            chain="invalid_chain",
+        )
