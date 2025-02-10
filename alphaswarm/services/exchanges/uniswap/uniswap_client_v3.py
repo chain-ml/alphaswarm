@@ -153,7 +153,7 @@ class UniswapClientV3(UniswapClientBase):
         logger.info(f"Pool raw price: {price} ({token_out.symbol} per {token_in.symbol})")
 
         # Convert to decimal for calculations
-        input_amount_decimal = token_in.convert_from_wei(wei_in)
+        amount_in_decimal = token_in.convert_from_wei(wei_in)
         logger.info(f"Actual input amount: {input_amount_decimal} {token_in.symbol}")
 
         # Calculate expected output

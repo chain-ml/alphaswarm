@@ -41,7 +41,7 @@ class UniswapClientBase(DEXClient):
 
     @abstractmethod
     def _swap(
-        self, token_out: TokenInfo, token_in: TokenInfo, address: str, wei_in: int, slippage_bps: int
+        self, *, token_out: TokenInfo, token_in: TokenInfo, address: str, wei_in: int, slippage_bps: int
     ) -> List[TxReceipt]:
         pass
 

@@ -82,7 +82,7 @@ class GetTokenPriceTool(Tool):
                 logger.exception(f"Error getting price from {venue}")
 
         if len(prices) == 0:
-            logger.warning(f"No valid prices found for {token_out}/{token_in}")
+            logger.warning(f"No valid prices found for out/in {token_out}/{token_in}")
             raise RuntimeError(f"No valid prices found for {token_out}/{token_in}")
 
         # Get current timestamp
