@@ -121,13 +121,21 @@ class UniswapClientBase(DEXClient):
         wei_in = token_in.convert_to_wei(amount_in)
 
         if in_balance < amount_in:
-            raise ValueError(f"Cannot perform swap, as you have {in_balance} {token_in.symbol}. Need at least {amount_in}")
+            raise ValueError(
+                f"Cannot perform swap, as you have {in_balance} {token_in.symbol}. Need at least {amount_in}"
+            )
 
         # Each DEX trade is two transactions
         # 1) ERC-20.approve()
         # 2) swap (various functions)
 
-        receipts = self._swap(token_out, token_in, self.wallet_address, wei_in, slippage_bps)
+        receipts = self._swap(
+            token_out=token_out,
+            token_in=token_in,
+            address=self.wallet_address,
+            wei_in=wei_in,
+            slippage_bps=slippage_bps,
+        )
 
         # Get the actual amount of base token received from the swap receipt
         swap_receipt = receipts[1]
@@ -141,7 +149,7 @@ class UniswapClientBase(DEXClient):
             tx_hash=swap_receipt["transactionHash"],  # Return the swap tx hash, not the approved tx
         )
 
-    def _approve_token_spend(self, token: TokenInfo, raw_amount: int) -> TxReceipt:
+    def _approve_token_spending(self, token: TokenInfo, raw_amount: int) -> TxReceipt:
         """Handle token approval and return fresh nonce and approval receipt.
 
         Args:

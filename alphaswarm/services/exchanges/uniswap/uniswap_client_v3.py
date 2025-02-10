@@ -142,7 +142,7 @@ class UniswapClientV3(UniswapClientBase):
     ) -> List[TxReceipt]:
         """Execute a swap on Uniswap V3."""
         # Handle token approval and get fresh nonce
-        approval_receipt = self._approve_token_spend(token_in, wei_in)
+        approval_receipt = self._approve_token_spending(token_in, wei_in)
 
         # Build a swap transaction
         pool = self._get_pool(token_out, token_in)
@@ -154,10 +154,10 @@ class UniswapClientV3(UniswapClientBase):
 
         # Convert to decimal for calculations
         amount_in_decimal = token_in.convert_from_wei(wei_in)
-        logger.info(f"Actual input amount: {input_amount_decimal} {token_in.symbol}")
+        logger.info(f"Actual input amount: {amount_in_decimal} {token_in.symbol}")
 
         # Calculate expected output
-        expected_output_decimal = input_amount_decimal * price
+        expected_output_decimal = amount_in_decimal * price
         logger.info(f"Expected output: {expected_output_decimal} {token_out.symbol}")
 
         # Convert expected output to raw integer
