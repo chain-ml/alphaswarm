@@ -32,7 +32,7 @@ def test_get_price(base_client: UniswapClientV3) -> None:
     usdc_per_weth = base_client.get_token_price(token_out=usdc, token_in=weth)
 
     print(f"1 {weth.symbol} is {usdc_per_weth} {usdc.symbol}")
-    assert usdc_per_weth > 1000
+    assert usdc_per_weth > 1000, "A WETH is worth many thousands of USDC"
 
 
 def test_quote_from_pool(base_client: UniswapClientV3) -> None:
