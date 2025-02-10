@@ -1,8 +1,8 @@
-# AlphaSwarm Framework
-
-AlphaSwarm is a framework for building autonomous crypto trading agents. It is currently built with the [smolagents](https://github.com/huggingface/smolagents) framework providing the main agentic loop. AlphaSwarm adds value on top of this in the form of customizable services, tools, and agent configurations geared for trading.
+# AlphaSwarm Architecture
 
 ## Introduction
+
+AlphaSwarm is currently built with the [smolagents](https://github.com/huggingface/smolagents) framework. AlphaSwarm adds value on top of this in the form of customizable services, tools, and agent configurations geared for trading.
 
 ### About `CodeAgent`
 
@@ -13,11 +13,6 @@ AlphaSwarm agents are currently based on the `CodeAgent` from `smolagents`. Alph
 - Evidence suggests that planning in code (vs. JSON tool sequences) leads to more accurate execution on the first attempt
 
 For code execution, we are currently relying on smolagents' [local Python code execution](https://huggingface.co/docs/smolagents/v1.6.0/en/tutorials/secure_code_execution#local-python-interpreter) framework. Secured, remote execution is part of the roadmap.
-
-## Requirements
-
-- Python 3.11 or higher
-- Poetry for dependency management
 
 ## Version Support (Initially Planned)
 
@@ -64,16 +59,18 @@ The agent is defined by:
 All tools in AlphaSwarm extend the smolagents `Tool` base class which requires:
 
 ```python
-class Tool:
-    # Required class attributes
+from smolagents import Tool
+
+
+class MyTool(Tool):
     name: str            # Name used to reference the tool
     description: str     # Description of functionality
     inputs: Dict[str, Dict[str, <input schema>]  # See below for input schema
-    output_type: str    # Output type from AUTHORIZED_TYPES
+    output_type: str     # Output type from authorized types
     
     # Required method
-    def forward(self, *args, **kwargs):  # Core implementation
-        pass
+    def forward(self, *args, **kwargs):
+        pass  # Core tool implementation
 ```
 
 The `inputs` dictionary must specify the schema for each input parameter:
@@ -83,22 +80,12 @@ inputs = {
         "type": str,        # Must be one of AUTHORIZED_TYPES
         "description": str, # Agent-readable description
         "nullable": bool,   # Optional, if parameter can be None
-        "default": ...,      # A literal value of the parameter's type
+        "default": ...,     # A literal value of the parameter's type
     }
 }
 ```
 
-Authorized types are:
-- string
-- boolean  
-- integer
-- number
-- image
-- audio
-- array
-- object
-- any
-- null
+Authorized types are: string, boolean, integer, number, image, audio, array, object, any, null.
 
 Tools can be created either by:
 1. Subclassing the `Tool` class and implementing the required attributes/methods (preferred)
@@ -109,7 +96,7 @@ Please review [tools docs](https://huggingface.co/docs/smolagents/tutorials/tool
 ## Security
 
 - Private keys and API credentials must be handled via environment variables
-- Code execution is sandboxed via smolagents
+- Code execution is sandboxed via `smolagents`
 - See SECURITY.md for vulnerability reporting procedures
 
 ## Architecture Overview
@@ -216,63 +203,6 @@ alphaswarm/
 ├── utils/           # Utility functions and helpers
 └── config.py        # Configuration management
 ```
-
-## Configuration
-
-The framework currently uses a YAML-based configuration system (`config/default.yaml`) with environment variable substitution. Key configuration areas include:
-
-- LLM settings
-- Network environments
-- Trading venues
-- Chain configurations
-- Token definitions
-
-Environment variables are defined in `.env` (use `.env.example` as a template).
-
-Configuration files and mechanisms are *subject to change* in the near term.
-
-## Development Guide
-
-### Prerequisites
-
-1. Install Poetry (package manager):
-```bash
-curl -sSL https://install.python-poetry.org | python3 -
-```
-
-2. Install dependencies:
-```bash
-poetry install --with dev
-```
-
-### Running Tests
-
-```bash
-# Run all tests
-make all-tests
-
-# Run specific test suites
-make unit-tests
-make integration-tests  # Requires API keys to be specified
-```
-
-### Code Style
-
-The project uses:
-- Black for code formatting
-- isort for import sorting
-- mypy for type checking
-- ruff for linting
-
-Format and lint code:
-```bash
-make format
-make dev-lint
-```
-
-## License
-
-This project is licensed under the MIT License.
 
 ## Future Evolution: Integration with Theoriq Protocol
 

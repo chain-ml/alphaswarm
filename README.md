@@ -214,10 +214,22 @@ Check out the `examples/` directory for more complete examples:
 
 ### Running Tests
 ```bash
-poetry run pytest
+# Run all tests
+make all-tests
+
+# Run specific test suites
+make unit-tests
+make integration-tests  # Requires API keys to be specified
 ```
 
 ### Code Quality
+
+The project uses:
+- Black for code formatting
+- isort for import sorting
+- ruff for linting
+- mypy for type checking
+
 ```bash
 # Format code
 poetry run black .
