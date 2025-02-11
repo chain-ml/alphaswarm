@@ -24,6 +24,7 @@ def eth_sepolia_signer(eth_sepolia_config: ChainConfig) -> EVMSigner:
 def eth_sepolia_usdc_contract(eth_sepolia_client: EVMClient) -> ERC20Contract:
     return ERC20Contract(eth_sepolia_client, Web3.to_checksum_address("0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238"))
 
+
 @pytest.mark.skip("Requires a wallet with Sepolia ETH. Can run manually")
 def test_approve_and_allowance(eth_sepolia_usdc_contract: ERC20Contract, eth_sepolia_signer: EVMSigner) -> None:
     spender = eth_sepolia_signer.address
