@@ -6,6 +6,7 @@ import dotenv
 from alphaswarm.agent.agent import AlphaSwarmAgent
 from alphaswarm.agent.clients import TerminalClient
 from alphaswarm.config import CONFIG_PATH, Config
+from alphaswarm.tools import GetTokenAddress
 from alphaswarm.tools.alchemy import AlchemyPriceHistoryByAddress, AlchemyPriceHistoryBySymbol
 from alphaswarm.tools.cookie.cookie_metrics import (
     CookieMetricsByContract,
@@ -34,6 +35,7 @@ async def main() -> None:
 
     tools: List[Tool] = [
         PriceTool(),
+        GetTokenAddress(config),
         GetTokenPriceTool(config),
         AlchemyPriceHistoryByAddress(),
         AlchemyPriceHistoryBySymbol(),

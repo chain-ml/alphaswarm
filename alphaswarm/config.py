@@ -70,6 +70,17 @@ class ChainConfig:
             return None
         return self.tokens[symbol]
 
+    def get_token_info_by_address(self, address: str) -> TokenInfo:
+        """Get token info for an address, raise ValueError if not found"""
+        result = self.get_token_info_by_address_or_none(address)
+        if result is None:
+            raise ValueError(f"Token {address} not found in chain config for {self.chain}")
+        return result
+
+    def get_token_info_by_address_or_none(self, address: str) -> Optional[TokenInfo]:
+        """Get token info from its address, returning None if not found"""
+        return next((token for token in self.tokens.values() if token.address == address), None)
+
 
 @dataclass
 class UniswapV2Venue:

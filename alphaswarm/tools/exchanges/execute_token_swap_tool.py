@@ -17,11 +17,11 @@ class ExecuteTokenSwapTool(Tool):
     inputs = {
         "token_out": {
             "type": "string",
-            "description": "The token being bought (out from the pool)",
+            "description": "The address of the token being bought (out from the pool)",
         },
         "token_in": {
             "type": "string",
-            "description": "The token being sold (in the pool)",
+            "description": "The address of the token being sold (in the pool)",
         },
         "amount_in": {"type": "number", "description": "The amount token_in to be sold", "required": True},
         "chain": {
@@ -63,8 +63,8 @@ class ExecuteTokenSwapTool(Tool):
 
         # Get wallet address and private key from chain config
         chain_config = self.config.get_chain_config(chain)
-        token_in_info = chain_config.get_token_info(token_in)
-        token_out_info = chain_config.get_token_info(token_out)
+        token_in_info = chain_config.get_token_info_by_address(token_in)
+        token_out_info = chain_config.get_token_info_by_address(token_out)
 
         # Log token details
         logger.info(

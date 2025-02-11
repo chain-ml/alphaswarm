@@ -5,7 +5,7 @@ import os
 import time
 from datetime import datetime, timezone
 from decimal import Decimal
-from typing import Annotated, Dict, Final, List
+from typing import Annotated, Dict, Final, List, Optional
 
 import requests
 from alphaswarm.services.api_exception import ApiException
@@ -78,6 +78,18 @@ class Transfer:
         if isinstance(value, Decimal):
             return value
         return Decimal(str(value))
+
+
+@dataclass
+class Balance:
+    contract_address: Annotated[str, Field(validation_alias="contractAddress")]
+    value: Annotated[Decimal, Field(validation_alias="tokenBalance", default=Decimal(0))]
+    error: Annotated[Optional[str], Field(default=None)]
+
+    @field_validator("value", mode="before")
+    def convert_to_decimal(cls, value: str) -> Decimal:
+        balance = int(value, 16)
+        return Decimal(balance)
 
 
 NETWORKS = ["eth-mainnet", "base-mainnet", "solana-mainnet", "eth-sepolia", "base-sepolia", "solana-devnet"]
@@ -179,7 +191,7 @@ class AlchemyClient:
         response = self._make_request(url, data)
         return HistoricalPriceByAddress(**response)
 
-    def get_transfers(self, wallet: str, chain: str, incoming: bool = False) -> List[Transfer]:
+    def get_transfers(self, *, wallet: str, chain: str, incoming: bool = False) -> List[Transfer]:
         """Fetch raw ERC20 token transfer data from Alchemy API for a given wallet and chain."""
 
         address_key = "toAddress" if incoming else "fromAddress"
@@ -213,6 +225,24 @@ class AlchemyClient:
 
         parsed_transfers = [Transfer(**transfer) for transfer in transfers]
         return parsed_transfers
+
+    def get_token_balances(self, *, wallet: str, chain: str) -> List[Balance]:
+        payload = {
+            "id": 1,
+            "jsonrpc": "2.0",
+            "method": "alchemy_getTokenBalances",
+            "params": [wallet.lower(), "erc20"],
+        }
+        data = self._make_request(url=self.network_url(chain=chain), data=payload)
+        result = data.get("result")
+        if result is None or not isinstance(result, dict):
+            raise RuntimeError("Alchemy response JSON does not contain a 'result' object.")
+        balances = result.get("tokenBalances")
+        if balances is None or not isinstance(balances, list):
+            raise RuntimeError("Alchemy response JSON does not contain a 'result.transfers' list.")
+
+        parsed_balances = [Balance(**balance) for balance in balances]
+        return parsed_balances
 
     def network_url(self, chain: str) -> str:
         if chain == "ethereum":
