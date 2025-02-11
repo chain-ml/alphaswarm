@@ -1,19 +1,22 @@
 import logging
 from decimal import Decimal
-from typing import List
+from typing import Callable, List, Optional, TypeVar
 
 from alphaswarm.config import ChainConfig, TokenInfo
 from eth_account import Account
 from eth_account.datastructures import SignedTransaction
+from eth_defi.revert_reason import fetch_transaction_revert_reason
 from eth_defi.token import TokenDetails, fetch_erc20_details
 from eth_typing import ChecksumAddress
 from hexbytes import HexBytes
 from web3 import Web3
 from web3.contract import Contract
 from web3.contract.contract import ContractFunction
-from web3.types import BlockData, TxParams, TxReceipt, Wei
+from web3.types import BlockData, Nonce, TxParams, TxReceipt, Wei
 
 logger = logging.getLogger(__name__)
+
+TResult = TypeVar("TResult")
 
 # Define supported chains
 SUPPORTED_CHAINS = {"ethereum", "ethereum_sepolia", "base", "base_sepolia"}
@@ -97,11 +100,13 @@ class EVMClient:
         tx_hash = self._client.eth.send_raw_transaction(signed_tx.rawTransaction)
         result: TxReceipt = self.wait_for_transaction(tx_hash)
 
-        # TODO
-        # if result["status"] == 0:
-        #     reason = fetch_transaction_revert_reason(self._client, tx_hash)
-        #     logger.error(f"Transaction {tx_hash.hex()} failed because of: {reason}")
+        if result["status"] == 0:
+            reason = fetch_transaction_revert_reason(self._client, tx_hash)
+            raise RuntimeError(f"Transaction {tx_hash.hex()} failed because of: {reason}")
         return result
+
+    def get_revert_reason(self, tx_hash: HexBytes) -> str:
+        return fetch_transaction_revert_reason(self._client, tx_hash)
 
     def get_contract(self, address: ChecksumAddress, abi: List[dict]) -> Contract:
         return self._client.eth.contract(address=address, abi=abi)
@@ -118,7 +123,7 @@ class EVMClient:
                 "from": wallet_address,
                 "maxFeePerGas": max_fee_per_gas,
                 "maxPriorityFeePerGas": priority_fee,
-                "nonce": self._client.eth.get_transaction_count(wallet_address, "pending"),
+                "nonce": Nonce(self.get_transaction_count(wallet_address)),
             }
         )
 
@@ -127,5 +132,28 @@ class EVMClient:
     def wait_for_transaction(self, tx_hash: HexBytes, timeout: int = 120, poll_latency: float = 1) -> TxReceipt:
         return self._client.eth.wait_for_transaction_receipt(tx_hash, timeout, poll_latency)
 
+    def get_transaction_count(self, wallet_address: ChecksumAddress) -> int:
+        return self._execute_with_retry(
+            lambda: self._client.eth.get_transaction_count(wallet_address), retry_predicate=lambda r: r == 0
+        )
+
     def get_block_latest(self) -> BlockData:
-        return self._client.eth.get_block("latest")
+        return self._execute_with_retry(lambda: self._client.eth.get_block("latest"))
+
+    @staticmethod
+    def _execute_with_retry(
+        func: Callable[[], TResult], retry_count: int = 3, retry_predicate: Optional[Callable[[TResult], bool]] = None
+    ) -> TResult:
+        retries_left = retry_count
+        while retries_left > 0:
+            try:
+                retries_left -= 1
+                result = func()
+                if retry_predicate is not None and retry_predicate(result):
+                    logger.warning(f"Retrying because of predicate. Retries left: {retries_left}")
+                return result
+            except Exception:
+                logger.exception(f"Block not found. Retries left: {retries_left}")
+                if retries_left > 0:
+                    continue
+        raise RuntimeError("Out of retries.")
