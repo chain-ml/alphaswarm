@@ -68,6 +68,13 @@ class GetTokenPriceTool(Tool):
         """Get token price from DEX(es)"""
         logger.debug(f"Getting price for {token_out}/{token_in} on {chain}")
 
+        # Get token info and create TokenInfo objects
+        chain_config = self.config.get_chain_config(chain)
+        token_out_info = chain_config.tokens[token_out]
+        token_in_info = chain_config.tokens[token_in]
+
+        logger.debug(f"Token info - Out: {token_out}, In: {token_in}")
+
         # Get prices from all available venues
         venues = self.config.get_trading_venues_for_chain(chain) if dex_type is None else [dex_type]
         prices = []
@@ -75,7 +82,7 @@ class GetTokenPriceTool(Tool):
             try:
                 dex = DEXFactory.create(dex_name=venue, config=self.config, chain=chain)
 
-                price = dex.get_token_price(token_out=token_out, token_in=token_in)
+                price = dex.get_token_price(token_out_info, token_in_info)
                 prices.append(TokenPrice(price=price, source=venue))
             except Exception:
                 logger.exception(f"Error getting price from {venue}")

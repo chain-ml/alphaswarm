@@ -86,18 +86,18 @@ class DEXClient(ABC):
         return self._chain_config
 
     @abstractmethod
-    def get_token_price(self, token_out: str, token_in: str) -> Decimal:
+    def get_token_price(self, token_out: TokenInfo, token_in: TokenInfo) -> Decimal:
         """Get price/conversion rate for the pair of tokens.
 
         The price is returned in terms of token_out/token_in (how much token out per token in).
 
         Args:
-            token_out (str): The address of the token to be bought (going out from the pool)
-            token_in (str): The address of the token to be sold (going into the pool)
+            token_out (TokenInfo): The token to be bought (going out from the pool)
+            token_in (TokenInfo): The token to be sold (going into the pool)
 
         Example:
-            eth_token = "0x..."
-            usdc_token = "0x..."
+            eth_token = TokenInfo(address="0x...", decimals=18, symbol="ETH", chain="ethereum")
+            usdc_token = TokenInfo(address="0x...", decimals=6, symbol="USDC", chain="ethereum")
             get_token_price(token_out=eth_token, token_in=usdc_token)
             Returns: The amount of ETH for 1 USDC
         """

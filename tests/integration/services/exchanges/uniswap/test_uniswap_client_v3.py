@@ -29,7 +29,7 @@ def eth_sepolia_client(default_config: Config) -> UniswapClientV3:
 def test_get_price(base_client: UniswapClientV3) -> None:
     usdc = base_client.chain_config.get_token_info("USDC")
     weth = base_client.chain_config.get_token_info("WETH")
-    usdc_per_weth = base_client.get_token_price(token_out=usdc.address, token_in=weth.address)
+    usdc_per_weth = base_client.get_token_price(token_out=usdc, token_in=weth)
 
     print(f"1 {weth.symbol} is {usdc_per_weth} {usdc.symbol}")
     assert usdc_per_weth > 1000, "A WETH is worth many thousands of USDC"

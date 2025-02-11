@@ -166,14 +166,12 @@ class UniswapClientBase(DEXClient):
         tx_receipt = token_contract.approve(self.get_signer(), self._router, raw_amount)
         return tx_receipt
 
-    def get_token_price(self, token_out: str, token_in: str) -> Decimal:
-        info_in = self._evm_client.get_token_info(EVMClient.to_checksum_address(token_in))
-        info_out = self._evm_client.get_token_info(EVMClient.to_checksum_address(token_out))
+    def get_token_price(self, token_out: TokenInfo, token_in: TokenInfo) -> Decimal:
         logger.debug(
-            f"Getting price for {info_out.symbol}/{info_in.symbol} on {self.chain} using Uniswap {self.version}"
+            f"Getting price for {token_out.symbol}/{token_in.symbol} on {self.chain} using Uniswap {self.version}"
         )
 
-        return self._get_token_price(token_out=info_out, token_in=info_in)
+        return self._get_token_price(token_out=token_out, token_in=token_in)
 
     def get_markets_for_tokens(self, tokens: List[TokenInfo]) -> List[Tuple[TokenInfo, TokenInfo]]:
         """Get list of valid trading pairs between the provided tokens.

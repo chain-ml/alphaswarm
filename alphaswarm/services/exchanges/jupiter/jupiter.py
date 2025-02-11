@@ -45,18 +45,19 @@ class JupiterClient(DEXClient):
     ) -> SwapResult:
         raise NotImplementedError("Jupiter swap functionality is not yet implemented")
 
-    def get_token_price(self, token_out: str, token_in: str) -> Decimal:
+    def get_token_price(self, token_out: TokenInfo, token_in: TokenInfo) -> Decimal:
         # Verify tokens are on Solana
-        in_info = self.chain_config.get_token_info_by_address(token_in)
-        out_info = self.chain_config.get_token_info_by_address(token_out)
-        logger.debug(f"Getting price for {out_info.symbol}/{in_info.symbol} on {self.chain} using Jupiter")
+        if not token_out.chain == self.chain or not token_in.chain == self.chain:
+            raise ValueError(f"Jupiter only supports Solana tokens. Got {token_out.chain} and {token_in.chain}")
+
+        logger.debug(f"Getting price for {token_out.symbol}/{token_in.symbol} on {token_out.chain} using Jupiter")
 
         # Prepare query parameters
         params = {
-            "inputMint": token_in,
-            "outputMint": token_out,
+            "inputMint": token_in.address,
+            "outputMint": token_out.address,
             "swapMode": "ExactIn",
-            "amount": str(in_info.convert_to_wei(Decimal(1))),  # Get price spending exactly 1 token_in
+            "amount": str(token_in.convert_to_wei(Decimal(1))),  # Get price spending exactly 1 token_in
             "slippageBps": self._settings.slippage_bps,
         }
 
@@ -71,12 +72,12 @@ class JupiterClient(DEXClient):
 
         # Calculate price (token_out per token_in)
         amount_out = quote.out_amount
-        price = out_info.convert_from_wei(amount_out)
+        price = token_out.convert_from_wei(amount_out)
         # Log quote details
         logger.debug("Quote successful:")
-        logger.debug(f"- Input: 1 {in_info.symbol}")
-        logger.debug(f"- Output: {amount_out} {out_info.symbol} lamports")
-        logger.debug(f"- Price: {price} {out_info.symbol}/{out_info.symbol}")
+        logger.debug(f"- Input: 1 {token_in.symbol}")
+        logger.debug(f"- Output: {amount_out} {token_out.symbol} lamports")
+        logger.debug(f"- Price: {price} {token_out.symbol}/{token_in.symbol}")
         logger.debug(f"- Route: {quote.route_plan}")
 
         return price
