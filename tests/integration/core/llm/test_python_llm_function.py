@@ -30,11 +30,11 @@ class HobbySuggestion(BaseModel):
 
 
 def get_person_to_backstory_function() -> PythonLLMFunction[PersonBackstory]:
-    return PythonLLMFunction(model_id="gpt-4o", response_model=PersonBackstory)
+    return PythonLLMFunction(model_id="gpt-4o-mini", response_model=PersonBackstory)
 
 
 def get_backstory_to_hobbies_function() -> PythonLLMFunction[HobbySuggestion]:
-    return PythonLLMFunction(model_id="gpt-4o", response_model=HobbySuggestion)
+    return PythonLLMFunction(model_id="gpt-4o-mini", response_model=HobbySuggestion)
 
 
 def test_python_llm_function() -> None:
