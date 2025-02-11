@@ -1,4 +1,5 @@
 import logging
+import time
 from decimal import Decimal
 from typing import Callable, List, Optional, TypeVar
 
@@ -145,15 +146,17 @@ class EVMClient:
         func: Callable[[], TResult], retry_count: int = 3, retry_predicate: Optional[Callable[[TResult], bool]] = None
     ) -> TResult:
         retries_left = retry_count
+        retry_delay_sec = 0.1
         while retries_left > 0:
             try:
+                if retries_left != retry_count:
+                    time.sleep(retry_delay_sec)
                 retries_left -= 1
                 result = func()
                 if retry_predicate is not None and retry_predicate(result):
                     logger.warning(f"Retrying because of predicate. Retries left: {retries_left}")
+                    continue
                 return result
             except Exception:
                 logger.exception(f"Block not found. Retries left: {retries_left}")
-                if retries_left > 0:
-                    continue
         raise RuntimeError("Out of retries.")
