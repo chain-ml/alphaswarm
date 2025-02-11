@@ -12,5 +12,5 @@ def test_get_token_price(default_config: Config) -> None:
     giga = tokens_config["GIGA"]
     sol = tokens_config["SOL"]
 
-    price = client.get_token_price(giga, sol)
-    assert price > 1000, "A Sol is worth many thousands of GIGA."
+    quote = client.get_token_price(giga, sol)
+    assert quote.price > 1000, "A Sol is worth many thousands of GIGA."

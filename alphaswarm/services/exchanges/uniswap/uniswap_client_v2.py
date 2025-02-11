@@ -1,12 +1,11 @@
 from __future__ import annotations
 
 import logging
-from decimal import Decimal
 from typing import List, Tuple
 
 from alphaswarm.config import ChainConfig, Config, TokenInfo
 from alphaswarm.services.chains.evm import ZERO_ADDRESS
-from alphaswarm.services.exchanges.base import Slippage
+from alphaswarm.services.exchanges.base import Slippage, TokenPrice
 from alphaswarm.services.exchanges.uniswap.constants_v2 import (
     UNISWAP_V2_DEPLOYMENTS,
     UNISWAP_V2_FACTORY_ABI,
@@ -40,13 +39,11 @@ class UniswapClientV2(UniswapClientBase):
         approval_receipt = self._approve_token_spending(token_in, wei_in)
 
         # Get price from V2 pair to calculate minimum output
-        price = self._get_token_price(token_out=token_out, token_in=token_in)
-        if not price:
-            raise ValueError(f"No V2 price found for {token_out.symbol}/{token_in.symbol}")
+        quote = self._get_token_price(token_out=token_out, token_in=token_in)
 
         # Calculate expected output
         input_amount_decimal = token_in.convert_from_wei(wei_in)
-        expected_output_decimal = input_amount_decimal * price
+        expected_output_decimal = input_amount_decimal * quote.price
         logger.info(f"Expected output: {expected_output_decimal} {token_out.symbol}")
 
         # Convert expected output to raw integer and apply slippage
@@ -73,7 +70,7 @@ class UniswapClientV2(UniswapClientBase):
         swap_receipt = self._evm_client.process(swap, self.get_signer())
         return [approval_receipt, swap_receipt]
 
-    def _get_token_price(self, token_out: TokenInfo, token_in: TokenInfo) -> Decimal:
+    def _get_token_price(self, token_out: TokenInfo, token_in: TokenInfo) -> TokenPrice:
         # Create factory contract instance
         factory_contract = self._web3.eth.contract(address=self._factory, abi=UNISWAP_V2_FACTORY_ABI)
 
@@ -90,7 +87,7 @@ class UniswapClientV2(UniswapClientBase):
         pair = fetch_pair_details(self._web3, pair_address, reverse_token_order=reverse)
         price = pair.get_current_mid_price()
 
-        return price
+        return TokenPrice(price=price, pool=pair.address)
 
     def _get_markets_for_tokens(self, tokens: List[TokenInfo]) -> List[Tuple[TokenInfo, TokenInfo]]:
         """Get all V2 pairs between the provided tokens."""

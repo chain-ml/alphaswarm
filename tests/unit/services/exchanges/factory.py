@@ -5,7 +5,7 @@ from typing import List, Tuple
 import pytest
 
 from alphaswarm.config import Config, TokenInfo, ChainConfig
-from alphaswarm.services.exchanges import DEXClient, DEXFactory, SwapResult
+from alphaswarm.services.exchanges import DEXClient, DEXFactory, SwapResult, TokenPrice
 
 
 class MockDex(DEXClient):
@@ -21,7 +21,7 @@ class MockDex(DEXClient):
     def get_markets_for_tokens(self, tokens: List[TokenInfo]) -> List[Tuple[TokenInfo, TokenInfo]]:
         raise NotImplementedError("For test only")
 
-    def get_token_price(self, token_out: TokenInfo, token_in: TokenInfo) -> Decimal:
+    def get_token_price(self, token_out: TokenInfo, token_in: TokenInfo) -> TokenPrice:
         raise NotImplementedError("For test only")
 
     def __init__(self, chain_config: ChainConfig) -> None:

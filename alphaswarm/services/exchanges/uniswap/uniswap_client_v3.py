@@ -6,7 +6,7 @@ from typing import Any, Dict, List, Optional, Self, Tuple, Union
 
 from alphaswarm.config import ChainConfig, Config, TokenInfo, UniswapV3Settings
 from alphaswarm.services.chains.evm import ZERO_ADDRESS, EVMClient, EVMContract, EVMSigner
-from alphaswarm.services.exchanges.base import Slippage
+from alphaswarm.services.exchanges.base import Slippage, TokenPrice
 from alphaswarm.services.exchanges.uniswap.constants_v3 import (
     UNISWAP_V3_DEPLOYMENTS,
     UNISWAP_V3_FACTORY_ABI,
@@ -205,9 +205,10 @@ class UniswapClientV3(UniswapClientBase):
 
         return [approval_receipt, swap_receipt]
 
-    def _get_token_price(self, token_out: TokenInfo, token_in: TokenInfo) -> Decimal:
+    def _get_token_price(self, token_out: TokenInfo, token_in: TokenInfo) -> TokenPrice:
         pool = self._get_pool(token_out, token_in)
-        return self._get_token_price_from_pool(token_out, pool)
+        price = self._get_token_price_from_pool(token_out, pool)
+        return TokenPrice(price=price, pool=pool.address)
 
     @staticmethod
     def _get_token_price_from_pool(token_out: TokenInfo, pool: PoolContract) -> Decimal:

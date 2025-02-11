@@ -1,20 +1,13 @@
 import logging
 from datetime import UTC, datetime
-from decimal import Decimal
 from typing import List, Optional
 
 from alphaswarm.config import Config
-from alphaswarm.services.exchanges import DEXFactory
+from alphaswarm.services.exchanges import DEXFactory, TokenPrice
 from pydantic.dataclasses import dataclass
 from smolagents import Tool
 
 logger = logging.getLogger(__name__)
-
-
-@dataclass
-class TokenPrice:
-    price: Decimal
-    source: str
 
 
 @dataclass
@@ -83,7 +76,8 @@ class GetTokenPriceTool(Tool):
                 dex = DEXFactory.create(dex_name=venue, config=self.config, chain=chain)
 
                 price = dex.get_token_price(token_out_info, token_in_info)
-                prices.append(TokenPrice(price=price, source=venue))
+                price.source = venue
+                prices.append(price)
             except Exception:
                 logger.exception(f"Error getting price from {venue}")
 

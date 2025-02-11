@@ -10,6 +10,13 @@ from hexbytes import HexBytes
 
 
 @dataclass
+class TokenPrice:
+    price: Decimal
+    pool: str
+    source: str = ""
+
+
+@dataclass
 class SwapResult:
     success: bool
     amount_out: Decimal
@@ -86,7 +93,7 @@ class DEXClient(ABC):
         return self._chain_config
 
     @abstractmethod
-    def get_token_price(self, token_out: TokenInfo, token_in: TokenInfo) -> Decimal:
+    def get_token_price(self, token_out: TokenInfo, token_in: TokenInfo) -> TokenPrice:
         """Get price/conversion rate for the pair of tokens.
 
         The price is returned in terms of token_out/token_in (how much token out per token in).
