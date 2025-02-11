@@ -24,6 +24,7 @@ class ExecuteTokenSwapTool(Tool):
             "description": "The address of the token being sold (in the pool)",
         },
         "amount_in": {"type": "number", "description": "The amount token_in to be sold", "required": True},
+        "pool": {"type": "string", "description": "Pool address, usually coming from the quote", "required": True},
         "chain": {
             "type": "string",
             "description": "The chain to execute the swap on (e.g., 'ethereum', 'ethereum_sepolia', 'base')",
@@ -53,6 +54,7 @@ class ExecuteTokenSwapTool(Tool):
         token_out: str,
         token_in: str,
         amount_in: Decimal,
+        pool: str,
         chain: str = "ethereum",
         dex_type: str = "uniswap_v3",
         slippage_bps: int = 100,
@@ -76,5 +78,6 @@ class ExecuteTokenSwapTool(Tool):
             token_out=token_out_info,
             token_in=token_in_info,
             amount_in=amount_in,
+            pool=pool,
             slippage_bps=slippage_bps,
         )

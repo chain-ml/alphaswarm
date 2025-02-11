@@ -5,7 +5,7 @@ from typing import List, Tuple
 
 from alphaswarm.config import ChainConfig, TokenInfo
 from alphaswarm.services.chains.evm import ERC20Contract, EVMClient, EVMSigner
-from alphaswarm.services.exchanges.base import DEXClient, SwapResult
+from alphaswarm.services.exchanges.base import DEXClient, SwapResult, TokenPrice
 from eth_typing import ChecksumAddress, HexAddress
 from web3.types import TxReceipt
 
@@ -41,12 +41,19 @@ class UniswapClientBase(DEXClient):
 
     @abstractmethod
     def _swap(
-        self, *, token_out: TokenInfo, token_in: TokenInfo, address: str, wei_in: int, slippage_bps: int
+        self,
+        *,
+        token_out: TokenInfo,
+        token_in: TokenInfo,
+        address: ChecksumAddress,
+        wei_in: int,
+        pool_address: ChecksumAddress,
+        slippage_bps: int,
     ) -> List[TxReceipt]:
         pass
 
     @abstractmethod
-    def _get_token_price(self, token_out: TokenInfo, token_in: TokenInfo) -> Decimal:
+    def _get_token_price(self, token_out: TokenInfo, token_in: TokenInfo) -> TokenPrice:
         pass
 
     @abstractmethod
@@ -98,6 +105,7 @@ class UniswapClientBase(DEXClient):
         token_out: TokenInfo,
         token_in: TokenInfo,
         amount_in: Decimal,
+        pool: str,
         slippage_bps: int = 100,
     ) -> SwapResult:
         logger.info(f"Initiating token swap for {token_in.symbol} to {token_out.symbol}")
@@ -134,6 +142,7 @@ class UniswapClientBase(DEXClient):
             token_in=token_in,
             address=self.wallet_address,
             wei_in=wei_in,
+            pool_address=EVMClient.to_checksum_address(pool),
             slippage_bps=slippage_bps,
         )
 
@@ -166,7 +175,7 @@ class UniswapClientBase(DEXClient):
         tx_receipt = token_contract.approve(self.get_signer(), self._router, raw_amount)
         return tx_receipt
 
-    def get_token_price(self, token_out: TokenInfo, token_in: TokenInfo) -> Decimal:
+    def get_token_price(self, token_out: TokenInfo, token_in: TokenInfo) -> TokenPrice:
         logger.debug(
             f"Getting price for {token_out.symbol}/{token_in.symbol} on {self.chain} using Uniswap {self.version}"
         )

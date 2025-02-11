@@ -10,6 +10,13 @@ from hexbytes import HexBytes
 
 
 @dataclass
+class TokenPrice:
+    price: Decimal
+    pool: str
+    source: str = ""
+
+
+@dataclass
 class SwapResult:
     success: bool
     amount_out: Decimal
@@ -86,7 +93,7 @@ class DEXClient(ABC):
         return self._chain_config
 
     @abstractmethod
-    def get_token_price(self, token_out: TokenInfo, token_in: TokenInfo) -> Decimal:
+    def get_token_price(self, token_out: TokenInfo, token_in: TokenInfo) -> TokenPrice:
         """Get price/conversion rate for the pair of tokens.
 
         The price is returned in terms of token_out/token_in (how much token out per token in).
@@ -109,6 +116,7 @@ class DEXClient(ABC):
         token_out: TokenInfo,
         token_in: TokenInfo,
         amount_in: Decimal,
+        pool: str,
         slippage_bps: int = 100,
     ) -> SwapResult:
         """Execute a token swap on the DEX
@@ -117,6 +125,7 @@ class DEXClient(ABC):
             token_out (TokenInfo): The token to be bought (going out from the pool)
             token_in (TokenInfo): The token to be sold (going into the pool)
             amount_in: Amount of token_in to spend
+            pool (str): Pool to use
             slippage_bps: Maximum allowed slippage in basis points (1 bp = 0.01%)
 
         Returns:

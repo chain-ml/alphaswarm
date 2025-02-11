@@ -6,7 +6,7 @@ from typing import Any, Dict, List, Optional, Self, Tuple, Union
 
 from alphaswarm.config import ChainConfig, Config, TokenInfo, UniswapV3Settings
 from alphaswarm.services.chains.evm import ZERO_ADDRESS, EVMClient, EVMContract, EVMSigner
-from alphaswarm.services.exchanges.base import Slippage
+from alphaswarm.services.exchanges.base import Slippage, TokenPrice
 from alphaswarm.services.exchanges.uniswap.constants_v3 import (
     UNISWAP_V3_DEPLOYMENTS,
     UNISWAP_V3_FACTORY_ABI,
@@ -138,14 +138,20 @@ class UniswapClientV3(UniswapClientBase):
         return self._evm_client.to_checksum_address(UNISWAP_V3_DEPLOYMENTS[self.chain]["factory"])
 
     def _swap(
-        self, token_out: TokenInfo, token_in: TokenInfo, address: str, wei_in: int, slippage_bps: int
+        self,
+        token_out: TokenInfo,
+        token_in: TokenInfo,
+        address: ChecksumAddress,
+        wei_in: int,
+        pool_address: ChecksumAddress,
+        slippage_bps: int,
     ) -> List[TxReceipt]:
         """Execute a swap on Uniswap V3."""
         # Handle token approval and get fresh nonce
         approval_receipt = self._approve_token_spending(token_in, wei_in)
 
         # Build a swap transaction
-        pool = self._get_pool(token_out, token_in)
+        pool = self._get_pool_by_address(pool_address)
         logger.info(f"Using Uniswap V3 pool at address: {pool.address} (raw fee tier: {pool.raw_fee})")
 
         # Get the on-chain price from the pool and reverse if necessary
@@ -205,9 +211,10 @@ class UniswapClientV3(UniswapClientBase):
 
         return [approval_receipt, swap_receipt]
 
-    def _get_token_price(self, token_out: TokenInfo, token_in: TokenInfo) -> Decimal:
+    def _get_token_price(self, token_out: TokenInfo, token_in: TokenInfo) -> TokenPrice:
         pool = self._get_pool(token_out, token_in)
-        return self._get_token_price_from_pool(token_out, pool)
+        price = self._get_token_price_from_pool(token_out, pool)
+        return TokenPrice(price=price, pool=pool.address)
 
     @staticmethod
     def _get_token_price_from_pool(token_out: TokenInfo, pool: PoolContract) -> Decimal:
