@@ -4,11 +4,15 @@ from typing import List
 
 import dotenv
 from smolagents import Tool
+
 from alphaswarm.agent.agent import AlphaSwarmAgent
 from alphaswarm.agent.clients.telegram_bot import TelegramBot
 from alphaswarm.config import Config
 from alphaswarm.tools import GetTokenAddress
-from alphaswarm.tools.alchemy import AlchemyPriceHistoryByAddress, AlchemyPriceHistoryBySymbol
+from alphaswarm.tools.alchemy import (
+    AlchemyPriceHistoryByAddress,
+    AlchemyPriceHistoryBySymbol,
+)
 from alphaswarm.tools.cookie.cookie_metrics import (
     CookieMetricsByContract,
     CookieMetricsBySymbol,
