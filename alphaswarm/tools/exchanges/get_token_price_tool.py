@@ -70,8 +70,8 @@ class GetTokenPriceTool(Tool):
 
         # Get token info and create TokenInfo objects
         chain_config = self.config.get_chain_config(chain)
-        token_out_info = chain_config.tokens[token_out]
-        token_in_info = chain_config.tokens[token_in]
+        token_out_info = chain_config.get_token_info_by_address(token_out)
+        token_in_info = chain_config.get_token_info_by_address(token_in)
 
         logger.debug(f"Token info - Out: {token_out}, In: {token_in}")
 
