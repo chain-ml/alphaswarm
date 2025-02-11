@@ -8,8 +8,16 @@ from alphaswarm.agent.clients.telegram_bot import TelegramBot
 from alphaswarm.config import Config
 from alphaswarm.tools.alchemy import AlchemyPriceHistoryByAddress, AlchemyPriceHistoryBySymbol
 from alphaswarm.tools.exchanges import GetTokenPriceTool
+from alphaswarm.tools import GetTokenAddress
 from alphaswarm.tools.price_tool import PriceTool
 from smolagents import Tool
+from alphaswarm.tools.cookie.cookie_metrics import (
+    CookieMetricsByContract,
+    CookieMetricsBySymbol,
+    CookieMetricsByTwitter,
+    CookieMetricsPaged,
+)
+from alphaswarm.tools.exchanges import ExecuteTokenSwapTool, GetTokenPriceTool
 
 logging.getLogger("smolagents").setLevel(logging.ERROR)
 
@@ -20,9 +28,15 @@ async def main() -> None:
 
     tools: List[Tool] = [
         PriceTool(),
+        GetTokenAddress(config),
         GetTokenPriceTool(config),
         AlchemyPriceHistoryByAddress(),
         AlchemyPriceHistoryBySymbol(),
+        CookieMetricsByContract(),
+        CookieMetricsBySymbol(),
+        CookieMetricsByTwitter(),
+        CookieMetricsPaged(),
+        ExecuteTokenSwapTool(config),
     ]  # Add your tools here
 
     agent = AlphaSwarmAgent(tools=tools)
