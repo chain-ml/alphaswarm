@@ -4,7 +4,7 @@ from typing import Any
 import dotenv
 from pydantic import BaseModel, Field
 
-from alphaswarm.core.llm import LLMFunctionFromPromptFiles
+from alphaswarm.core.llm import LLMFunctionTemplated
 
 dotenv.load_dotenv()
 
@@ -14,8 +14,8 @@ class SimpleResponse(BaseModel):
     number: int = Field(..., ge=1, le=10, description="The random number between 1 and 10.")
 
 
-def get_llm_function_from_files(**kwargs: Any) -> LLMFunctionFromPromptFiles[SimpleResponse]:
-    return LLMFunctionFromPromptFiles(
+def get_llm_function_from_files(**kwargs: Any) -> LLMFunctionTemplated[SimpleResponse]:
+    return LLMFunctionTemplated.from_files(
         model_id="anthropic/claude-3-haiku-20240307",
         response_model=SimpleResponse,
         **kwargs,
