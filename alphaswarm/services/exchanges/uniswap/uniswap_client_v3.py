@@ -138,14 +138,20 @@ class UniswapClientV3(UniswapClientBase):
         return self._evm_client.to_checksum_address(UNISWAP_V3_DEPLOYMENTS[self.chain]["factory"])
 
     def _swap(
-        self, token_out: TokenInfo, token_in: TokenInfo, address: str, wei_in: int, slippage_bps: int
+        self,
+        token_out: TokenInfo,
+        token_in: TokenInfo,
+        address: ChecksumAddress,
+        wei_in: int,
+        pool_address: ChecksumAddress,
+        slippage_bps: int,
     ) -> List[TxReceipt]:
         """Execute a swap on Uniswap V3."""
         # Handle token approval and get fresh nonce
         approval_receipt = self._approve_token_spending(token_in, wei_in)
 
         # Build a swap transaction
-        pool = self._get_pool(token_out, token_in)
+        pool = self._get_pool_by_address(pool_address)
         logger.info(f"Using Uniswap V3 pool at address: {pool.address} (raw fee tier: {pool.raw_fee})")
 
         # Get the on-chain price from the pool and reverse if necessary

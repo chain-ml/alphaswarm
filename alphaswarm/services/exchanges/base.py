@@ -116,6 +116,7 @@ class DEXClient(ABC):
         token_out: TokenInfo,
         token_in: TokenInfo,
         amount_in: Decimal,
+        pool: str,
         slippage_bps: int = 100,
     ) -> SwapResult:
         """Execute a token swap on the DEX
@@ -124,6 +125,7 @@ class DEXClient(ABC):
             token_out (TokenInfo): The token to be bought (going out from the pool)
             token_in (TokenInfo): The token to be sold (going into the pool)
             amount_in: Amount of token_in to spend
+            pool (str): Pool to use
             slippage_bps: Maximum allowed slippage in basis points (1 bp = 0.01%)
 
         Returns:

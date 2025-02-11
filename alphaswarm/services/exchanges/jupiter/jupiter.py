@@ -64,6 +64,7 @@ class JupiterClient(DEXClient):
         token_out: TokenInfo,
         token_in: TokenInfo,
         amount_in: Decimal,
+        pool: str,
         slippage_bps: int = 100,
     ) -> SwapResult:
         raise NotImplementedError("Jupiter swap functionality is not yet implemented")

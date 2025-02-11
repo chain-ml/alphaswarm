@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+from decimal import Decimal
 from typing import List, Tuple
 
 from alphaswarm.config import ChainConfig, Config, TokenInfo
@@ -32,18 +33,24 @@ class UniswapClientV2(UniswapClientBase):
         return self._evm_client.to_checksum_address(UNISWAP_V2_DEPLOYMENTS[self.chain]["factory"])
 
     def _swap(
-        self, token_out: TokenInfo, token_in: TokenInfo, address: str, wei_in: int, slippage_bps: int
+        self,
+        token_out: TokenInfo,
+        token_in: TokenInfo,
+        address: ChecksumAddress,
+        wei_in: int,
+        pool_address: ChecksumAddress,
+        slippage_bps: int,
     ) -> List[TxReceipt]:
         """Execute a swap on Uniswap V2."""
         # Handle token approval and get fresh nonce
         approval_receipt = self._approve_token_spending(token_in, wei_in)
 
         # Get price from V2 pair to calculate minimum output
-        quote = self._get_token_price(token_out=token_out, token_in=token_in)
+        price = self._get_price_from_pool(pair_address=pool_address, token_out=token_out, token_in=token_in)
 
         # Calculate expected output
         input_amount_decimal = token_in.convert_from_wei(wei_in)
-        expected_output_decimal = input_amount_decimal * quote.price
+        expected_output_decimal = input_amount_decimal * price
         logger.info(f"Expected output: {expected_output_decimal} {token_out.symbol}")
 
         # Convert expected output to raw integer and apply slippage
@@ -83,11 +90,16 @@ class UniswapClientV2(UniswapClientBase):
 
         # Get V2 pair details - if reverse false, mid_price = token1_amount / token0_amount
         # token0 of the pair has the lowest address. Reverse if needed
+        price = self._get_price_from_pool(pair_address=pair_address, token_out=token_out, token_in=token_in)
+        return TokenPrice(price=price, pool=pair_address)
+
+    def _get_price_from_pool(
+        self, *, pair_address: ChecksumAddress, token_out: TokenInfo, token_in: TokenInfo
+    ) -> Decimal:
         reverse = token_out.checksum_address.lower() < token_in.checksum_address.lower()
         pair = fetch_pair_details(self._web3, pair_address, reverse_token_order=reverse)
         price = pair.get_current_mid_price()
-
-        return TokenPrice(price=price, pool=pair.address)
+        return price
 
     def _get_markets_for_tokens(self, tokens: List[TokenInfo]) -> List[Tuple[TokenInfo, TokenInfo]]:
         """Get all V2 pairs between the provided tokens."""
