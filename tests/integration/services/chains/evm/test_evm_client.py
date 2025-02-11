@@ -39,7 +39,7 @@ def test_get_block_latest(evm_client: EVMClient, chain: str) -> None:
     assert result["timestamp"] > 0
 
 
-@pytest.mark.parametrize("chain", all_chains)
+@pytest.mark.parametrize("chain", main_net_chains)
 def test_get_transaction_count(evm_client: EVMClient, chain: str, binance_hot_wallet: ChecksumAddress) -> None:
     result = evm_client._client.eth.get_transaction_count(binance_hot_wallet)
-    print(result)
+    assert result > 0
