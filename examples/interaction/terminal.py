@@ -6,6 +6,7 @@ import dotenv
 from alphaswarm.agent.agent import AlphaSwarmAgent
 from alphaswarm.agent.clients import TerminalClient
 from alphaswarm.config import CONFIG_PATH, Config
+from alphaswarm.tools import GetTokenAddress
 from alphaswarm.tools.alchemy import AlchemyPriceHistoryByAddress, AlchemyPriceHistoryBySymbol
 from alphaswarm.tools.cookie.cookie_metrics import (
     CookieMetricsByContract,
@@ -34,6 +35,7 @@ async def main() -> None:
 
     tools: List[Tool] = [
         PriceTool(),
+        GetTokenAddress(config),
         GetTokenPriceTool(config),
         AlchemyPriceHistoryByAddress(),
         AlchemyPriceHistoryBySymbol(),
@@ -62,7 +64,9 @@ async def main() -> None:
     # Optional hints
     hints = read_text_file_to_string(CONFIG_PATH / "trading_strategy_agent_hints.txt")
 
-    agent = AlphaSwarmAgent(tools=tools, system_prompt=system_prompt, hints=hints)
+    agent = AlphaSwarmAgent(
+        tools=tools, model_id="anthropic/claude-3-5-sonnet-20241022", system_prompt=system_prompt, hints=hints
+    )
 
     terminal = TerminalClient("AlphaSwarm terminal", agent)
     await asyncio.gather(

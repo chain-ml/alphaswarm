@@ -22,7 +22,11 @@ def test_get_token_price_tool(
 ) -> None:
     config = default_config
     tool = GetTokenPriceTool(config)
-    result = tool.forward(token_out=token_out, token_in=token_in, dex_type=dex, chain=chain)
+
+    chaing_config = config.get_chain_config(chain)
+    token_info_out = chaing_config.get_token_info(token_out)
+    token_info_in = chaing_config.get_token_info(token_in)
+    result = tool.forward(token_out=token_info_out.address, token_in=token_info_in.address, dex_type=dex, chain=chain)
 
     assert len(result.prices) > 0, "at least one price is expected"
     item = result.prices[0]

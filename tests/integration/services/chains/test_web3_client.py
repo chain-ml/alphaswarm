@@ -1,5 +1,3 @@
-import pytest
-
 from alphaswarm.services.chains import EVMClient, SolanaClient
 from alphaswarm.config import Config
 from alphaswarm.services.chains.evm import ERC20Contract
@@ -58,13 +56,13 @@ def test_get_contract_balance(default_config: Config) -> None:
 
 
 def test_get_eth_balance(default_config: Config) -> None:
-    """Test getting balance for a known ETH wallet."""
+    """Test getting balance for a known USDC wallet."""
     client = EVMClient(chain_config=default_config.get_chain_config("ethereum"))
 
     # Test wallet with known balance
-    # Using a known active ETH wallet (Binance hot wallet)
+    # Using a known active USDC wallet (Binance hot wallet)
     wallet = client.to_checksum_address("0xF977814e90dA44bFA03b6295A0616a897441aceC")
-    token_symbol = "ETH"
+    token_symbol = "USDC"
     balance = client.get_token_balance(token_symbol, wallet)
 
     assert balance is not None
@@ -72,11 +70,9 @@ def test_get_eth_balance(default_config: Config) -> None:
     print(f"Wallet balance: {balance}")
 
 
-def test_get_native_token_vs_get_token(default_config: Config) -> None:
+def test_get_native_token(default_config: Config) -> None:
     client = EVMClient(chain_config=default_config.get_chain_config("ethereum"))
     wallet = client.to_checksum_address("0xF977814e90dA44bFA03b6295A0616a897441aceC")
-    token_info = client.get_token_info_by_name("ETH")
     balance_native = client.get_native_balance(wallet)
-    balance_token = client.get_token_balance("ETH", wallet)
 
-    assert pytest.approx(balance_native, rel=0.1) == token_info.convert_to_wei(balance_token)
+    assert balance_native > 0

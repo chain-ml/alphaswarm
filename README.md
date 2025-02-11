@@ -35,17 +35,18 @@ AlphaSwarm is a starter kit for building LLM-powered AI agents that interpret na
 ## Prerequisites
 
 - Python 3.11 or higher
-- Poetry (package manager)
+   - Download and install Python from [here](https://www.python.org/downloads/)
+   - Verify installation with `python --version`
+- [Poetry](https://python-poetry.org/docs/) (package manager)
+   - Install Poetry with `pipx install poetry`
+   - Verify installation with `poetry --version`
 - Basic understanding of crypto trading concepts
 
 ## Getting Started
 
 ### 1. Installation
 
-First, ensure you have all prerequisites installed:
-- Python 3.11 or higher
-- Poetry (package manager)
-- Basic understanding of crypto trading concepts
+First, ensure you have all prerequisites installed, including Python and poetry.
 
 Then follow these steps:
 
@@ -55,12 +56,7 @@ git clone https://github.com/chain-ml/alphaswarm.git
 cd alphaswarm
 ```
 
-2. Install Poetry if you haven't already:
-```bash
-pipx install poetry
-```
-
-3. Install dependencies:
+2. Install dependencies:
 ```bash
 # For basic installation
 poetry install
@@ -76,16 +72,17 @@ Note: Poetry manages its own virtual environments, so a separate virtual environ
 Before running the framework, you'll need to obtain several API keys:
 
 1. **LLM API Key**:
-   - [Anthropic API Key](https://www.anthropic.com/)
-   - OpenAI coming soon...
+   - [Anthropic API Key](https://docs.anthropic.com/en/api/getting-started) if using Claude models (default)
+   - [OpenAI API Key](https://platform.openai.com/docs/quickstart) if using GPT models
+   - or any other LLM provider [supported by LiteLLM](https://models.litellm.ai/)
 
 2. **Blockchain Access**:
    - [Alchemy API Key](https://www.alchemy.com/) (required for blockchain data)
    - RPC URLs from [Alchemy](https://www.alchemy.com/) or [Infura](https://www.infura.io/) or another RPC provider of choice
 
 3. **Optional - Telegram Bot** (for notifications):
-   - Create a bot through [BotFather](https://t.me/botfather)
-   - Get your chat ID by messaging `/id` to your bot
+   - Create a bot through [BotFather](https://t.me/botfather) with `/newbot` and securely save the bot token
+   - To get chat ID, run `examples/telegram_bot.py` and message `/start` or `/id` to your bot
 
 ### 3. Environment Configuration
 
@@ -99,7 +96,9 @@ cp .env.example .env
 #### Required environment variables:
 
 LLM Configuration (at least one required):
-- `ANTHROPIC_API_KEY`: Your Anthropic API key for using Claude models
+- `ANTHROPIC_API_KEY`: Your Anthropic API key if using Claude models (default)
+- `OPENAI_API_KEY`: Your OpenAI API key if using GPT models
+- For any other provider ensure to follow the same pattern
 
 Blockchain Access:
 - `ALCHEMY_API_KEY`: Your Alchemy API key for accessing blockchain data
@@ -143,7 +142,6 @@ Logging configuration:
 The framework uses YAML configuration files to define trading venues, token pairs, and other application-specific and trading-related settings. The main configuration file is `config/default.yaml`.
 
 Key configuration sections:
-- **LLM Configuration**: Model settings, provider details, and parameters
 - **Network Environments**: Production and test network configurations
 - **Trading Venues**: Supported DEXs with their supported pairs and settings for each chain
 - **Chain Configuration**: 
@@ -156,59 +154,7 @@ Note: Always verify contract addresses from official sources.
 
 ## Usage
 
-### Quick Start
-
-In all examples below, set your Anthropic API key in the `.env` file or change the model ID to an OpenAI model if using openAI.
-
-#### Basic Example: Quote for a token pair
-
-[Basic Example 01 - Quote](examples/basic_example_01_quote.py) is a first "hello world" example that:
-- Initializes the Alphaswarm agent with a token price checking tool
-- Uses Claude 3 Sonnet to process natural language queries
-- Connects to Base network to fetch real-time token prices
-- Demonstrates how to query token pair prices (AIXBT/USDC) using natural language
-
-Run the example:
-```bash
-# Make sure you've configured your .env file first!
-python examples/basic_example_01_quote.py
-```
-
-#### Basic Example: Execute a token swap
-
-[Basic Example 02 - Swap](examples/basic_example_02_swap.py) is a follow up example that:
-- Initializes the Alphaswarm agent with a token swap tool
-- Uses Claude 3 Sonnet to process natural language queries
-- Connects to Ethereum Sepolia network to execute a token swap
-- Demonstrates how to initiate a token swap (3 USDC for WETH) using natural language
-
-Run the example:
-```bash
-# Make sure you've configured your .env file first!
-python examples/basic_example_02_swap.py
-```
-
-#### Strategy Example: Check trading strategy and optionally execute it
-
-[Basic Example 03 - Strategy](examples/basic_example_03_strategy.py) dives into the optional execution of a trading strategy given input signals that:
-- Initializes the Alphaswarm agent with both strategy analysis and token swap tools
-- Uses Claude 3 Sonnet to process natural language queries
-- Defines a simple trading strategy: Swap 3 USDC for WETH on Ethereum Sepolia when price below 10000 USDC per WETH
-- Evaluates the trading strategy conditions using real-time market data when triggered
-- Conditionally executes trades only when strategy conditions are met
-
-Run the example:
-```bash
-# Make sure you've configured your .env file first!
-python examples/basic_example_03_strategy.py
-```
-
-### More Examples
-
-Check out the `examples/` directory for more complete examples:
-- `examples/terminal.py` - Command-line interface usage
-- `examples/telegram_bot.py` - Setting up Telegram notifications
-- `examples/cron.py` - Running strategies on a schedule
+See [examples/README.md](examples/README.md) for more information about usage examples.
 
 ## Development
 
