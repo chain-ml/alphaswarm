@@ -14,6 +14,15 @@ class AlphaSwarmAgent:
         system_prompt: Optional[str] = None,
         hints: Optional[str] = None,
     ) -> None:
+        """
+        Initialize the AlphaSwarmAgent.
+
+        Args:
+            tools: A sequence of tools to use.
+            model_id: The LiteLLM model ID of the LLM to use.
+            system_prompt: Optional system prompt to use. If not provided, the default system prompt will be used.
+            hints: Optional additional hints to provide to the agent.
+        """
 
         system_prompt = system_prompt or CODE_SYSTEM_PROMPT
         system_prompt = system_prompt + "\n" + hints if hints else system_prompt

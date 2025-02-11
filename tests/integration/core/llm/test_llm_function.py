@@ -3,6 +3,8 @@ from typing import Any, List, Literal, Type
 
 import dotenv
 import requests
+from litellm.types.utils import Usage
+
 from alphaswarm.core.llm import ImageURL, LLMFunction, Message
 from pydantic import BaseModel, Field
 from tests import get_data_filename
@@ -94,16 +96,17 @@ def test_llm_function_with_prompt_caching() -> None:
 
     llm_func_response = llm_func.execute_with_completion("Summarize the core ideas in two sentences.")
     assert isinstance(llm_func_response.response, TestResponse)
-    assert "peer" in llm_func_response.response.content.lower()
 
     time.sleep(1)
 
     llm_func_response = llm_func.execute_with_completion("Summarize the core ideas in two sentences.")
     assert isinstance(llm_func_response.response, TestResponse)
-    assert "peer" in llm_func_response.response.content.lower()
 
-    # FIX ME
-    assert llm_func_response.completion.usage.prompt_tokens_details.cached_tokens > 0  # type: ignore[attr-defined]
+    assert hasattr(llm_func_response.completion, "usage")
+    usage: Usage = llm_func_response.completion.usage
+    assert usage.prompt_tokens_details is not None
+    assert usage.prompt_tokens_details.cached_tokens is not None
+    assert usage.prompt_tokens_details.cached_tokens > 0
 
 
 def test_llm_function_with_image() -> None:

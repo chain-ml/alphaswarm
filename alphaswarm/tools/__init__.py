@@ -1,1 +1,2 @@
 from .strategy_analysis import GenericStrategyAnalysisTool
+from .get_token_address import GetTokenAddress

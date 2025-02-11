@@ -12,18 +12,18 @@ from hexbytes import HexBytes
 @dataclass
 class SwapResult:
     success: bool
-    base_amount: Decimal
-    quote_amount: Decimal
+    amount_out: Decimal
+    amount_in: Decimal
     tx_hash: Optional[str] = None
     error: Optional[str] = None
 
     @classmethod
-    def build_error(cls, error: str, base_amount: Decimal) -> SwapResult:
-        return cls(success=False, base_amount=base_amount, quote_amount=Decimal(0), error=error)
+    def build_error(cls, error: str, amount_in: Decimal) -> SwapResult:
+        return cls(success=False, amount_out=Decimal(0), amount_in=amount_in, error=error)
 
     @classmethod
-    def build_success(cls, base_amount: Decimal, quote_amount: Decimal, tx_hash: HexBytes) -> SwapResult:
-        return cls(success=True, base_amount=base_amount, quote_amount=quote_amount, tx_hash=tx_hash.hex())
+    def build_success(cls, amount_out: Decimal, amount_in: Decimal, tx_hash: HexBytes) -> SwapResult:
+        return cls(success=True, amount_out=amount_out, amount_in=amount_in, tx_hash=tx_hash.hex())
 
 
 @dataclass
@@ -86,39 +86,37 @@ class DEXClient(ABC):
         return self._chain_config
 
     @abstractmethod
-    def get_token_price(self, base_token: TokenInfo, quote_token: TokenInfo) -> Decimal:
-        """Get current token price.
+    def get_token_price(self, token_out: TokenInfo, token_in: TokenInfo) -> Decimal:
+        """Get price/conversion rate for the pair of tokens.
 
-        Gets the current price from either Uniswap V2 or V3 pools based on the client version.
-        The price is returned in terms of base/quote (how much quote token per base token).
+        The price is returned in terms of token_out/token_in (how much token out per token in).
 
         Args:
-            base_token (TokenInfo): Base token info (token being priced)
-            quote_token (TokenInfo): Quote token info (denominator token)
+            token_out (TokenInfo): The token to be bought (going out from the pool)
+            token_in (TokenInfo): The token to be sold (going into the pool)
 
         Example:
             eth_token = TokenInfo(address="0x...", decimals=18, symbol="ETH", chain="ethereum")
             usdc_token = TokenInfo(address="0x...", decimals=6, symbol="USDC", chain="ethereum")
-            get_token_price(eth_token, usdc_token)
-            Returns: The price of 1 ETH in USDC
+            get_token_price(token_out=eth_token, token_in=usdc_token)
+            Returns: The amount of ETH for 1 USDC
         """
         pass
 
-    # TODO: using `float` for the amount is potentially dangerous because of precision limitation and rounding issues.
     @abstractmethod
     def swap(
         self,
-        base_token: TokenInfo,
-        quote_token: TokenInfo,
-        quote_amount: Decimal,
+        token_out: TokenInfo,
+        token_in: TokenInfo,
+        amount_in: Decimal,
         slippage_bps: int = 100,
     ) -> SwapResult:
         """Execute a token swap on the DEX
 
         Args:
-            base_token: TokenInfo object for the token being sold
-            quote_token: TokenInfo object for the token being bought
-            quote_amount: Amount of quote_token to spend (output amount)
+            token_out (TokenInfo): The token to be bought (going out from the pool)
+            token_in (TokenInfo): The token to be sold (going into the pool)
+            amount_in: Amount of token_in to spend
             slippage_bps: Maximum allowed slippage in basis points (1 bp = 0.01%)
 
         Returns:
