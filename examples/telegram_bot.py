@@ -19,10 +19,7 @@ from alphaswarm.tools.cookie.cookie_metrics import (
     CookieMetricsByTwitter,
     CookieMetricsPaged,
 )
-from alphaswarm.tools.exchanges import (
-    ExecuteTokenSwapTool, 
-    GetTokenPriceTool
-)
+from alphaswarm.tools.exchanges import ExecuteTokenSwapTool, GetTokenPriceTool
 from alphaswarm.tools.price_tool import PriceTool
 
 logging.getLogger("smolagents").setLevel(logging.ERROR)
