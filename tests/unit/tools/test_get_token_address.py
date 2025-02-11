@@ -15,6 +15,7 @@ def tool(default_config: Config) -> GetTokenAddress:
         ("WETH", "0x4200000000000000000000000000000000000006", "base"),
         ("WETH", "0xfff9976782d46cc05630d1f6ebab18b2324d6b14", "ethereum_sepolia"),
         ("WETH", "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2", "ethereum"),
+        ("GIGA", "63LfDmNb3MQ8mw9MtZ2To9bEA2M71kZUUGq5tiJxcqj9", "solana")
     ],
 )
 def test_get_token_address(symbol: str, expected_address: str, chain: str, tool: GetTokenAddress) -> None:
