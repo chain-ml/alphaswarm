@@ -61,15 +61,12 @@ class JupiterClient(DEXClient):
 
     def swap(
         self,
-        token_out: TokenInfo,
-        token_in: TokenInfo,
-        amount_in: Decimal,
-        pool: str,
+        quote: TokenPrice,
         slippage_bps: int = 100,
     ) -> SwapResult:
         raise NotImplementedError("Jupiter swap functionality is not yet implemented")
 
-    def get_token_price(self, token_out: TokenInfo, token_in: TokenInfo) -> TokenPrice:
+    def get_token_price(self, token_out: TokenInfo, token_in: TokenInfo, amount_in: Decimal) -> TokenPrice:
         # Verify tokens are on Solana
         if not token_out.chain == self.chain or not token_in.chain == self.chain:
             raise ValueError(f"Jupiter only supports Solana tokens. Got {token_out.chain} and {token_in.chain}")
@@ -104,7 +101,7 @@ class JupiterClient(DEXClient):
         logger.debug(f"- Price: {price} {token_out.symbol}/{token_in.symbol}")
         logger.debug(f"- Route: {quote.route_plan}")
 
-        return TokenPrice(price=price, source="jupiter", pool=quote.route_plan_to_string())
+        return TokenPrice(quote_details=quote)
 
     def get_markets_for_tokens(self, tokens: List[TokenInfo]) -> List[Tuple[TokenInfo, TokenInfo]]:
         """Get list of valid trading pairs between the provided tokens.
