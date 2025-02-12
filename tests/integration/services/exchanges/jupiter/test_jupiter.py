@@ -13,4 +13,4 @@ def test_get_token_price(default_config: Config) -> None:
     sol = tokens_config["SOL"]
 
     price = client.get_token_price(giga, sol)
-    assert price > 0
+    assert price > 1000, "A Sol is worth many thousands of GIGA."

@@ -3,13 +3,12 @@ from __future__ import annotations
 import logging
 import os
 from decimal import Decimal
-from typing import Any, Dict, List, Optional, Sequence, Union
+from typing import Any, Dict, List, Optional, Union
 
 import yaml
 from alphaswarm import BASE_PATH
 from eth_typing import ChecksumAddress
 from pydantic.dataclasses import dataclass
-from typing_extensions import deprecated
 from web3 import Web3
 
 logger = logging.getLogger(__name__)
@@ -70,6 +69,17 @@ class ChainConfig:
         if symbol not in self.tokens:
             return None
         return self.tokens[symbol]
+
+    def get_token_info_by_address(self, address: str) -> TokenInfo:
+        """Get token info for an address, raise ValueError if not found"""
+        result = self.get_token_info_by_address_or_none(address)
+        if result is None:
+            raise ValueError(f"Token {address} not found in chain config for {self.chain}")
+        return result
+
+    def get_token_info_by_address_or_none(self, address: str) -> Optional[TokenInfo]:
+        """Get token info from its address, returning None if not found"""
+        return next((token for token in self.tokens.values() if token.address == address), None)
 
 
 @dataclass
@@ -238,23 +248,6 @@ class Config:
         except (KeyError, TypeError):
             return default
 
-    @deprecated("use ChainConfig.get_token_info() instead")
-    def get_token_info(self, *, chain: str, token: str) -> TokenInfo:
-        """Get token info for a symbol, raising an error if not found"""
-        try:
-            values = self._config["chain_config"][chain]["tokens"][token]
-            return TokenInfo(symbol=token, chain=chain, **values)
-        except KeyError:
-            raise ValueError(f"Token {token} not found in chain {chain} config")
-
-    @deprecated("use ChainConfig.get_token_info_or_none() instead")
-    def get_token_info_or_none(self, *, chain: str, token: str) -> Optional[TokenInfo]:
-        """Get token info for a symbol, returning None if not found"""
-        try:
-            return self.get_token_info(chain=chain, token=token)
-        except ValueError:
-            return None
-
     def get_chain_config(self, chain: str) -> ChainConfig:
         values = self._config["chain_config"][chain].copy()
         values["chain"] = chain
@@ -277,46 +270,14 @@ class Config:
         """Get all trading venues configuration"""
         return self._config.get("trading_venues", {})
 
-    def get_trading_venues_for_chain(self, chain: str) -> Optional[Dict[str, Any]]:
+    def get_trading_venues_for_chain(self, chain: str) -> List[str]:
         """Get all trading venues configuration for a chain"""
-        try:
-            return self._config.get("trading_venues", {}).get(chain, {})
-        except KeyError:
-            return None
+        result = []
+        for name, value in self.get_trading_venues().items():
+            if isinstance(value, dict) and value.get(chain) is not None:
+                result.append(name)
 
-    def get_trading_venues_for_token_pair(
-        self, base_token: str, quote_token: str, chain: str, specific_venue: Optional[str] = None
-    ) -> Sequence[str]:
-        """Find all venues that support a given token pair on a chain"""
-        venues: List[str] = []
-
-        # Get token info
-        base_token_info = self.get_token_info_or_none(chain=chain, token=base_token)
-        quote_token_info = self.get_token_info_or_none(chain=chain, token=quote_token)
-
-        if not base_token_info or not quote_token_info:
-            logger.warning(f"Token pair {base_token}/{quote_token} not found in chain {chain} config")
-            return venues
-
-        # Check each venue in trading_venues
-        trading_venues = self.get_trading_venues()
-        for venue_name, venue_config in trading_venues.items():
-            # Skip if not looking for this specific venue
-            if specific_venue and venue_name != specific_venue:
-                continue
-
-            # Skip if venue not supported on this chain
-            if chain not in venue_config:
-                continue
-
-            # Check if the pair is in supported_pairs for this chain
-            chain_venue_config = venue_config[chain]
-            pair_str = f"{base_token}_{quote_token}"
-            supported_pairs = chain_venue_config.get("supported_pairs", [])
-            if pair_str in supported_pairs:
-                venues.append(venue_name)
-
-        return venues
+        return result
 
     def get_venue_uniswap_v2(self, chain: str) -> UniswapV2Venue:
         values = self._config["trading_venues"]["uniswap_v2"][chain]

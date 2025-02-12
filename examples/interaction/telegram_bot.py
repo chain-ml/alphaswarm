@@ -6,8 +6,15 @@ import dotenv
 from alphaswarm.agent.agent import AlphaSwarmAgent
 from alphaswarm.agent.clients.telegram_bot import TelegramBot
 from alphaswarm.config import Config
+from alphaswarm.tools import GetTokenAddress
 from alphaswarm.tools.alchemy import AlchemyPriceHistoryByAddress, AlchemyPriceHistoryBySymbol
-from alphaswarm.tools.exchanges import GetTokenPriceTool
+from alphaswarm.tools.cookie.cookie_metrics import (
+    CookieMetricsByContract,
+    CookieMetricsBySymbol,
+    CookieMetricsByTwitter,
+    CookieMetricsPaged,
+)
+from alphaswarm.tools.exchanges import ExecuteTokenSwapTool, GetTokenPriceTool
 from alphaswarm.tools.price_tool import PriceTool
 from smolagents import Tool
 
@@ -20,12 +27,18 @@ async def main() -> None:
 
     tools: List[Tool] = [
         PriceTool(),
+        GetTokenAddress(config),
         GetTokenPriceTool(config),
         AlchemyPriceHistoryByAddress(),
         AlchemyPriceHistoryBySymbol(),
+        CookieMetricsByContract(),
+        CookieMetricsBySymbol(),
+        CookieMetricsByTwitter(),
+        CookieMetricsPaged(),
+        ExecuteTokenSwapTool(config),
     ]  # Add your tools here
 
-    agent = AlphaSwarmAgent(tools=tools)
+    agent = AlphaSwarmAgent(tools=tools, model_id="anthropic/claude-3-5-sonnet-20241022")
     bot_token = config.get("telegram", {}).get("bot_token")
     tg_bot = TelegramBot(bot_token=bot_token, agent=agent)
 
