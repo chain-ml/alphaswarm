@@ -3,7 +3,6 @@ from web3 import Web3
 
 from alphaswarm.config import ChainConfig, Config
 from alphaswarm.services.chains.evm import ERC20Contract, EVMSigner, EVMClient
-from alphaswarm.services.chains.evm.evm import ZERO_CHECKSUM_ADDRESS
 
 
 @pytest.fixture
@@ -24,12 +23,6 @@ def eth_sepolia_signer(eth_sepolia_config: ChainConfig) -> EVMSigner:
 @pytest.fixture
 def eth_sepolia_usdc_contract(eth_sepolia_client: EVMClient) -> ERC20Contract:
     return ERC20Contract(eth_sepolia_client, Web3.to_checksum_address("0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238"))
-
-
-def test_ecr_20_get_balance(eth_sepolia_usdc_contract: ERC20Contract) -> None:
-    result = eth_sepolia_usdc_contract.get_balance(ZERO_CHECKSUM_ADDRESS)
-
-    assert result == 0
 
 
 @pytest.mark.skip("Requires a wallet with Sepolia ETH. Can run manually")

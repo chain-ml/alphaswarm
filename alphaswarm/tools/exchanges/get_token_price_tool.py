@@ -30,7 +30,7 @@ class GetTokenPriceTool(Tool):
     name = "get_token_price"
     description = (
         "Get the current price of a token pair from available DEXes. "
-        f"Returns a list of {TokenQuote.__name__} object."
+        f"Returns a {TokenPriceResult.__name__} object containing a list of {TokenQuote.__name__} objects."
         "Examples: 'Get the price of 1 ETH in USDC on ethereum', 'Get the price of 1 GIGA in SOL on solana'"
     )
     inputs = {
@@ -45,11 +45,14 @@ class GetTokenPriceTool(Tool):
         "amount_in": {"type": "string", "description": "The amount token_in to be sold, in Token", "required": True},
         "chain": {
             "type": "string",
-            "description": "Blockchain to use. Must be 'solana' for Solana tokens, 'base' for Base tokens, 'ethereum' for Ethereum tokens, 'ethereum_sepolia' for Ethereum Sepolia tokens.",
+            "description": "Blockchain to use. Must be 'solana' for Solana tokens, 'base' for Base tokens, "
+            "'ethereum' for Ethereum tokens, 'ethereum_sepolia' for Ethereum Sepolia tokens.",
+            "enum": ["solana", "base", "ethereum", "ethereum_sepolia"],
         },
         "dex_type": {
             "type": "string",
-            "description": "Type of DEX to use (e.g. 'uniswap_v2', 'uniswap_v3', 'jupiter'). If not provided, will check all available venues.",
+            "description": "Type of DEX to use. If not provided, will check all available venues.",
+            "enum": ["uniswap_v2", "uniswap_v3", "jupiter"],
             "nullable": True,
         },
     }

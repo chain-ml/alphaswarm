@@ -31,7 +31,6 @@ class ExecuteTokenSwapTool(Tool):
     def __init__(self, config: Config, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
         self.config = config
-        # Initialize with None, we'll get the appropriate client when needed
 
     def forward(
         self,
