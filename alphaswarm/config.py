@@ -81,6 +81,10 @@ class ChainConfig:
         """Get token info from its address, returning None if not found"""
         return next((token for token in self.tokens.values() if token.address == address), None)
 
+    def get_token_address_mapping(self) -> Dict[str, str]:
+        """Get a mapping of token symbols to their addresses"""
+        return {token_symbol: token_info.address for token_symbol, token_info in self.tokens.items()}
+
 
 @dataclass
 class UniswapV2Venue:
