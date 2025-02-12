@@ -26,13 +26,17 @@ class ExecuteTokenSwapTool(Tool):
         "amount_in": {"type": "number", "description": "The amount token_in to be sold", "required": True},
         "chain": {
             "type": "string",
-            "description": "The chain to execute the swap on (e.g., 'ethereum', 'ethereum_sepolia', 'base')",
+            "description": "The chain to execute the swap on",
+            "enum": ["solana", "base", "ethereum", "ethereum_sepolia"],
             "nullable": True,
+            "default": "ethereum",
         },
         "dex_type": {
             "type": "string",
-            "description": "The DEX type to use (e.g., 'uniswap_v2', 'uniswap_v3')",
+            "description": "The DEX type to use",
+            "enum": ["uniswap_v2", "uniswap_v3", "jupiter"],
             "nullable": True,
+            "default": "uniswap_v3",
         },
         "slippage_bps": {
             "type": "integer",
@@ -45,7 +49,6 @@ class ExecuteTokenSwapTool(Tool):
     def __init__(self, config: Config, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
         self.config = config
-        # Initialize with None, we'll get the appropriate client when needed
 
     def forward(
         self,
