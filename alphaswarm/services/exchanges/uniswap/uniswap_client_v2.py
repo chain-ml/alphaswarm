@@ -6,7 +6,7 @@ from typing import List, Tuple
 
 from alphaswarm.config import ChainConfig, Config, TokenInfo
 from alphaswarm.services.chains.evm import ZERO_ADDRESS
-from alphaswarm.services.exchanges.base import Slippage
+from alphaswarm.services.exchanges.base import QuoteResult, Slippage
 from alphaswarm.services.exchanges.uniswap.constants_v2 import (
     UNISWAP_V2_DEPLOYMENTS,
     UNISWAP_V2_FACTORY_ABI,
@@ -34,7 +34,7 @@ class UniswapClientV2(UniswapClientBase):
 
     def _swap(
         self,
-        quote: UniswapQuote,
+        quote: QuoteResult[UniswapQuote],
         slippage_bps: int,
     ) -> List[TxReceipt]:
         """Execute a swap on Uniswap V2."""
@@ -42,7 +42,7 @@ class UniswapClientV2(UniswapClientBase):
         token_in = quote.token_in
         token_out = quote.token_out
         amount_in = quote.amount_in
-        pool_address = quote.pool_address
+        pool_address = quote.quote.pool_address
         wei_in = token_in.convert_to_wei(amount_in)
 
         approval_receipt = self._approve_token_spending(token_in, wei_in)
@@ -79,7 +79,9 @@ class UniswapClientV2(UniswapClientBase):
         swap_receipt = self._evm_client.process(swap, self.get_signer())
         return [approval_receipt, swap_receipt]
 
-    def _get_token_price(self, token_out: TokenInfo, token_in: TokenInfo, amount_in: Decimal) -> UniswapQuote:
+    def _get_token_price(
+        self, token_out: TokenInfo, token_in: TokenInfo, amount_in: Decimal
+    ) -> QuoteResult[UniswapQuote]:
         # Create factory contract instance
         factory_contract = self._web3.eth.contract(address=self._factory, abi=UNISWAP_V2_FACTORY_ABI)
 
@@ -93,12 +95,12 @@ class UniswapClientV2(UniswapClientBase):
         # Get V2 pair details - if reverse false, mid_price = token1_amount / token0_amount
         # token0 of the pair has the lowest address. Reverse if needed
         price = self._get_price_from_pool(pair_address=pair_address, token_out=token_out, token_in=token_in)
-        return UniswapQuote(
-            token_in=token_in,
-            token_out=token_out,
-            amount_in=amount_in,
-            amount_out=price * amount_in,  # TODO: substract fees?
+        quote = UniswapQuote(
             pool_address=pair_address,
+        )
+
+        return QuoteResult(
+            quote=quote, token_in=token_in, token_out=token_out, amount_in=amount_in, amount_out=price * amount_in
         )
 
     def _get_price_from_pool(

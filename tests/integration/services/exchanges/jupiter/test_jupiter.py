@@ -1,3 +1,5 @@
+from decimal import Decimal
+
 from alphaswarm.config import Config
 from alphaswarm.services.exchanges.jupiter.jupiter import JupiterClient
 
@@ -12,5 +14,5 @@ def test_get_token_price(default_config: Config) -> None:
     giga = tokens_config["GIGA"]
     sol = tokens_config["SOL"]
 
-    quote = client.get_token_price(giga, sol)
-    assert quote.price > 1000, "A Sol is worth many thousands of GIGA."
+    quote = client.get_token_price(token_out=giga, token_in=sol, amount_in=Decimal(1))
+    assert 10000 > quote.amount_out > 1000, "A Sol is worth many thousands of GIGA."

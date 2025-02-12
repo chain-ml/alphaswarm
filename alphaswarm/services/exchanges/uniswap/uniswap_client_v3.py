@@ -6,7 +6,7 @@ from typing import Any, Dict, List, Optional, Self, Tuple, Union
 
 from alphaswarm.config import ChainConfig, Config, TokenInfo, UniswapV3Settings
 from alphaswarm.services.chains.evm import ZERO_ADDRESS, EVMClient, EVMContract, EVMSigner
-from alphaswarm.services.exchanges.base import Slippage
+from alphaswarm.services.exchanges.base import QuoteResult, Slippage
 from alphaswarm.services.exchanges.uniswap.constants_v3 import (
     UNISWAP_V3_DEPLOYMENTS,
     UNISWAP_V3_FACTORY_ABI,
@@ -139,7 +139,7 @@ class UniswapClientV3(UniswapClientBase):
 
     def _swap(
         self,
-        quote: UniswapQuote,
+        quote: QuoteResult[UniswapQuote],
         slippage_bps: int,
     ) -> List[TxReceipt]:
         """Execute a swap on Uniswap V3."""
@@ -152,7 +152,7 @@ class UniswapClientV3(UniswapClientBase):
         approval_receipt = self._approve_token_spending(token_in, wei_in)
 
         # Build a swap transaction
-        pool = self._get_pool_by_address(quote.pool_address)
+        pool = self._get_pool_by_address(quote.quote.pool_address)
         logger.info(f"Using Uniswap V3 pool at address: {pool.address} (raw fee tier: {pool.raw_fee})")
 
         # Get the on-chain price from the pool and reverse if necessary
@@ -212,15 +212,17 @@ class UniswapClientV3(UniswapClientBase):
 
         return [approval_receipt, swap_receipt]
 
-    def _get_token_price(self, token_out: TokenInfo, token_in: TokenInfo, amount_in: Decimal) -> UniswapQuote:
+    def _get_token_price(
+        self, token_out: TokenInfo, token_in: TokenInfo, amount_in: Decimal
+    ) -> QuoteResult[UniswapQuote]:
         pool = self._get_pool(token_out, token_in)
         price = self._get_token_price_from_pool(token_out, pool)
-        return UniswapQuote(
+        return QuoteResult(
             token_in=token_in,
             token_out=token_out,
             amount_in=amount_in,
             amount_out=price * amount_in,  # TODO: substract fees?
-            pool_address=pool.address,
+            quote=UniswapQuote(pool_address=pool.address),
         )
 
     @staticmethod

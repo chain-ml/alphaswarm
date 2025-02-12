@@ -4,7 +4,7 @@ from decimal import Decimal
 from typing import List, Optional, Union
 
 from alphaswarm.config import Config
-from alphaswarm.services.exchanges import DEXFactory
+from alphaswarm.services.exchanges import DEXFactory, QuoteResult
 from alphaswarm.services.exchanges.jupiter.jupiter import JupiterQuote
 from alphaswarm.services.exchanges.uniswap.uniswap_client_base import UniswapQuote
 from pydantic.dataclasses import dataclass
@@ -18,7 +18,7 @@ class TokenQuote:
     datetime: str
     dex: str
     chain: str
-    quote: Union[UniswapQuote, JupiterQuote]
+    quote: QuoteResult[Union[UniswapQuote, JupiterQuote]]
 
 
 @dataclass

@@ -20,21 +20,6 @@ def eth_client(default_config: Config) -> UniswapClientV3:
     return UniswapClientV3(chain_config=chain_config, settings=default_config.get_venue_settings_uniswap_v3())
 
 
-@pytest.fixture
-def eth_sepolia_client(default_config: Config) -> UniswapClientV3:
-    chain_config = default_config.get_chain_config(chain="ethereum_sepolia")
-    return UniswapClientV3(chain_config=chain_config, settings=default_config.get_venue_settings_uniswap_v3())
-
-
-def test_get_price(base_client: UniswapClientV3) -> None:
-    usdc = base_client.chain_config.get_token_info("USDC")
-    weth = base_client.chain_config.get_token_info("WETH")
-    quote_usdc_per_weth = base_client.get_token_price(token_out=usdc, token_in=weth)
-
-    print(f"1 {weth.symbol} is {quote_usdc_per_weth.price} {usdc.symbol}")
-    assert quote_usdc_per_weth.price > 1000, "A WETH is worth many thousands of USDC"
-
-
 def test_quote_from_pool(base_client: UniswapClientV3) -> None:
     pool = base_client._get_pool_by_address(BASE_WETH_USDC_005)
     usdc: TokenInfo = base_client.chain_config.get_token_info("USDC")
@@ -90,17 +75,40 @@ def test_get_markets_for_tokens(eth_client: UniswapClientV3) -> None:
     assert quote_token.chain == eth_client.chain
 
 
-@pytest.mark.skip("Needs a wallet with USDC to perform the swap to WETH. Run manually")
-def test_swap_eth_sepolia(eth_sepolia_client: UniswapClientV3) -> None:
-    usdc = eth_sepolia_client.chain_config.get_token_info("USDC")
-    weth = eth_sepolia_client.chain_config.get_token_info("WETH")
+@pytest.fixture
+def client(default_config: Config, chain: str) -> UniswapClientV3:
+    return UniswapClientV3.from_config(default_config, chain)
 
-    pool = eth_sepolia_client._get_pool(usdc, weth)
-    print(f"find pool {pool.address}")
 
-    quote = eth_sepolia_client._get_token_price_from_pool(token_out=weth, pool=pool)
-    print(f"1 {usdc.symbol} is {quote} {weth.symbol}")
+chains = [
+    "ethereum",
+    "ethereum_sepolia",
+    "base",
+    # "base_sepolia",
+]
 
-    # Buy X Weth for 1 USDC
-    result = eth_sepolia_client.swap(token_out=weth, token_in=usdc, amount_in=Decimal(100), pool=pool.address)
+
+@pytest.mark.parametrize("chain", chains)
+def test_quote_weth_to_usdc(client: UniswapClientV3, chain: str) -> None:
+    usdc = client.chain_config.get_token_info("USDC")
+    weth = client.chain_config.get_token_info("WETH")
+    quote = client.get_token_price(token_out=usdc, token_in=weth, amount_in=Decimal("0.01"))
+    print(quote)
+    assert 10_000 > quote.amount_out > 10
+
+
+@pytest.mark.skip("Need a funded wallet.")
+@pytest.mark.parametrize("chain", chains)
+def test_swap_weth_to_usdc(client: UniswapClientV3, chain: str) -> None:
+    usdc = client.chain_config.get_token_info("USDC")
+    weth = client.chain_config.get_token_info("WETH")
+    amount_in = Decimal("0.0001")
+
+    quote = client.get_token_price(token_out=usdc, token_in=weth, amount_in=amount_in)
+    assert quote.amount_out > amount_in, "1 USDC is worth a fraction of WETH"
+
+    result = client.swap(quote)
     print(result)
+    assert result.success
+    assert result.amount_in == amount_in
+    assert result.amount_out == pytest.approx(quote.amount_out, rel=Decimal("0.05"))

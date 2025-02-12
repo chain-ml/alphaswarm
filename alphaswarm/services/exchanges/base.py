@@ -8,12 +8,18 @@ from typing import Any, Generic, List, Optional, Tuple, Type, TypeGuard, TypeVar
 from alphaswarm.config import ChainConfig, Config, TokenInfo
 from hexbytes import HexBytes
 
+T = TypeVar("T", bound="DEXClient")
 TQuote = TypeVar("TQuote")
 
 
 @dataclass
-class TokenPrice:
-    quote_details: Any
+class QuoteResult(Generic[TQuote]):
+    quote: TQuote
+
+    token_in: TokenInfo
+    token_out: TokenInfo
+    amount_in: Decimal
+    amount_out: Decimal
 
 
 @dataclass
@@ -73,9 +79,6 @@ class Slippage:
         return f"Slippage(bps={self.bps})"
 
 
-T = TypeVar("T", bound="DEXClient")
-
-
 class DEXClient(Generic[TQuote], ABC):
     """Base class for DEX clients"""
 
@@ -94,7 +97,7 @@ class DEXClient(Generic[TQuote], ABC):
         return self._chain_config
 
     @abstractmethod
-    def get_token_price(self, token_out: TokenInfo, token_in: TokenInfo, amount_in: Decimal) -> TQuote:
+    def get_token_price(self, token_out: TokenInfo, token_in: TokenInfo, amount_in: Decimal) -> QuoteResult[TQuote]:
         """Get price/conversion rate for the pair of tokens.
 
         The price is returned in terms of token_out/token_in (how much token out per token in).
@@ -115,7 +118,7 @@ class DEXClient(Generic[TQuote], ABC):
     @abstractmethod
     def swap(
         self,
-        quote: TQuote,
+        quote: QuoteResult[TQuote],
         slippage_bps: int = 100,
     ) -> SwapResult:
         """Execute a token swap on the DEX
@@ -165,5 +168,5 @@ class DEXClient(Generic[TQuote], ABC):
         if self.is_quote(value):
             raise TypeError(f"Expected {self._quote_type} but got {type(value)}")
 
-    def is_quote(self, value: Any) -> TypeGuard[TQuote]:
-        return isinstance(value, self._quote_type)
+    def is_quote(self, value: Any) -> TypeGuard[QuoteResult[TQuote]]:
+        return isinstance(value, QuoteResult) and isinstance(value.quote, self._quote_type)

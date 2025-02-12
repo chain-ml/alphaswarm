@@ -8,7 +8,7 @@ from urllib.parse import urlencode
 import requests
 from alphaswarm.config import ChainConfig, Config, JupiterSettings, JupiterVenue, TokenInfo
 from alphaswarm.services import ApiException
-from alphaswarm.services.exchanges.base import DEXClient, SwapResult
+from alphaswarm.services.exchanges.base import DEXClient, QuoteResult, SwapResult
 from pydantic import BaseModel, Field
 from pydantic.dataclasses import dataclass
 
@@ -61,12 +61,14 @@ class JupiterClient(DEXClient[JupiterQuote]):
 
     def swap(
         self,
-        quote: JupiterQuote,
+        quote: QuoteResult[JupiterQuote],
         slippage_bps: int = 100,
     ) -> SwapResult:
         raise NotImplementedError("Jupiter swap functionality is not yet implemented")
 
-    def get_token_price(self, token_out: TokenInfo, token_in: TokenInfo, amount_in: Decimal) -> JupiterQuote:
+    def get_token_price(
+        self, token_out: TokenInfo, token_in: TokenInfo, amount_in: Decimal
+    ) -> QuoteResult[JupiterQuote]:
         # Verify tokens are on Solana
         if not token_out.chain == self.chain or not token_in.chain == self.chain:
             raise ValueError(f"Jupiter only supports Solana tokens. Got {token_out.chain} and {token_in.chain}")
@@ -78,7 +80,7 @@ class JupiterClient(DEXClient[JupiterQuote]):
             "inputMint": token_in.address,
             "outputMint": token_out.address,
             "swapMode": "ExactIn",
-            "amount": str(token_in.convert_to_wei(Decimal(1))),  # Get price spending exactly 1 token_in
+            "amount": str(token_in.convert_to_wei(amount_in)),
             "slippageBps": self._settings.slippage_bps,
         }
 
@@ -101,7 +103,13 @@ class JupiterClient(DEXClient[JupiterQuote]):
         logger.debug(f"- Price: {price} {token_out.symbol}/{token_in.symbol}")
         logger.debug(f"- Route: {quote.route_plan}")
 
-        return quote
+        return QuoteResult(
+            quote=quote,
+            token_in=token_in,
+            token_out=token_out,
+            amount_in=amount_in,
+            amount_out=price,
+        )
 
     def get_markets_for_tokens(self, tokens: List[TokenInfo]) -> List[Tuple[TokenInfo, TokenInfo]]:
         """Get list of valid trading pairs between the provided tokens.
