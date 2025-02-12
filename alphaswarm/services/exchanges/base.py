@@ -3,7 +3,7 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from decimal import Decimal
-from typing import List, Optional, Tuple, Type, TypeVar, Union
+from typing import Any, List, Optional, Tuple, Type, TypeVar, Union
 
 from alphaswarm.config import ChainConfig, Config, TokenInfo
 from hexbytes import HexBytes
@@ -11,9 +11,7 @@ from hexbytes import HexBytes
 
 @dataclass
 class TokenPrice:
-    price: Decimal
-    pool: str
-    source: str = ""
+    quote_details: Any
 
 
 @dataclass
@@ -93,7 +91,7 @@ class DEXClient(ABC):
         return self._chain_config
 
     @abstractmethod
-    def get_token_price(self, token_out: TokenInfo, token_in: TokenInfo) -> TokenPrice:
+    def get_token_price(self, token_out: TokenInfo, token_in: TokenInfo, amount_in: Decimal) -> TokenPrice:
         """Get price/conversion rate for the pair of tokens.
 
         The price is returned in terms of token_out/token_in (how much token out per token in).
@@ -101,6 +99,7 @@ class DEXClient(ABC):
         Args:
             token_out (TokenInfo): The token to be bought (going out from the pool)
             token_in (TokenInfo): The token to be sold (going into the pool)
+            amount_in (Decimal): The amount of the token to be sold
 
         Example:
             eth_token = TokenInfo(address="0x...", decimals=18, symbol="ETH", chain="ethereum")
@@ -113,19 +112,13 @@ class DEXClient(ABC):
     @abstractmethod
     def swap(
         self,
-        token_out: TokenInfo,
-        token_in: TokenInfo,
-        amount_in: Decimal,
-        pool: str,
+        quote: TokenPrice,
         slippage_bps: int = 100,
     ) -> SwapResult:
         """Execute a token swap on the DEX
 
         Args:
-            token_out (TokenInfo): The token to be bought (going out from the pool)
-            token_in (TokenInfo): The token to be sold (going into the pool)
-            amount_in: Amount of token_in to spend
-            pool (str): Pool to use
+            quote (TokenPrice): The quote to execute
             slippage_bps: Maximum allowed slippage in basis points (1 bp = 0.01%)
 
         Returns:

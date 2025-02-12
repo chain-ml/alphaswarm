@@ -14,7 +14,7 @@ from alphaswarm.services.exchanges.uniswap.constants_v3 import (
     UNISWAP_V3_ROUTER_ABI,
     UNISWAP_V3_VERSION,
 )
-from alphaswarm.services.exchanges.uniswap.uniswap_client_base import UniswapClientBase
+from alphaswarm.services.exchanges.uniswap.uniswap_client_base import QuoteDetail, UniswapClientBase
 from eth_defi.uniswap_v3.pool import PoolDetails, fetch_pool_details
 from eth_defi.uniswap_v3.price import get_onchain_price
 from eth_typing import ChecksumAddress, HexAddress
@@ -139,19 +139,20 @@ class UniswapClientV3(UniswapClientBase):
 
     def _swap(
         self,
-        token_out: TokenInfo,
-        token_in: TokenInfo,
-        address: ChecksumAddress,
-        wei_in: int,
-        pool_address: ChecksumAddress,
+        quote: QuoteDetail,
         slippage_bps: int,
     ) -> List[TxReceipt]:
         """Execute a swap on Uniswap V3."""
         # Handle token approval and get fresh nonce
+
+        token_in = quote.token_in
+        token_out = quote.token_out
+        amount_in = quote.amount_in
+        wei_in = token_in.convert_to_wei(amount_in)
         approval_receipt = self._approve_token_spending(token_in, wei_in)
 
         # Build a swap transaction
-        pool = self._get_pool_by_address(pool_address)
+        pool = self._get_pool_by_address(quote.pool_address)
         logger.info(f"Using Uniswap V3 pool at address: {pool.address} (raw fee tier: {pool.raw_fee})")
 
         # Get the on-chain price from the pool and reverse if necessary
@@ -198,7 +199,7 @@ class UniswapClientV3(UniswapClientBase):
             token_in=token_in.checksum_address,
             token_out=token_out.checksum_address,
             fee=pool.raw_fee,
-            recipient=self._evm_client.to_checksum_address(address),
+            recipient=self.wallet_address,
             deadline=int(self._evm_client.get_block_latest()["timestamp"] + 300),
             amount_in=wei_in,
             amount_out_minimum=min_output_raw,
@@ -211,10 +212,17 @@ class UniswapClientV3(UniswapClientBase):
 
         return [approval_receipt, swap_receipt]
 
-    def _get_token_price(self, token_out: TokenInfo, token_in: TokenInfo) -> TokenPrice:
+    def _get_token_price(self, token_out: TokenInfo, token_in: TokenInfo, amount_in: Decimal) -> TokenPrice:
         pool = self._get_pool(token_out, token_in)
         price = self._get_token_price_from_pool(token_out, pool)
-        return TokenPrice(price=price, pool=pool.address)
+        details = QuoteDetail(
+            token_in=token_in,
+            token_out=token_out,
+            amount_in=amount_in,
+            amount_out=price * amount_in,  # TODO: substract fees?
+            pool_address=pool.address,
+        )
+        return TokenPrice(quote_details=details)
 
     @staticmethod
     def _get_token_price_from_pool(token_out: TokenInfo, pool: PoolContract) -> Decimal:
