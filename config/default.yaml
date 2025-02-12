@@ -54,10 +54,6 @@ chain_config:
     rpc_url:
       fromEnvVar: ETH_RPC_URL
     tokens:
-      ETH: # Used to correctly map price requests
-        address: "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"
-        decimals: 18
-        is_native: true
       WETH:
         address: "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"
         decimals: 18
@@ -142,6 +138,24 @@ chain_config:
       CLANKER:
         address: "0x1bc0c42215582d5A085795f4baDbaC3ff36d1Bcb"
         decimals: 18
+
+  base_sepolia:
+    wallet_address:
+      fromEnvVar: BASE_WALLET_ADDRESS
+    private_key:
+      fromEnvVar: BASE_PRIVATE_KEY
+    gas_settings:
+      max_priority_fee: 1000000000  # 1 gwei, currently not used
+      gas_limit: 200000
+    rpc_url:
+      fromEnvVar: BASE_SEPOLIA_RPC_URL
+    tokens:
+      WETH:
+        address: "0x4200000000000000000000000000000000000006"
+        decimals: 18
+      USDC:
+        address: "0x036CbD53842c5426634e7929541eC2318f3dCF7e"
+        decimals: 6
 
   solana:
     wallet_address:

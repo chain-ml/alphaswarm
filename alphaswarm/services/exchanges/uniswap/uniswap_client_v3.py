@@ -138,30 +138,30 @@ class UniswapClientV3(UniswapClientBase):
         return self._evm_client.to_checksum_address(UNISWAP_V3_DEPLOYMENTS[self.chain]["factory"])
 
     def _swap(
-        self, base: TokenInfo, quote: TokenInfo, address: str, quote_wei: int, slippage_bps: int
+        self, token_out: TokenInfo, token_in: TokenInfo, address: str, wei_in: int, slippage_bps: int
     ) -> List[TxReceipt]:
         """Execute a swap on Uniswap V3."""
         # Handle token approval and get fresh nonce
-        approval_receipt = self._approve_token_spend(quote, quote_wei)
+        approval_receipt = self._approve_token_spending(token_in, wei_in)
 
         # Build a swap transaction
-        pool = self._get_pool(base, quote)
+        pool = self._get_pool(token_out, token_in)
         logger.info(f"Using Uniswap V3 pool at address: {pool.address} (raw fee tier: {pool.raw_fee})")
 
         # Get the on-chain price from the pool and reverse if necessary
-        price = self._get_token_price_from_pool(quote, pool)
-        logger.info(f"Pool raw price: {price} ({quote.symbol} per {base.symbol})")
+        price = self._get_token_price_from_pool(token_out, pool)
+        logger.info(f"Pool raw price: {price} ({token_out.symbol} per {token_in.symbol})")
 
         # Convert to decimal for calculations
-        input_amount_decimal = quote.convert_from_wei(quote_wei)
-        logger.info(f"Actual input amount: {input_amount_decimal} {quote.symbol}")
+        amount_in_decimal = token_in.convert_from_wei(wei_in)
+        logger.info(f"Actual input amount: {amount_in_decimal} {token_in.symbol}")
 
         # Calculate expected output
-        expected_output_decimal = input_amount_decimal * price
-        logger.info(f"Expected output: {expected_output_decimal} {base.symbol}")
+        expected_output_decimal = amount_in_decimal * price
+        logger.info(f"Expected output: {expected_output_decimal} {token_out.symbol}")
 
         # Convert expected output to raw integer
-        raw_output = base.convert_to_wei(expected_output_decimal)
+        raw_output = token_out.convert_to_wei(expected_output_decimal)
         logger.info(f"Expected output amount (raw): {raw_output}")
 
         # Calculate price impact
@@ -169,7 +169,7 @@ class UniswapClientV3(UniswapClientBase):
         logger.info(f"Pool liquidity: {pool_liquidity}")
 
         # Estimate price impact (simplified)
-        price_impact = (quote_wei * Slippage.base_point) / pool_liquidity  # in bps
+        price_impact = (wei_in * Slippage.base_point) / pool_liquidity  # in bps
         logger.info(f"Estimated price impact: {price_impact:.2f} bps")
 
         # Check if price impact is too high relative to slippage
@@ -189,12 +189,12 @@ class UniswapClientV3(UniswapClientBase):
 
         # Build swap parameters for `exactInputSingle`
         params = ExactInputSingleParams(
-            token_in=quote.checksum_address,
-            token_out=base.checksum_address,
+            token_in=token_in.checksum_address,
+            token_out=token_out.checksum_address,
             fee=pool.raw_fee,
             recipient=self._evm_client.to_checksum_address(address),
             deadline=int(self._evm_client.get_block_latest()["timestamp"] + 300),
-            amount_in=quote_wei,
+            amount_in=wei_in,
             amount_out_minimum=min_output_raw,
             sqrt_price_limit_x96=0,
         )
@@ -205,28 +205,13 @@ class UniswapClientV3(UniswapClientBase):
 
         return [approval_receipt, swap_receipt]
 
-    def _get_token_price(self, base_token: TokenInfo, quote_token: TokenInfo) -> Decimal:
-        """Get the current price from a Uniswap V3 pool for a token pair.
+    def _get_token_price(self, token_out: TokenInfo, token_in: TokenInfo) -> Decimal:
+        pool = self._get_pool(token_out, token_in)
+        return self._get_token_price_from_pool(token_out, pool)
 
-        Finds the first available pool for the token pair and gets the current price.
-        The price is returned in terms of base/quote (how much quote token per base token).
-
-        Args:
-            base_token: Base token info (token being priced)
-            quote_token: Quote token info (denominator token)
-
-        Returns:
-            Decimal: Current price in base/quote terms, or None if no pool exists
-            or there was an error getting the price
-
-        Note:
-            Uses the pool with the most liquidity.
-        """
-        pool = self._get_pool(base_token, quote_token)
-        return self._get_token_price_from_pool(quote_token, pool)
-
-    def _get_token_price_from_pool(self, quote_token: TokenInfo, pool: PoolContract) -> Decimal:
-        return pool.get_price_for_token_in(quote_token.checksum_address)
+    @staticmethod
+    def _get_token_price_from_pool(token_out: TokenInfo, pool: PoolContract) -> Decimal:
+        return pool.get_price_for_token_out(token_out.checksum_address)
 
     def _get_pool_by_address(self, address: Union[str, HexAddress]) -> PoolContract:
         return PoolContract(self._evm_client, EVMClient.to_checksum_address(address))

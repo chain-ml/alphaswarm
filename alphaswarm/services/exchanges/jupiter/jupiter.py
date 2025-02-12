@@ -38,38 +38,26 @@ class JupiterClient(DEXClient):
 
     def swap(
         self,
-        base_token: TokenInfo,
-        quote_token: TokenInfo,
-        quote_amount: Decimal,
+        token_out: TokenInfo,
+        token_in: TokenInfo,
+        amount_in: Decimal,
         slippage_bps: int = 100,
     ) -> SwapResult:
-        """Execute a token swap on Jupiter (Not Implemented)"""
         raise NotImplementedError("Jupiter swap functionality is not yet implemented")
 
-    def get_token_price(self, base_token: TokenInfo, quote_token: TokenInfo) -> Decimal:
-        """Get token price.
-
-        Gets the current price from Jupiter based on the client version.
-        The price is returned in terms of base/quote (how much quote token per base token).
-
-        Args:
-            base_token (TokenInfo): Base token info (token being priced)
-            quote_token (TokenInfo): Quote token info (denominator token)
-
-        Returns:
-            Decimal: Current price in base/quote terms
-        """
+    def get_token_price(self, token_out: TokenInfo, token_in: TokenInfo) -> Decimal:
         # Verify tokens are on Solana
-        if not base_token.chain == self.chain or not quote_token.chain == self.chain:
-            raise ValueError(f"Jupiter only supports Solana tokens. Got {base_token.chain} and {quote_token.chain}")
+        if not token_out.chain == self.chain or not token_in.chain == self.chain:
+            raise ValueError(f"Jupiter only supports Solana tokens. Got {token_out.chain} and {token_in.chain}")
 
-        logger.debug(f"Getting price for {base_token.symbol}/{quote_token.symbol} on {base_token.chain} using Jupiter")
+        logger.debug(f"Getting price for {token_out.symbol}/{token_in.symbol} on {token_out.chain} using Jupiter")
 
         # Prepare query parameters
         params = {
-            "inputMint": base_token.address,
-            "outputMint": quote_token.address,
-            "amount": str(base_token.convert_to_wei(Decimal(1))),  # Get price for 1 full token
+            "inputMint": token_in.address,
+            "outputMint": token_out.address,
+            "swapMode": "ExactIn",
+            "amount": str(token_in.convert_to_wei(Decimal(1))),  # Get price spending exactly 1 token_in
             "slippageBps": self._settings.slippage_bps,
         }
 
@@ -82,14 +70,14 @@ class JupiterClient(DEXClient):
         result = response.json()
         quote = QuoteResponse(**result)
 
-        # Calculate price (quote_token per base_token)
+        # Calculate price (token_out per token_in)
         amount_out = quote.out_amount
-        price = quote_token.convert_from_wei(amount_out)
+        price = token_out.convert_from_wei(amount_out)
         # Log quote details
         logger.debug("Quote successful:")
-        logger.debug(f"- Input: 1 {base_token.symbol}")
-        logger.debug(f"- Output: {amount_out} {quote_token.symbol} lamports")
-        logger.debug(f"- Price: {price} {quote_token.symbol}/{base_token.symbol}")
+        logger.debug(f"- Input: 1 {token_in.symbol}")
+        logger.debug(f"- Output: {amount_out} {token_out.symbol} lamports")
+        logger.debug(f"- Price: {price} {token_out.symbol}/{token_in.symbol}")
         logger.debug(f"- Route: {quote.route_plan}")
 
         return price
