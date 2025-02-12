@@ -73,7 +73,7 @@ class JupiterClient(DEXClient[JupiterQuote]):
         if not token_out.chain == self.chain or not token_in.chain == self.chain:
             raise ValueError(f"Jupiter only supports Solana tokens. Got {token_out.chain} and {token_in.chain}")
 
-        logger.debug(f"Getting price for {token_out.symbol}/{token_in.symbol} on {token_out.chain} using Jupiter")
+        logger.debug(f"Getting amount_out for {token_out.symbol}/{token_in.symbol} on {token_out.chain} using Jupiter")
 
         # Prepare query parameters
         params = {
@@ -93,14 +93,14 @@ class JupiterClient(DEXClient[JupiterQuote]):
         result = response.json()
         quote = JupiterQuote(**result)
 
-        # Calculate price (token_out per token_in)
-        amount_out = quote.out_amount
-        price = token_out.convert_from_wei(amount_out)
+        # Calculate amount_out (token_out per token_in)
+        raw_out = quote.out_amount
+        amount_out = token_out.convert_from_wei(raw_out)
         # Log quote details
         logger.debug("Quote successful:")
-        logger.debug(f"- Input: 1 {token_in.symbol}")
-        logger.debug(f"- Output: {amount_out} {token_out.symbol} lamports")
-        logger.debug(f"- Price: {price} {token_out.symbol}/{token_in.symbol}")
+        logger.debug(f"- Input: {amount_in} {token_in.symbol}")
+        logger.debug(f"- Output: {amount_out} {token_out.symbol}")
+        logger.debug(f"- Ratio: {amount_out/amount_in} {token_out.symbol}/{token_in.symbol}")
         logger.debug(f"- Route: {quote.route_plan}")
 
         return QuoteResult(
@@ -108,7 +108,7 @@ class JupiterClient(DEXClient[JupiterQuote]):
             token_in=token_in,
             token_out=token_out,
             amount_in=amount_in,
-            amount_out=price,
+            amount_out=amount_out,
         )
 
     def get_markets_for_tokens(self, tokens: List[TokenInfo]) -> List[Tuple[TokenInfo, TokenInfo]]:
