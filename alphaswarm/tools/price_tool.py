@@ -36,6 +36,12 @@ class PriceTool(Tool):
         """Cleanup the session when the tool is destroyed"""
         self.session.close()
 
+    def fetch_price(self, *, address: str, chain: str) -> requests.Response:
+        url = f"{self.base_url}/simple/token_price/{chain}"
+        params = {"contract_addresses": address, "vs_currencies": "usd", "include_24hr_change": "true"}
+
+        return self.session.get(url, params=params, timeout=10)
+
     def forward(self, address: str, chain: str) -> str:
         """
         Fetch current price and 24h change for a given token
@@ -48,10 +54,7 @@ class PriceTool(Tool):
             # Normalize address to lowercase for consistent comparison
             address = address.lower()
 
-            url = f"{self.base_url}/simple/token_price/{chain}"
-            params = {"contract_addresses": address, "vs_currencies": "usd", "include_24hr_change": "true"}
-
-            response = self.session.get(url, params=params, timeout=10)
+            response = self.fetch_price(address=address, chain=chain)
 
             if response.status_code != 200:
                 return f"Error: Could not fetch price for {address} (Status: {response.status_code})"
