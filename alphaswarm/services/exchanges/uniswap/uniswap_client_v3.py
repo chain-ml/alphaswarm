@@ -6,7 +6,7 @@ from typing import Any, Dict, List, Optional, Self, Tuple, Union
 
 from alphaswarm.config import ChainConfig, Config, TokenInfo, UniswapV3Settings
 from alphaswarm.services.chains.evm import ZERO_ADDRESS, EVMClient, EVMContract, EVMSigner
-from alphaswarm.services.exchanges.base import Slippage, TokenPrice
+from alphaswarm.services.exchanges.base import Slippage
 from alphaswarm.services.exchanges.uniswap.constants_v3 import (
     UNISWAP_V3_DEPLOYMENTS,
     UNISWAP_V3_FACTORY_ABI,
@@ -14,7 +14,7 @@ from alphaswarm.services.exchanges.uniswap.constants_v3 import (
     UNISWAP_V3_ROUTER_ABI,
     UNISWAP_V3_VERSION,
 )
-from alphaswarm.services.exchanges.uniswap.uniswap_client_base import QuoteDetail, UniswapClientBase
+from alphaswarm.services.exchanges.uniswap.uniswap_client_base import UniswapClientBase, UniswapQuote
 from eth_defi.uniswap_v3.pool import PoolDetails, fetch_pool_details
 from eth_defi.uniswap_v3.price import get_onchain_price
 from eth_typing import ChecksumAddress, HexAddress
@@ -139,7 +139,7 @@ class UniswapClientV3(UniswapClientBase):
 
     def _swap(
         self,
-        quote: QuoteDetail,
+        quote: UniswapQuote,
         slippage_bps: int,
     ) -> List[TxReceipt]:
         """Execute a swap on Uniswap V3."""
@@ -212,17 +212,16 @@ class UniswapClientV3(UniswapClientBase):
 
         return [approval_receipt, swap_receipt]
 
-    def _get_token_price(self, token_out: TokenInfo, token_in: TokenInfo, amount_in: Decimal) -> TokenPrice:
+    def _get_token_price(self, token_out: TokenInfo, token_in: TokenInfo, amount_in: Decimal) -> UniswapQuote:
         pool = self._get_pool(token_out, token_in)
         price = self._get_token_price_from_pool(token_out, pool)
-        details = QuoteDetail(
+        return UniswapQuote(
             token_in=token_in,
             token_out=token_out,
             amount_in=amount_in,
             amount_out=price * amount_in,  # TODO: substract fees?
             pool_address=pool.address,
         )
-        return TokenPrice(quote_details=details)
 
     @staticmethod
     def _get_token_price_from_pool(token_out: TokenInfo, pool: PoolContract) -> Decimal:

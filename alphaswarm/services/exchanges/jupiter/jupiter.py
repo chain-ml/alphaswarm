@@ -8,7 +8,7 @@ from urllib.parse import urlencode
 import requests
 from alphaswarm.config import ChainConfig, Config, JupiterSettings, JupiterVenue, TokenInfo
 from alphaswarm.services import ApiException
-from alphaswarm.services.exchanges.base import DEXClient, SwapResult, TokenPrice
+from alphaswarm.services.exchanges.base import DEXClient, SwapResult
 from pydantic import BaseModel, Field
 from pydantic.dataclasses import dataclass
 
@@ -36,7 +36,7 @@ class RoutePlan:
 
 
 @dataclass
-class QuoteResponse:
+class JupiterQuote:
     # TODO capture more fields if needed
     out_amount: Annotated[Decimal, Field(alias="outAmount")]
     route_plan: Annotated[List[RoutePlan], Field(alias="routePlan")]
@@ -45,12 +45,12 @@ class QuoteResponse:
         return "/".join([route.swap_info.amm_key for route in self.route_plan])
 
 
-class JupiterClient(DEXClient):
+class JupiterClient(DEXClient[JupiterQuote]):
     """Client for Jupiter DEX on Solana"""
 
     def __init__(self, chain_config: ChainConfig, venue_config: JupiterVenue, settings: JupiterSettings) -> None:
         self._validate_chain(chain_config.chain)
-        super().__init__(chain_config)
+        super().__init__(chain_config, JupiterQuote)
         self._settings = settings
         self._venue_config = venue_config
         logger.info(f"Initialized JupiterClient on chain '{self.chain}'")
@@ -61,12 +61,12 @@ class JupiterClient(DEXClient):
 
     def swap(
         self,
-        quote: TokenPrice,
+        quote: JupiterQuote,
         slippage_bps: int = 100,
     ) -> SwapResult:
         raise NotImplementedError("Jupiter swap functionality is not yet implemented")
 
-    def get_token_price(self, token_out: TokenInfo, token_in: TokenInfo, amount_in: Decimal) -> TokenPrice:
+    def get_token_price(self, token_out: TokenInfo, token_in: TokenInfo, amount_in: Decimal) -> JupiterQuote:
         # Verify tokens are on Solana
         if not token_out.chain == self.chain or not token_in.chain == self.chain:
             raise ValueError(f"Jupiter only supports Solana tokens. Got {token_out.chain} and {token_in.chain}")
@@ -89,7 +89,7 @@ class JupiterClient(DEXClient):
             raise ApiException(response)
 
         result = response.json()
-        quote = QuoteResponse(**result)
+        quote = JupiterQuote(**result)
 
         # Calculate price (token_out per token_in)
         amount_out = quote.out_amount
@@ -101,7 +101,7 @@ class JupiterClient(DEXClient):
         logger.debug(f"- Price: {price} {token_out.symbol}/{token_in.symbol}")
         logger.debug(f"- Route: {quote.route_plan}")
 
-        return TokenPrice(quote_details=quote)
+        return quote
 
     def get_markets_for_tokens(self, tokens: List[TokenInfo]) -> List[Tuple[TokenInfo, TokenInfo]]:
         """Get list of valid trading pairs between the provided tokens.

@@ -5,7 +5,7 @@ from typing import List, Tuple
 
 from alphaswarm.config import ChainConfig, TokenInfo
 from alphaswarm.services.chains.evm import ERC20Contract, EVMClient, EVMSigner
-from alphaswarm.services.exchanges.base import DEXClient, SwapResult, TokenPrice
+from alphaswarm.services.exchanges.base import DEXClient, SwapResult
 from eth_typing import ChecksumAddress, HexAddress
 from pydantic import BaseModel
 from web3.types import TxReceipt
@@ -14,7 +14,7 @@ from web3.types import TxReceipt
 logger = logging.getLogger(__name__)
 
 
-class QuoteDetail(BaseModel):
+class UniswapQuote(BaseModel):
     token_in: TokenInfo
     token_out: TokenInfo
     amount_in: Decimal
@@ -22,9 +22,9 @@ class QuoteDetail(BaseModel):
     pool_address: ChecksumAddress
 
 
-class UniswapClientBase(DEXClient):
+class UniswapClientBase(DEXClient[UniswapQuote]):
     def __init__(self, chain_config: ChainConfig, version: str) -> None:
-        super().__init__(chain_config)
+        super().__init__(chain_config, UniswapQuote)
         self.version = version
         self._evm_client = EVMClient(chain_config)
         self._router = self._get_router()
@@ -52,13 +52,13 @@ class UniswapClientBase(DEXClient):
     def _swap(
         self,
         *,
-        quote: QuoteDetail,
+        quote: UniswapQuote,
         slippage_bps: int,
     ) -> List[TxReceipt]:
         pass
 
     @abstractmethod
-    def _get_token_price(self, token_out: TokenInfo, token_in: TokenInfo, amount_in: Decimal) -> TokenPrice:
+    def _get_token_price(self, token_out: TokenInfo, token_in: TokenInfo, amount_in: Decimal) -> UniswapQuote:
         pass
 
     @abstractmethod
@@ -107,19 +107,15 @@ class UniswapClientBase(DEXClient):
 
     def swap(
         self,
-        quote: TokenPrice,
+        quote: UniswapQuote,
         slippage_bps: int = 100,
     ) -> SwapResult:
-        quote_details = quote.quote_details
-        if not isinstance(quote_details, QuoteDetail):
-            raise ValueError("incorrect quote details")
-
         # Create contract instances
-        token_out = quote_details.token_out
+        token_out = quote.token_out
         token_out_contract = ERC20Contract(self._evm_client, token_out.checksum_address)
-        token_in = quote_details.token_in
+        token_in = quote.token_in
         token_in_contract = ERC20Contract(self._evm_client, token_in.checksum_address)
-        amount_in = quote_details.amount_in
+        amount_in = quote.amount_in
 
         logger.info(f"Initiating token swap for {token_in.symbol} to {token_out.symbol}")
         logger.info(f"Wallet address: {self.wallet_address}")
@@ -146,7 +142,7 @@ class UniswapClientBase(DEXClient):
         # 2) swap (various functions)
 
         receipts = self._swap(
-            quote=quote_details,
+            quote=quote,
             slippage_bps=slippage_bps,
         )
 
@@ -179,7 +175,7 @@ class UniswapClientBase(DEXClient):
         tx_receipt = token_contract.approve(self.get_signer(), self._router, raw_amount)
         return tx_receipt
 
-    def get_token_price(self, token_out: TokenInfo, token_in: TokenInfo, amount_in: Decimal) -> TokenPrice:
+    def get_token_price(self, token_out: TokenInfo, token_in: TokenInfo, amount_in: Decimal) -> UniswapQuote:
         logger.debug(
             f"Getting price for {token_out.symbol}/{token_in.symbol} on {self.chain} using Uniswap {self.version}"
         )

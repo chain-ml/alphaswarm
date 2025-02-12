@@ -13,7 +13,7 @@ class ExecuteTokenSwapTool(Tool):
     """Tool for executing token swaps on supported DEXes."""
 
     name = "execute_token_swap"
-    description = "Execute a token swap on a supported DEX (Uniswap V2/V3 on Ethereum and Base chains)."
+    description = "Execute a token swap on a supported DEX (Uniswap V2/V3 on Ethereum and Base chains). Returns the effective amount of token bought."
     inputs = {
         "quote": {
             "type": "object",

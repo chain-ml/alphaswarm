@@ -1,10 +1,12 @@
 import logging
 from datetime import UTC, datetime
 from decimal import Decimal
-from typing import List, Optional
+from typing import List, Optional, Union
 
 from alphaswarm.config import Config
-from alphaswarm.services.exchanges import DEXFactory, TokenPrice
+from alphaswarm.services.exchanges import DEXFactory
+from alphaswarm.services.exchanges.jupiter.jupiter import JupiterQuote
+from alphaswarm.services.exchanges.uniswap.uniswap_client_base import UniswapQuote
 from pydantic.dataclasses import dataclass
 from smolagents import Tool
 
@@ -16,7 +18,7 @@ class TokenQuote:
     datetime: str
     dex: str
     chain: str
-    quote: TokenPrice
+    quote: Union[UniswapQuote, JupiterQuote]
 
 
 @dataclass
@@ -29,7 +31,7 @@ class GetTokenPriceTool(Tool):
     description = (
         "Get the current price of a token pair from available DEXes. "
         f"Returns a list of {TokenQuote.__name__} object."
-        "Examples: 'Get the price of ETH in USDC on ethereum', 'Get the price of GIGA in SOL on solana'"
+        "Examples: 'Get the price of 1 ETH in USDC on ethereum', 'Get the price of 1 GIGA in SOL on solana'"
     )
     inputs = {
         "token_out": {
@@ -40,7 +42,7 @@ class GetTokenPriceTool(Tool):
             "type": "string",
             "description": "The address of the token we want to sell",
         },
-        "amount_in": {"type": "number", "description": "The amount token_in to be sold", "required": True},
+        "amount_in": {"type": "string", "description": "The amount token_in to be sold, in Token", "required": True},
         "chain": {
             "type": "string",
             "description": "Blockchain to use. Must be 'solana' for Solana tokens, 'base' for Base tokens, 'ethereum' for Ethereum tokens, 'ethereum_sepolia' for Ethereum Sepolia tokens.",
@@ -61,7 +63,7 @@ class GetTokenPriceTool(Tool):
         self,
         token_out: str,
         token_in: str,
-        amount_in: Decimal,
+        amount_in: str,
         chain: str,
         dex_type: Optional[str] = None,
     ) -> TokenPriceResult:
@@ -82,10 +84,10 @@ class GetTokenPriceTool(Tool):
             try:
                 dex = DEXFactory.create(dex_name=venue, config=self.config, chain=chain)
 
-                price = dex.get_token_price(token_out_info, token_in_info, amount_in=amount_in)
+                price = dex.get_token_price(token_out_info, token_in_info, amount_in=Decimal(amount_in))
                 timestamp = datetime.now(UTC).strftime("%Y-%m-%d %H:%M UTC")
 
-                prices.append(TokenQuote(dex=dex_type, chain=chain, quote=price, datetime=timestamp))
+                prices.append(TokenQuote(dex=venue, chain=chain, quote=price, datetime=timestamp))
             except Exception:
                 logger.exception(f"Error getting price from {venue}")
 

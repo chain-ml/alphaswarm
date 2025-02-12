@@ -3,10 +3,12 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from decimal import Decimal
-from typing import Any, List, Optional, Tuple, Type, TypeVar, Union
+from typing import Any, Generic, List, Optional, Tuple, Type, TypeGuard, TypeVar, Union
 
 from alphaswarm.config import ChainConfig, Config, TokenInfo
 from hexbytes import HexBytes
+
+TQuote = TypeVar("TQuote")
 
 
 @dataclass
@@ -74,13 +76,14 @@ class Slippage:
 T = TypeVar("T", bound="DEXClient")
 
 
-class DEXClient(ABC):
+class DEXClient(Generic[TQuote], ABC):
     """Base class for DEX clients"""
 
     @abstractmethod
-    def __init__(self, chain_config: ChainConfig) -> None:
+    def __init__(self, chain_config: ChainConfig, quote_type: Type[TQuote]) -> None:
         """Initialize the DEX client with configuration"""
         self._chain_config = chain_config
+        self._quote_type = quote_type
 
     @property
     def chain(self) -> str:
@@ -91,7 +94,7 @@ class DEXClient(ABC):
         return self._chain_config
 
     @abstractmethod
-    def get_token_price(self, token_out: TokenInfo, token_in: TokenInfo, amount_in: Decimal) -> TokenPrice:
+    def get_token_price(self, token_out: TokenInfo, token_in: TokenInfo, amount_in: Decimal) -> TQuote:
         """Get price/conversion rate for the pair of tokens.
 
         The price is returned in terms of token_out/token_in (how much token out per token in).
@@ -112,7 +115,7 @@ class DEXClient(ABC):
     @abstractmethod
     def swap(
         self,
-        quote: TokenPrice,
+        quote: TQuote,
         slippage_bps: int = 100,
     ) -> SwapResult:
         """Execute a token swap on the DEX
@@ -157,3 +160,10 @@ class DEXClient(ABC):
             An instance of the DEX client
         """
         pass
+
+    def raise_if_not_quote(self, value: Any) -> None:
+        if self.is_quote(value):
+            raise TypeError(f"Expected {self._quote_type} but got {type(value)}")
+
+    def is_quote(self, value: Any) -> TypeGuard[TQuote]:
+        return isinstance(value, self._quote_type)
