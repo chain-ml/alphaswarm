@@ -48,7 +48,6 @@ class UniswapClientBase(DEXClient[UniswapQuote]):
     @abstractmethod
     def _swap(
         self,
-        *,
         quote: QuoteResult[UniswapQuote],
         slippage_bps: int,
     ) -> List[TxReceipt]:
