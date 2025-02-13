@@ -16,6 +16,7 @@ class CronJobClient(AlphaSwarmAgentClient[Any]):
         response_handler: Callable[[str], None] = print,
         should_process: Callable[[str], bool] = lambda _: True,
         skip_message: Callable[[str], None] = lambda _: None,
+        max_history: int = 1,
     ) -> None:
         """
         Initialize CronJobClient with conditional processing.
@@ -28,8 +29,9 @@ class CronJobClient(AlphaSwarmAgentClient[Any]):
             response_handler: Function to handle agent responses
             should_process: Function that decides if a message should be processed by agent
             skip_message: Function to handle skipped messages
+            max_history: Maximum number of messages to keep in history
         """
-        super().__init__(agent, client_id)
+        super().__init__(agent, client_id, max_history=max_history)
         self.interval_seconds = interval_seconds
         self.message_generator = message_generator
         self.should_process = should_process

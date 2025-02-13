@@ -19,9 +19,9 @@ class PriceChangeObserver(AlphaSwarmAgent):
         price_pct_chg_thresh: float = 2.0,
     ) -> None:
         """
-        Initialize the PriceChangeObserver with some `configurable` parameters.
-        This `agent` won't use any LLM calls, rather it will just execute a sequence of tool calls.
-        It may imply that we want to generalize AlphSwarmAgent so that it doesn't necessarily need a LLM or smolagents.
+        A basic agent that observes price changes for a set of token addresses.
+        This agent does not use any LLM calls, instead it will just execute a sequence of tool calls.
+        It can be adapted to use any LLM by adding logic to thea `process_message` method.
 
         Args:
             token_addresses: List of token addresses to observe
@@ -37,7 +37,9 @@ class PriceChangeObserver(AlphaSwarmAgent):
         self.price_change_interval = price_change_interval
         self.price_pct_chg_thresh = price_pct_chg_thresh
 
-        super().__init__(tools=[self.price_change_calculator])
+        hints = "Have any of the price changes increased or decreased (+/- 1%) since the last observation? Respond with either 'yes' or 'no'."
+
+        super().__init__(model_id="gpt-4o-mini", tools=[], hints=hints)
 
     def get_price_alerts(self) -> str:
         """
@@ -65,34 +67,29 @@ class PriceChangeObserver(AlphaSwarmAgent):
         else:
             return ""
 
-    async def process_message(self, message: str) -> Optional[str]:
-        """
-        Add your logic here to decide what to do with the message.
-
-        Args:
-            message: Previous messages followed by the current message that includes the price alerts.
-
-        Returns:
-            The agent's response to the message.
-        """
-        logging.info(f"Agent received alerts: {message}")
-        return None
+    # async def process_message(self, message: str) -> Optional[str]:
+    #     """
+    #     You can override the `process_message` method to specify how the agent will respond to the price alerts.
+    #     When this method is not overridden, the default LLM-based agent configuration will be used to respond.
+    #     """
+    #     logging.info(f"Agent received alerts:\n{message}")
+    #     pass
 
 
 async def main() -> None:
     dotenv.load_dotenv()
     logging.basicConfig(level=logging.INFO)
     token_addresses = [
-        "0x4F9Fd6Be4a90f2620860d680c0d4d5Fb53d1A825",
-        "0x0b3e328455c4059EEb9e3f84b5543F74E24e7E1b",
-        "0x731814e491571A2e9eE3c5b1F7f3b962eE8f4870",
+        "0x4F9Fd6Be4a90f2620860d680c0d4d5Fb53d1A825",  # AIXBT
+        "0x0b3e328455c4059EEb9e3f84b5543F74E24e7E1b",  # VIRTUAL
+        "0x731814e491571A2e9eE3c5b1F7f3b962eE8f4870",  # VADER
     ]
 
     agent = PriceChangeObserver(
         token_addresses=token_addresses,
         chain="base-mainnet",
-        price_change_interval="5m",
-        price_pct_chg_thresh=0.2,
+        price_change_interval="5m",  # '5m', '1h', or '1d'
+        price_pct_chg_thresh=0.02,
     )
 
     cron_client = CronJobClient(
@@ -103,6 +100,7 @@ async def main() -> None:
         message_generator=agent.get_price_alerts,
         should_process=lambda alerts: len(alerts) > 0,
         skip_message=lambda _: None,
+        max_history=2,
     )
     await asyncio.gather(cron_client.start())
 
