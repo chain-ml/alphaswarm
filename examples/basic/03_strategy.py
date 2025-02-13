@@ -1,31 +1,28 @@
-from typing import Dict
-
 import dotenv
-import yaml
-from alphaswarm.agent.agent import AlphaSwarmAgent
+from alphaswarm.agent import AlphaSwarmAgent
 from alphaswarm.config import Config
-from alphaswarm.tools.exchanges.execute_token_swap_tool import ExecuteTokenSwapTool
-from alphaswarm.tools.strategy_analysis.generic.generic_analysis import GenericStrategyAnalysisTool
-from alphaswarm.tools.strategy_analysis.strategy import Strategy
+from alphaswarm.tools import GetTokenAddress
+from alphaswarm.tools.exchanges import ExecuteTokenSwapTool, GetTokenPriceTool
+from alphaswarm.tools.strategy_analysis import GenericStrategyAnalysisTool, Strategy
 
 dotenv.load_dotenv()
 config = Config(network_env="test")  # Use a testnet environment (as defined in config/default.yaml)
 
 # Initialize tools
 strategy = Strategy(
-    rules="Swap 3 USDC for WETH on Ethereum Sepolia when price below 10000 USDC per WETH",
+    rules="Swap 3 USDC for WETH on Ethereum Sepolia when price below 10_000 USDC per WETH",
     model_id="anthropic/claude-3-5-sonnet-20241022",
 )
 
 tools = [
+    GetTokenPriceTool(config),  # Get the price of a token pair from available DEXes given addresses
+    GetTokenAddress(config),  # Get token address from a symbol
     GenericStrategyAnalysisTool(strategy),  # Check a trading strategy
-    ExecuteTokenSwapTool(config),  # Execute a token swap on a supported DEX (Uniswap V2/V3 on Ethereum and Base chains)
+    ExecuteTokenSwapTool(config),  # Execute a token swap on a supported DEX
 ]
 
 # Create the agent
-token_addresses: Dict[str, str] = config.get_chain_config("ethereum_sepolia").get_token_address_mapping()
-hints = "Here are token addresses: \n" + yaml.dump(token_addresses)  # So agent knows addresses to query
-agent = AlphaSwarmAgent(tools=tools, model_id="anthropic/claude-3-5-sonnet-20241022", hints=hints)
+agent = AlphaSwarmAgent(tools=tools, model_id="anthropic/claude-3-5-sonnet-20241022")
 
 
 # Interact with the agent
