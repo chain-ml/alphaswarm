@@ -41,23 +41,13 @@ class UniswapClientV2(UniswapClientBase):
         # Handle token approval and get fresh nonce
         token_in = quote.token_in
         token_out = quote.token_out
-        amount_in = quote.amount_in
-        pool_address = quote.quote.pool_address
-        wei_in = token_in.convert_to_wei(amount_in)
+        wei_in = token_in.convert_to_wei(quote.amount_out)
 
         approval_receipt = self._approve_token_spending(token_in, wei_in)
 
-        # Get price from V2 pair to calculate minimum output
-        price = self._get_price_from_pool(pair_address=pool_address, token_out=token_out, token_in=token_in)
-
-        # Calculate expected output
-        input_amount_decimal = token_in.convert_from_wei(wei_in)
-        expected_output_decimal = input_amount_decimal * price
-        logger.info(f"Expected output: {expected_output_decimal} {token_out.symbol}")
-
         # Convert expected output to raw integer and apply slippage
         slippage = Slippage(slippage_bps)
-        min_output_raw = slippage.calculate_minimum_amount(token_out.convert_to_wei(expected_output_decimal))
+        min_output_raw = slippage.calculate_minimum_amount(token_out.convert_to_wei(quote.amount_out))
         logger.info(f"Minimum output with {slippage} slippage (raw): {min_output_raw}")
 
         # Build swap path

@@ -147,28 +147,15 @@ class UniswapClientV3(UniswapClientBase):
 
         token_in = quote.token_in
         token_out = quote.token_out
-        amount_in = quote.amount_in
-        wei_in = token_in.convert_to_wei(amount_in)
+        wei_in = token_in.convert_to_wei(quote.amount_out)
         approval_receipt = self._approve_token_spending(token_in, wei_in)
 
         # Build a swap transaction
         pool = self._get_pool_by_address(quote.quote.pool_address)
         logger.info(f"Using Uniswap V3 pool at address: {pool.address} (raw fee tier: {pool.raw_fee})")
 
-        # Get the on-chain price from the pool and reverse if necessary
-        price = self._get_token_price_from_pool(token_out, pool)
-        logger.info(f"Pool raw price: {price} ({token_out.symbol} per {token_in.symbol})")
-
-        # Convert to decimal for calculations
-        amount_in_decimal = token_in.convert_from_wei(wei_in)
-        logger.info(f"Actual input amount: {amount_in_decimal} {token_in.symbol}")
-
-        # Calculate expected output
-        expected_output_decimal = amount_in_decimal * price
-        logger.info(f"Expected output: {expected_output_decimal} {token_out.symbol}")
-
         # Convert expected output to raw integer
-        raw_output = token_out.convert_to_wei(expected_output_decimal)
+        raw_output = token_out.convert_to_wei(quote.amount_out)
         logger.info(f"Expected output amount (raw): {raw_output}")
 
         # Calculate price impact
