@@ -44,15 +44,10 @@ class ExecuteTokenSwapTool(Tool):
         # Create DEX client
         dex_client = DEXFactory.create(dex_name=quote.dex, config=self.config, chain=quote.chain)
 
-        # Get wallet address and private key from chain config
-        # chain_config = self.config.get_chain_config(quote.chain)
-        # token_in_info = chain_config.get_token_info_by_address(token_in)
-        # token_out_info = chain_config.get_token_info_by_address(token_out)
-
-        # Log token details
-        # logger.info(
-        #     f"Swapping {amount_in} {token_in_info.symbol} ({token_in_info.address}) for {token_out_info.symbol} ({token_out_info.address}) on {chain}"
-        # )
+        inner = quote.quote
+        logger.info(
+            f"Swapping {inner.amount_in} {inner.token_in.symbol} ({inner.token_in.address}) for {inner.token_out.symbol} ({inner.token_out.address}) on {quote.chain}"
+        )
 
         # Execute swap
         return dex_client.swap(
