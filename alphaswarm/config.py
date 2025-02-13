@@ -251,7 +251,7 @@ class Config:
     def get_chain_config(self, chain: str) -> ChainConfig:
         chain_config_dict: Dict[str, Any] = self._config["chain_config"]
         if chain not in chain_config_dict:
-            raise ValueError(f"Unknown chain! Configured chains: {', '.join(chain_config_dict.keys())}")
+            raise ValueError(f"Unknown chain! Configured chains: [{', '.join(chain_config_dict.keys())}]")
 
         values = chain_config_dict[chain].copy()
         values["chain"] = chain
@@ -267,7 +267,7 @@ class Config:
         """Get chain config or None if chain doesn't exist"""
         try:
             return self.get_chain_config(chain)
-        except KeyError:
+        except (KeyError, ValueError):
             return None
 
     def get_trading_venues(self) -> Dict[str, Any]:
