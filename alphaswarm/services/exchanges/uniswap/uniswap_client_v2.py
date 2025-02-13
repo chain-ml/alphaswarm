@@ -41,7 +41,7 @@ class UniswapClientV2(UniswapClientBase):
         # Handle token approval and get fresh nonce
         token_in = quote.token_in
         token_out = quote.token_out
-        wei_in = token_in.convert_to_wei(quote.amount_out)
+        wei_in = token_in.convert_to_wei(quote.amount_in)
 
         approval_receipt = self._approve_token_spending(token_in, wei_in)
 
