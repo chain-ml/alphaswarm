@@ -16,7 +16,10 @@ class GetTokenAddress(Tool):
         },
         "chain": {
             "type": "string",
-            "description": "The chain to get the address for",
+            "description": "The chain to get the address for. "
+            "Must be 'solana' for Solana tokens, 'base' for Base tokens, "
+            "'ethereum' for Ethereum tokens, 'ethereum_sepolia' for Ethereum Sepolia tokens.",
+            "enum": ["solana", "base", "ethereum", "ethereum_sepolia"],
         },
     }
     output_type = "string"
@@ -26,4 +29,8 @@ class GetTokenAddress(Tool):
         self._config = config
 
     def forward(self, token_symbol: str, chain: str) -> str:
+        supported_chains = self._config.get_supported_networks()
+        if chain not in supported_chains:
+            raise ValueError(f"Unknown chain! Configured chains: {', '.join(supported_chains)}")
+
         return self._config.get_chain_config(chain).get_token_info(token_symbol).address

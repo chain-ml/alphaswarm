@@ -5,7 +5,7 @@ from alphaswarm.utils import load_strategy_config
 
 class Strategy:
 
-    def __init__(self, *, rules: str, model_id: str) -> None:
+    def __init__(self, *, rules: str, model_id: str = "anthropic/claude-3-5-sonnet-20241022") -> None:
         self.rules = rules
         self.model_id = model_id
 
