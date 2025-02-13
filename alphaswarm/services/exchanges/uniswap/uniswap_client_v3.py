@@ -6,7 +6,7 @@ from typing import Any, Dict, List, Optional, Self, Tuple, Union
 
 from alphaswarm.config import ChainConfig, Config, TokenInfo, UniswapV3Settings
 from alphaswarm.services.chains.evm import ZERO_ADDRESS, EVMClient, EVMContract, EVMSigner
-from alphaswarm.services.exchanges.base import Slippage
+from alphaswarm.services.exchanges.base import QuoteResult, Slippage
 from alphaswarm.services.exchanges.uniswap.constants_v3 import (
     UNISWAP_V3_DEPLOYMENTS,
     UNISWAP_V3_FACTORY_ABI,
@@ -14,7 +14,7 @@ from alphaswarm.services.exchanges.uniswap.constants_v3 import (
     UNISWAP_V3_ROUTER_ABI,
     UNISWAP_V3_VERSION,
 )
-from alphaswarm.services.exchanges.uniswap.uniswap_client_base import UniswapClientBase
+from alphaswarm.services.exchanges.uniswap.uniswap_client_base import UniswapClientBase, UniswapQuote
 from eth_defi.uniswap_v3.pool import PoolDetails, fetch_pool_details
 from eth_defi.uniswap_v3.price import get_onchain_price
 from eth_typing import ChecksumAddress, HexAddress
@@ -138,30 +138,24 @@ class UniswapClientV3(UniswapClientBase):
         return self._evm_client.to_checksum_address(UNISWAP_V3_DEPLOYMENTS[self.chain]["factory"])
 
     def _swap(
-        self, token_out: TokenInfo, token_in: TokenInfo, address: str, wei_in: int, slippage_bps: int
+        self,
+        quote: QuoteResult[UniswapQuote],
+        slippage_bps: int,
     ) -> List[TxReceipt]:
         """Execute a swap on Uniswap V3."""
         # Handle token approval and get fresh nonce
+
+        token_in = quote.token_in
+        token_out = quote.token_out
+        wei_in = token_in.convert_to_wei(quote.amount_in)
         approval_receipt = self._approve_token_spending(token_in, wei_in)
 
         # Build a swap transaction
-        pool = self._get_pool(token_out, token_in)
+        pool = self._get_pool_by_address(quote.quote.pool_address)
         logger.info(f"Using Uniswap V3 pool at address: {pool.address} (raw fee tier: {pool.raw_fee})")
 
-        # Get the on-chain price from the pool and reverse if necessary
-        price = self._get_token_price_from_pool(token_out, pool)
-        logger.info(f"Pool raw price: {price} ({token_out.symbol} per {token_in.symbol})")
-
-        # Convert to decimal for calculations
-        amount_in_decimal = token_in.convert_from_wei(wei_in)
-        logger.info(f"Actual input amount: {amount_in_decimal} {token_in.symbol}")
-
-        # Calculate expected output
-        expected_output_decimal = amount_in_decimal * price
-        logger.info(f"Expected output: {expected_output_decimal} {token_out.symbol}")
-
         # Convert expected output to raw integer
-        raw_output = token_out.convert_to_wei(expected_output_decimal)
+        raw_output = token_out.convert_to_wei(quote.amount_out)
         logger.info(f"Expected output amount (raw): {raw_output}")
 
         # Calculate price impact
@@ -192,7 +186,7 @@ class UniswapClientV3(UniswapClientBase):
             token_in=token_in.checksum_address,
             token_out=token_out.checksum_address,
             fee=pool.raw_fee,
-            recipient=self._evm_client.to_checksum_address(address),
+            recipient=self.wallet_address,
             deadline=int(self._evm_client.get_block_latest()["timestamp"] + 300),
             amount_in=wei_in,
             amount_out_minimum=min_output_raw,
@@ -205,9 +199,18 @@ class UniswapClientV3(UniswapClientBase):
 
         return [approval_receipt, swap_receipt]
 
-    def _get_token_price(self, token_out: TokenInfo, token_in: TokenInfo) -> Decimal:
+    def _get_token_price(
+        self, token_out: TokenInfo, token_in: TokenInfo, amount_in: Decimal
+    ) -> QuoteResult[UniswapQuote]:
         pool = self._get_pool(token_out, token_in)
-        return self._get_token_price_from_pool(token_out, pool)
+        price = self._get_token_price_from_pool(token_out, pool)
+        return QuoteResult(
+            token_in=token_in,
+            token_out=token_out,
+            amount_in=amount_in,
+            amount_out=price * amount_in,  # TODO: substract fees?
+            quote=UniswapQuote(pool_address=pool.address),
+        )
 
     @staticmethod
     def _get_token_price_from_pool(token_out: TokenInfo, pool: PoolContract) -> Decimal:
