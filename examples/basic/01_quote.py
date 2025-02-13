@@ -4,14 +4,14 @@ import dotenv
 import yaml
 from alphaswarm.agent.agent import AlphaSwarmAgent
 from alphaswarm.config import Config
-from alphaswarm.tools.exchanges.get_token_price_tool import GetTokenPriceTool
+from alphaswarm.tools.exchanges.get_token_price import GetTokenPrice
 
 dotenv.load_dotenv()
 config = Config()
 
 # Initialize tools
 tools = [
-    GetTokenPriceTool(config),  # Get the price of a token pair from available DEXes
+    GetTokenPrice(config),  # Get the price of a token pair from available DEXes
 ]
 
 # Create the agent

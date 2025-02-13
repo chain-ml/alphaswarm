@@ -2,17 +2,15 @@ from datetime import UTC, datetime
 from typing import Any
 
 import requests
-from smolagents import Tool
+from alphaswarm.core.base_tool import AlphaSwarmBaseTool
 
 
-class PriceTool(Tool):
-    """Tool for getting current price of crypto tokens using CoinGecko API"""
-
-    name = "price_tool"
-    description = """
-    Get the current price of a cryptocurrency in USD.
+class GetUsdPrice(AlphaSwarmBaseTool):
+    """
+    Get the current price of a cryptocurrency in USD using CoinGecko API.
     Returns price and 24h price change percentage.
     """
+
     inputs = {
         "address": {
             "type": "string",

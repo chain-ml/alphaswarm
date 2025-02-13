@@ -1,14 +1,12 @@
 from typing import Any
 
 from alphaswarm.config import Config
-from smolagents import Tool
+from alphaswarm.core.base_tool import AlphaSwarmBaseTool
 
 
-class GetTokenAddress(Tool):
-    """Tool to get the token address for known token symbols"""
+class GetTokenAddress(AlphaSwarmBaseTool):
+    """Get the token address for known token symbols"""
 
-    name = "get_token_address"
-    description = "Get the token address for known token symbols"
     inputs = {
         "token_symbol": {
             "type": "string",

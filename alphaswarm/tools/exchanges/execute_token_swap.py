@@ -2,21 +2,20 @@ import logging
 from typing import Any
 
 from alphaswarm.config import Config
+from alphaswarm.core.base_tool import AlphaSwarmBaseTool
 from alphaswarm.services.exchanges import DEXFactory, SwapResult
-from alphaswarm.tools.exchanges.get_token_price_tool import TokenQuote
-from smolagents import Tool
+
+from .get_token_price import TokenQuote
 
 logger = logging.getLogger(__name__)
 
 
-class ExecuteTokenSwapTool(Tool):
-    """Tool for executing token swaps on supported DEXes."""
+class ExecuteTokenSwap(AlphaSwarmBaseTool):
+    """
+    Execute a token swap on a supported DEX (Uniswap V2/V3 on Ethereum and Base chains).
+    Returns a SwapResult details of the transaction.
+    """
 
-    name = "execute_token_swap"
-    description = (
-        "Execute a token swap on a supported DEX (Uniswap V2/V3 on Ethereum and Base chains). "
-        f"Returns a {SwapResult.__name__} details of the transaction."
-    )
     inputs = {
         "quote": {
             "type": "object",
@@ -46,7 +45,8 @@ class ExecuteTokenSwapTool(Tool):
 
         inner = quote.quote
         logger.info(
-            f"Swapping {inner.amount_in} {inner.token_in.symbol} ({inner.token_in.address}) for {inner.token_out.symbol} ({inner.token_out.address}) on {quote.chain}"
+            f"Swapping {inner.amount_in} {inner.token_in.symbol} ({inner.token_in.address}) "
+            f"for {inner.token_out.symbol} ({inner.token_out.address}) on {quote.chain}"
         )
 
         # Execute swap

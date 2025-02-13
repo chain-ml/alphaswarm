@@ -4,17 +4,17 @@ import pytest
 
 from alphaswarm.config import Config
 from alphaswarm.services.chains import EVMClient
-from alphaswarm.tools.exchanges import ExecuteTokenSwapTool, GetTokenPriceTool
+from alphaswarm.tools.exchanges import ExecuteTokenSwap, GetTokenPrice
 
 
 @pytest.fixture
-def token_quote_tool(default_config: Config) -> GetTokenPriceTool:
-    return GetTokenPriceTool(default_config)
+def token_quote_tool(default_config: Config) -> GetTokenPrice:
+    return GetTokenPrice(default_config)
 
 
 @pytest.fixture
-def token_swap_tool(default_config: Config) -> ExecuteTokenSwapTool:
-    return ExecuteTokenSwapTool(default_config)
+def token_swap_tool(default_config: Config) -> ExecuteTokenSwap:
+    return ExecuteTokenSwap(default_config)
 
 
 @pytest.fixture
@@ -24,7 +24,7 @@ def sepolia_client(default_config: Config) -> EVMClient:
 
 @pytest.mark.skip("Requires a founded wallet. Run manually")
 def test_token_swap_tool(
-    token_quote_tool: GetTokenPriceTool, token_swap_tool: ExecuteTokenSwapTool, sepolia_client: EVMClient
+    token_quote_tool: GetTokenPrice, token_swap_tool: ExecuteTokenSwap, sepolia_client: EVMClient
 ) -> None:
     weth = sepolia_client.get_token_info_by_name("WETH")
     usdc = sepolia_client.get_token_info_by_name("USDC")

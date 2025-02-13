@@ -7,9 +7,9 @@ import dotenv
 from alphaswarm.agent.agent import AlphaSwarmAgent
 from alphaswarm.agent.clients import CronJobClient
 from alphaswarm.config import Config
-from alphaswarm.tools.alchemy import AlchemyPriceHistoryBySymbol
-from alphaswarm.tools.exchanges import GetTokenPriceTool
-from alphaswarm.tools.price_tool import PriceTool
+from alphaswarm.tools.alchemy import GetAlchemyPriceHistoryBySymbol
+from alphaswarm.tools.core import GetUsdPrice
+from alphaswarm.tools.exchanges import GetTokenPrice
 from smolagents import Tool
 
 logging.getLogger("smolagents").setLevel(logging.ERROR)
@@ -20,10 +20,10 @@ async def main() -> None:
     config = Config()
 
     # Initialize tools for price-related operations
-    # PriceTool: General price queries
-    # GetTokenPriceTool: Real-time token prices
-    # AlchemyPriceHistoryBySymbol: Historical price data from Alchemy
-    tools: List[Tool] = [PriceTool(), GetTokenPriceTool(config), AlchemyPriceHistoryBySymbol()]
+    # GetUsdPrice: General price queries
+    # GetTokenPrice: Real-time token prices
+    # GetAlchemyPriceHistoryBySymbol: Historical price data from Alchemy
+    tools: List[Tool] = [GetUsdPrice(), GetTokenPrice(config), GetAlchemyPriceHistoryBySymbol()]
 
     # Initialize the AlphaSwarm agent with the price tools
     agent = AlphaSwarmAgent(tools=tools, model_id="anthropic/claude-3-5-sonnet-20241022")

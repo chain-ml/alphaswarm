@@ -4,11 +4,11 @@ from decimal import Decimal
 from typing import List, Optional, Union
 
 from alphaswarm.config import Config
+from alphaswarm.core.base_tool import AlphaSwarmBaseTool
 from alphaswarm.services.exchanges import DEXFactory, QuoteResult
 from alphaswarm.services.exchanges.jupiter.jupiter import JupiterQuote
 from alphaswarm.services.exchanges.uniswap.uniswap_client_base import UniswapQuote
 from pydantic.dataclasses import dataclass
-from smolagents import Tool
 
 logger = logging.getLogger(__name__)
 
@@ -26,13 +26,15 @@ class TokenPriceResult:
     quotes: List[TokenQuote]
 
 
-class GetTokenPriceTool(Tool):
-    name = "get_token_price"
-    description = (
-        "Get the current price of a token pair from available DEXes. "
-        f"Returns a {TokenPriceResult.__name__} object containing a list of {TokenQuote.__name__} objects."
-        "Examples: 'Get the price of 1 ETH in USDC on ethereum', 'Get the price of 1 GIGA in SOL on solana'"
-    )
+class GetTokenPrice(AlphaSwarmBaseTool):
+    """
+    Get the current price of a token pair from available DEXes.
+    Returns a {TokenPriceResult.__name__} object containing a list of {TokenQuote.__name__} objects.
+    Examples: 'Get the price of 1 ETH in USDC on ethereum', 'Get the price of 1 GIGA in SOL on solana'
+    """
+
+    # TODO: discuss
+
     inputs = {
         "token_out": {
             "type": "string",

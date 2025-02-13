@@ -4,9 +4,9 @@ from pathlib import Path
 from typing import Any, Dict, List
 
 from alphaswarm import BASE_PATH
+from alphaswarm.core.base_tool import AlphaSwarmBaseTool
 from alphaswarm.core.llm.llm_function import LLMFunctionFromPromptFiles
 from pydantic import BaseModel, Field
-from smolagents import Tool
 
 from ..strategy import Strategy
 
@@ -34,12 +34,12 @@ class StrategyAnalysis(BaseModel):
     alerts: List[AlertItem] = Field(description="List of triggered rules and their details", default_factory=list)
 
 
-class GenericStrategyAnalysisTool(Tool):
-    name = "GenericStrategyAnalysisTool"
-    description = """Analyze the trading strategy against the provided data and decide if any of the strategy rules are triggered. 
-    Returns a StrategyAnalysis object, which contains a summary of the analysis and a list of triggered rules and their details.
-    This tool will apply the same strategy rules that is found under the "## Strategy Rules" section of the User Context.
+class AnalyzeTradingStrategy(AlphaSwarmBaseTool):
     """
+    Analyze the trading strategy against the provided data and decide if any of the strategy rules are triggered.
+    Returns a StrategyAnalysis object, which contains a summary of the analysis and a list of triggered rules and their details.
+    """
+
     inputs = {
         "token_data": {
             "type": "string",

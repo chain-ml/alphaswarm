@@ -1,13 +1,13 @@
 from datetime import datetime, timedelta, timezone
 from typing import Optional
 
+from alphaswarm.core.base_tool import AlphaSwarmBaseTool
 from alphaswarm.services.alchemy import NETWORKS, AlchemyClient, HistoricalPriceByAddress, HistoricalPriceBySymbol
-from smolagents import Tool
 
 
-class AlchemyPriceHistoryBySymbol(Tool):
-    name = "AlchemyPriceHistoryBySymbol"
-    description = "Retrieve price history for a given token symbol using Alchemy"
+class GetAlchemyPriceHistoryBySymbol(AlphaSwarmBaseTool):
+    """Retrieve price history for a given token symbol using Alchemy API"""
+
     inputs = {
         "symbol": {
             "type": "string",
@@ -37,9 +37,9 @@ class AlchemyPriceHistoryBySymbol(Tool):
         return self.client.get_historical_prices_by_symbol(symbol, start_time, end_time, interval)
 
 
-class AlchemyPriceHistoryByAddress(Tool):
-    name = "AlchemyPriceHistoryByAddress"
-    description = "Retrieve price history for a given token address using Alchemy"
+class GetAlchemyPriceHistoryByAddress(AlphaSwarmBaseTool):
+    """Retrieve price history for a given token address using Alchemy API"""
+
     inputs = {
         "address": {
             "type": "string",

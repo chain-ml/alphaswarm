@@ -2,7 +2,7 @@ from typing import Optional
 
 import pytest
 
-from alphaswarm.tools.exchanges import GetTokenPriceTool
+from alphaswarm.tools.exchanges import GetTokenPrice
 from alphaswarm.config import Config
 
 
@@ -21,7 +21,7 @@ def test_get_token_price_tool(
     dex: Optional[str], chain: str, token_out: str, token_in: str, min_out: int, max_out: int, default_config: Config
 ) -> None:
     config = default_config
-    tool = GetTokenPriceTool(config)
+    tool = GetTokenPrice(config)
 
     chain_config = config.get_chain_config(chain)
     token_info_out = chain_config.get_token_info(token_out)

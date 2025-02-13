@@ -4,9 +4,8 @@ import dotenv
 import yaml
 from alphaswarm.agent.agent import AlphaSwarmAgent
 from alphaswarm.config import Config
-from alphaswarm.tools.exchanges.execute_token_swap_tool import ExecuteTokenSwapTool
-from alphaswarm.tools.strategy_analysis.generic.generic_analysis import GenericStrategyAnalysisTool
-from alphaswarm.tools.strategy_analysis.strategy import Strategy
+from alphaswarm.tools.exchanges import ExecuteTokenSwap
+from alphaswarm.tools.strategy_analysis import AnalyzeTradingStrategy, Strategy
 
 dotenv.load_dotenv()
 config = Config(network_env="test")  # Use a testnet environment (as defined in config/default.yaml)
@@ -18,8 +17,8 @@ strategy = Strategy(
 )
 
 tools = [
-    GenericStrategyAnalysisTool(strategy),  # Check a trading strategy
-    ExecuteTokenSwapTool(config),  # Execute a token swap on a supported DEX (Uniswap V2/V3 on Ethereum and Base chains)
+    AnalyzeTradingStrategy(strategy),  # Check a trading strategy
+    ExecuteTokenSwap(config),  # Execute a token swap on a supported DEX (Uniswap V2/V3 on Ethereum and Base chains)
 ]
 
 # Create the agent
