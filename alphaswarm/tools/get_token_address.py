@@ -29,8 +29,4 @@ class GetTokenAddress(Tool):
         self._config = config
 
     def forward(self, token_symbol: str, chain: str) -> str:
-        supported_chains = self._config.get_supported_networks()
-        if chain not in supported_chains:
-            raise ValueError(f"Unknown chain! Configured chains: {', '.join(supported_chains)}")
-
         return self._config.get_chain_config(chain).get_token_info(token_symbol).address

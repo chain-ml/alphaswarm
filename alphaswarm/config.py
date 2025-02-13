@@ -249,7 +249,11 @@ class Config:
             return default
 
     def get_chain_config(self, chain: str) -> ChainConfig:
-        values = self._config["chain_config"][chain].copy()
+        chain_config_dict: Dict[str, Any] = self._config["chain_config"]
+        if chain not in chain_config_dict:
+            raise ValueError(f"Unknown chain! Configured chains: {', '.join(chain_config_dict.keys())}")
+
+        values = chain_config_dict[chain].copy()
         values["chain"] = chain
         # Convert each token config into a TokenInfo instance
         if "tokens" in values:
