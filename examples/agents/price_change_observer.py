@@ -1,7 +1,7 @@
 import asyncio
 import datetime
 import logging
-from typing import List, Optional
+from typing import List
 
 import dotenv
 from alphaswarm.agent.agent import AlphaSwarmAgent
