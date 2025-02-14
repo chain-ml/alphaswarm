@@ -1,17 +1,17 @@
 import asyncio
 import datetime
-import dotenv
 import logging
 from decimal import Decimal
 from typing import List, Tuple
 
+import dotenv
 from alphaswarm.agent.agent import AlphaSwarmAgent
 from alphaswarm.agent.clients import CronJobClient
 from alphaswarm.config import Config
 from alphaswarm.services.alchemy import AlchemyClient
-from alphaswarm.tools.get_token_address import GetTokenAddress
 from alphaswarm.tools.alchemy import AlchemyPriceHistoryByAddress
 from alphaswarm.tools.exchanges import ExecuteTokenSwapTool, GetTokenPriceTool
+from alphaswarm.tools.get_token_address import GetTokenAddress
 
 
 class PriceMomentumCronAgent(AlphaSwarmAgent):
@@ -24,7 +24,7 @@ class PriceMomentumCronAgent(AlphaSwarmAgent):
         long_term_minutes: int = 60,
         long_term_threshold: float = 5.0,
     ) -> None:
-        """  
+        """
         A price momentum agent that alerts on significant price movements.
         Price movements must exceed both thresholds and be in the same direction.
 
@@ -46,7 +46,7 @@ class PriceMomentumCronAgent(AlphaSwarmAgent):
         self.price_history_tool = AlchemyPriceHistoryByAddress(self.alchemy_client)
         self.token_addresses = token_addresses
         self.chain = chain
-        
+
         self.short_term_periods = short_term_minutes // 5
         self.long_term_periods = long_term_minutes // 5
         self.short_term_threshold = Decimal(str(short_term_threshold))
@@ -55,7 +55,7 @@ class PriceMomentumCronAgent(AlphaSwarmAgent):
         tools = [
             GetTokenAddress(config=self.config),
             GetTokenPriceTool(config=self.config),
-            ExecuteTokenSwapTool(config=self.config)
+            ExecuteTokenSwapTool(config=self.config),
         ]
 
         hints = "Please follow these task-specific instructions:"
@@ -67,15 +67,15 @@ class PriceMomentumCronAgent(AlphaSwarmAgent):
     def calculate_price_changes(self, prices: List[Decimal]) -> Tuple[Decimal, Decimal]:
         """Calculate short and long term price changes."""
         if len(prices) < self.long_term_periods:
-            return Decimal('0'), Decimal('0')
-            
+            return Decimal("0"), Decimal("0")
+
         current_price = prices[-1]
-        short_term_start = prices[-self.short_term_periods-1]
-        long_term_start = prices[-self.long_term_periods-1]
-        
-        short_term_change = ((current_price - short_term_start) / short_term_start) * Decimal('100')
-        long_term_change = ((current_price - long_term_start) / long_term_start) * Decimal('100')
-        
+        short_term_start = prices[-self.short_term_periods - 1]
+        long_term_start = prices[-self.long_term_periods - 1]
+
+        short_term_change = ((current_price - short_term_start) / short_term_start) * Decimal("100")
+        long_term_change = ((current_price - long_term_start) / long_term_start) * Decimal("100")
+
         return short_term_change, long_term_change
 
     def get_price_alerts(self) -> str:
@@ -85,23 +85,22 @@ class PriceMomentumCronAgent(AlphaSwarmAgent):
 
             logging.info(f"Getting price history for {address}")
             price_history = self.price_history_tool.forward(
-                address=address,
-                network=self.chain,
-                interval="5m",
-                history=1  # 1 day of history
+                address=address, network=self.chain, interval="5m", history=1  # 1 day of history
             )
-            
-            prices = [price.value for price in price_history.data]  # This is how to get the prices (Decimal type) out of the price history object
+
+            prices = [
+                price.value for price in price_history.data
+            ]  # This is how to get the prices (Decimal type) out of the price history object
             short_term_change, long_term_change = self.calculate_price_changes(prices)
-            
+
             # Check if changes meet thresholds and are in same direction
             short_term_signal = abs(short_term_change) >= self.short_term_threshold
             long_term_signal = abs(long_term_change) >= self.long_term_threshold
-            same_direction = (short_term_change * long_term_change > Decimal('0'))
-            
+            same_direction = short_term_change * long_term_change > Decimal("0")
+
             # Alert only if both signals are present and in same direction
             if short_term_signal and long_term_signal and same_direction:
-                direction = "Upward" if short_term_change > Decimal('0') else "Downward"
+                direction = "Upward" if short_term_change > Decimal("0") else "Downward"
                 price_alerts.append(
                     f"{address} --- {direction} momentum detected:\n"
                     f"  - {self.short_term_periods * 5}min change: {short_term_change:.2f}%\n"
