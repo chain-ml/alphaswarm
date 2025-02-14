@@ -21,6 +21,7 @@ def test_get_token_price(jupiter_client: JupiterClient) -> None:
     assert 10000 > quote.amount_out > 1000, "A Sol is worth many thousands of GIGA."
 
 
+@pytest.mark.skip("Requires a funded wallet.")
 def test_swap(jupiter_client: JupiterClient) -> None:
     tokens_config = jupiter_client._chain_config.tokens
     giga = tokens_config["GIGA"]

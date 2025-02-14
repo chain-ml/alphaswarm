@@ -29,6 +29,7 @@ def test_token_balance(token: str, client: SolanaClient, solana_config: ChainCon
     print(result)
 
 
+@pytest.mark.skip("Requires a valid Solana wallet")
 def test_sol_signer(solana_config: ChainConfig) -> None:
     signer = SolSigner(solana_config.private_key)
 
