@@ -1,7 +1,7 @@
 import logging
 import time
 from decimal import Decimal
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 from alphaswarm.config import ChainConfig
 from solana.rpc import api
@@ -12,6 +12,7 @@ from solders.pubkey import Pubkey
 from solders.rpc.responses import SendTransactionResp
 from solders.signature import Signature
 from solders.transaction import VersionedTransaction
+from solders.transaction_status import TransactionConfirmationStatus
 
 logger = logging.getLogger(__name__)
 
@@ -112,7 +113,7 @@ class SolanaClient:
     def _wait_for_confirmation(self, signature: Signature) -> None:
         timeout_sec = 10
         sleep_sec = 1
-
+        status: Optional[TransactionConfirmationStatus] = None
         while timeout_sec > 0:
             tx_status = self._client.get_signature_statuses([signature])
             response = tx_status.value[0]
@@ -121,7 +122,9 @@ class SolanaClient:
                 if status is not None and status.Finalized:
                     return
             time.sleep(sleep_sec)
-        raise RuntimeError(f"Failed to get confirmation for transaction '{str(signature)}'")
+        raise RuntimeError(
+            f"Failed to get confirmation for transaction '{str(signature)}' for {timeout_sec} seconds. Last status is {status}"
+        )
 
     @staticmethod
     def _get_decimal(values: Dict[str, Any], key: str) -> Decimal:
