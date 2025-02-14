@@ -3,10 +3,23 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from decimal import Decimal
-from typing import List, Optional, Tuple, Type, TypeVar, Union
+from typing import Any, Generic, List, Optional, Tuple, Type, TypeGuard, TypeVar, Union
 
 from alphaswarm.config import ChainConfig, Config, TokenInfo
 from hexbytes import HexBytes
+
+T = TypeVar("T", bound="DEXClient")
+TQuote = TypeVar("TQuote")
+
+
+@dataclass
+class QuoteResult(Generic[TQuote]):
+    quote: TQuote
+
+    token_in: TokenInfo
+    token_out: TokenInfo
+    amount_in: Decimal
+    amount_out: Decimal
 
 
 @dataclass
@@ -66,16 +79,14 @@ class Slippage:
         return f"Slippage(bps={self.bps})"
 
 
-T = TypeVar("T", bound="DEXClient")
-
-
-class DEXClient(ABC):
+class DEXClient(Generic[TQuote], ABC):
     """Base class for DEX clients"""
 
     @abstractmethod
-    def __init__(self, chain_config: ChainConfig) -> None:
+    def __init__(self, chain_config: ChainConfig, quote_type: Type[TQuote]) -> None:
         """Initialize the DEX client with configuration"""
         self._chain_config = chain_config
+        self._quote_type = quote_type
 
     @property
     def chain(self) -> str:
@@ -86,7 +97,7 @@ class DEXClient(ABC):
         return self._chain_config
 
     @abstractmethod
-    def get_token_price(self, token_out: TokenInfo, token_in: TokenInfo) -> Decimal:
+    def get_token_price(self, token_out: TokenInfo, token_in: TokenInfo, amount_in: Decimal) -> QuoteResult[TQuote]:
         """Get price/conversion rate for the pair of tokens.
 
         The price is returned in terms of token_out/token_in (how much token out per token in).
@@ -94,6 +105,7 @@ class DEXClient(ABC):
         Args:
             token_out (TokenInfo): The token to be bought (going out from the pool)
             token_in (TokenInfo): The token to be sold (going into the pool)
+            amount_in (Decimal): The amount of the token to be sold
 
         Example:
             eth_token = TokenInfo(address="0x...", decimals=18, symbol="ETH", chain="ethereum")
@@ -106,17 +118,13 @@ class DEXClient(ABC):
     @abstractmethod
     def swap(
         self,
-        token_out: TokenInfo,
-        token_in: TokenInfo,
-        amount_in: Decimal,
+        quote: QuoteResult[TQuote],
         slippage_bps: int = 100,
     ) -> SwapResult:
         """Execute a token swap on the DEX
 
         Args:
-            token_out (TokenInfo): The token to be bought (going out from the pool)
-            token_in (TokenInfo): The token to be sold (going into the pool)
-            amount_in: Amount of token_in to spend
+            quote (TokenPrice): The quote to execute
             slippage_bps: Maximum allowed slippage in basis points (1 bp = 0.01%)
 
         Returns:
@@ -155,3 +163,10 @@ class DEXClient(ABC):
             An instance of the DEX client
         """
         pass
+
+    def raise_if_not_quote(self, value: Any) -> None:
+        if self.is_quote(value):
+            raise TypeError(f"Expected {self._quote_type} but got {type(value)}")
+
+    def is_quote(self, value: Any) -> TypeGuard[QuoteResult[TQuote]]:
+        return isinstance(value, QuoteResult) and isinstance(value.quote, self._quote_type)

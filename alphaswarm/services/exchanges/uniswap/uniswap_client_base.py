@@ -5,17 +5,23 @@ from typing import List, Tuple
 
 from alphaswarm.config import ChainConfig, TokenInfo
 from alphaswarm.services.chains.evm import ERC20Contract, EVMClient, EVMSigner
-from alphaswarm.services.exchanges.base import DEXClient, SwapResult
+from alphaswarm.services.exchanges.base import DEXClient, QuoteResult, SwapResult
 from eth_typing import ChecksumAddress, HexAddress
+from pydantic.dataclasses import dataclass
 from web3.types import TxReceipt
 
 # Set up logger
 logger = logging.getLogger(__name__)
 
 
-class UniswapClientBase(DEXClient):
+@dataclass
+class UniswapQuote:
+    pool_address: ChecksumAddress
+
+
+class UniswapClientBase(DEXClient[UniswapQuote]):
     def __init__(self, chain_config: ChainConfig, version: str) -> None:
-        super().__init__(chain_config)
+        super().__init__(chain_config, UniswapQuote)
         self.version = version
         self._evm_client = EVMClient(chain_config)
         self._router = self._get_router()
@@ -41,12 +47,16 @@ class UniswapClientBase(DEXClient):
 
     @abstractmethod
     def _swap(
-        self, *, token_out: TokenInfo, token_in: TokenInfo, address: str, wei_in: int, slippage_bps: int
+        self,
+        quote: QuoteResult[UniswapQuote],
+        slippage_bps: int,
     ) -> List[TxReceipt]:
         pass
 
     @abstractmethod
-    def _get_token_price(self, token_out: TokenInfo, token_in: TokenInfo) -> Decimal:
+    def _get_token_price(
+        self, token_out: TokenInfo, token_in: TokenInfo, amount_in: Decimal
+    ) -> QuoteResult[UniswapQuote]:
         pass
 
     @abstractmethod
@@ -95,17 +105,18 @@ class UniswapClientBase(DEXClient):
 
     def swap(
         self,
-        token_out: TokenInfo,
-        token_in: TokenInfo,
-        amount_in: Decimal,
+        quote: QuoteResult[UniswapQuote],
         slippage_bps: int = 100,
     ) -> SwapResult:
+        # Create contract instances
+        token_out = quote.token_out
+        token_out_contract = ERC20Contract(self._evm_client, token_out.checksum_address)
+        token_in = quote.token_in
+        token_in_contract = ERC20Contract(self._evm_client, token_in.checksum_address)
+        amount_in = quote.amount_in
+
         logger.info(f"Initiating token swap for {token_in.symbol} to {token_out.symbol}")
         logger.info(f"Wallet address: {self.wallet_address}")
-
-        # Create contract instances
-        token_out_contract = ERC20Contract(self._evm_client, token_out.checksum_address)
-        token_in_contract = ERC20Contract(self._evm_client, token_in.checksum_address)
 
         # Gas balance
         gas_balance = self._evm_client.get_native_balance(self.wallet_address)
@@ -118,7 +129,6 @@ class UniswapClientBase(DEXClient):
         logger.info(f"Balance of {token_out.symbol}: {out_balance:,.8f}")
         logger.info(f"Balance of {token_in.symbol}: {in_balance:,.8f}")
         logger.info(f"ETH balance for gas: {eth_balance:,.6f}")
-        wei_in = token_in.convert_to_wei(amount_in)
 
         if in_balance < amount_in:
             raise ValueError(
@@ -130,10 +140,7 @@ class UniswapClientBase(DEXClient):
         # 2) swap (various functions)
 
         receipts = self._swap(
-            token_out=token_out,
-            token_in=token_in,
-            address=self.wallet_address,
-            wei_in=wei_in,
+            quote=quote,
             slippage_bps=slippage_bps,
         )
 
@@ -166,12 +173,14 @@ class UniswapClientBase(DEXClient):
         tx_receipt = token_contract.approve(self.get_signer(), self._router, raw_amount)
         return tx_receipt
 
-    def get_token_price(self, token_out: TokenInfo, token_in: TokenInfo) -> Decimal:
+    def get_token_price(
+        self, token_out: TokenInfo, token_in: TokenInfo, amount_in: Decimal
+    ) -> QuoteResult[UniswapQuote]:
         logger.debug(
             f"Getting price for {token_out.symbol}/{token_in.symbol} on {self.chain} using Uniswap {self.version}"
         )
 
-        return self._get_token_price(token_out=token_out, token_in=token_in)
+        return self._get_token_price(token_out=token_out, token_in=token_in, amount_in=amount_in)
 
     def get_markets_for_tokens(self, tokens: List[TokenInfo]) -> List[Tuple[TokenInfo, TokenInfo]]:
         """Get list of valid trading pairs between the provided tokens.
