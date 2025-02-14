@@ -37,7 +37,6 @@ class StrategyAnalysis(BaseModel):
 class AnalyzeTradingStrategy(AlphaSwarmTool):
     """
     Analyze the trading strategy against the provided data and decide if any of the strategy rules are triggered.
-    Returns a StrategyAnalysis object, which contains a summary of the analysis and a list of triggered rules and their details.
     """
 
     inputs = {
@@ -47,7 +46,6 @@ class AnalyzeTradingStrategy(AlphaSwarmTool):
             "description": "A JSON-formatted string containing the token data to analyze, keyed by token symbol.",
         },
     }
-    output_type = "object"
 
     def __init__(self, strategy: Strategy, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)

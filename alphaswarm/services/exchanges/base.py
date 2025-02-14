@@ -7,6 +7,7 @@ from typing import Any, Generic, List, Optional, Tuple, Type, TypeGuard, TypeVar
 
 from alphaswarm.config import ChainConfig, Config, TokenInfo
 from hexbytes import HexBytes
+from pydantic import BaseModel
 
 T = TypeVar("T", bound="DEXClient")
 TQuote = TypeVar("TQuote")
@@ -22,8 +23,7 @@ class QuoteResult(Generic[TQuote]):
     amount_out: Decimal
 
 
-@dataclass
-class SwapResult:
+class SwapResult(BaseModel):
     success: bool
     amount_out: Decimal
     amount_in: Decimal

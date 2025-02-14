@@ -17,7 +17,6 @@ class GetTokenAddress(AlphaSwarmTool):
             "description": "The chain to get the address for",
         },
     }
-    output_type = "string"
 
     def __init__(self, config: Config, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)

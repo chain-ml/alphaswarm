@@ -8,32 +8,24 @@ from alphaswarm.core.tool import AlphaSwarmTool
 from alphaswarm.services.exchanges import DEXFactory, QuoteResult
 from alphaswarm.services.exchanges.jupiter.jupiter import JupiterQuote
 from alphaswarm.services.exchanges.uniswap.uniswap_client_base import UniswapQuote
-from pydantic.dataclasses import dataclass
+from pydantic import BaseModel
 
 logger = logging.getLogger(__name__)
 
 
-@dataclass
-class TokenQuote:
+class TokenQuote(BaseModel):
     datetime: str
     dex: str
     chain: str
     quote: QuoteResult[Union[UniswapQuote, JupiterQuote]]
 
 
-@dataclass
-class TokenPriceResult:
+class TokenPriceResult(BaseModel):
     quotes: List[TokenQuote]
 
 
 class GetTokenPrice(AlphaSwarmTool):
-    """
-    Get the current price of a token pair from available DEXes.
-    Returns a {TokenPriceResult.__name__} object containing a list of {TokenQuote.__name__} objects.
-    Examples: 'Get the price of 1 ETH in USDC on ethereum', 'Get the price of 1 GIGA in SOL on solana'
-    """
-
-    # TODO: discuss
+    """Get the current price of a token pair from available DEXes."""
 
     inputs = {
         "token_out": {
@@ -58,7 +50,11 @@ class GetTokenPrice(AlphaSwarmTool):
             "nullable": True,
         },
     }
-    output_type = "object"
+    # TODO: discuss
+    examples = [
+        "Get the price of 1 ETH in USDC on ethereum",
+        "Get the price of 1 GIGA in SOL on solana",
+    ]
 
     def __init__(self, config: Config) -> None:
         super().__init__()

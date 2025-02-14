@@ -25,7 +25,6 @@ class GetAlchemyPriceHistoryBySymbol(AlphaSwarmTool):
             "lte": 365,
         },
     }
-    output_type = "object"
 
     def __init__(self, alchemy_client: Optional[AlchemyClient] = None) -> None:
         super().__init__()
@@ -62,7 +61,6 @@ class GetAlchemyPriceHistoryByAddress(AlphaSwarmTool):
             "lte": 365,
         },
     }
-    output_type = "object"
 
     def __init__(self, alchemy_client: Optional[AlchemyClient] = None) -> None:
         super().__init__()

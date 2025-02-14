@@ -21,7 +21,6 @@ class GetCookieMetricsByTwitter(AlphaSwarmTool):
             "enum": ["_3Days", "_7Days"],
         },
     }
-    output_type = "object"
 
     def __init__(self, client: Optional[CookieFunClient] = None):
         super().__init__()
@@ -52,7 +51,6 @@ class GetCookieMetricsByContract(AlphaSwarmTool):
             "enum": ["_3Days", "_7Days"],
         },
     }
-    output_type = "object"
 
     def __init__(self, client: Optional[CookieFunClient] = None):
         super().__init__()
@@ -79,7 +77,6 @@ class GetCookieMetricsBySymbol(AlphaSwarmTool):
             "enum": ["_3Days", "_7Days"],
         },
     }
-    output_type = "object"
 
     def __init__(self, client: Optional[CookieFunClient] = None):
         super().__init__()
@@ -92,7 +89,6 @@ class GetCookieMetricsBySymbol(AlphaSwarmTool):
 class GetCookieMetricsPaged(AlphaSwarmTool):
     """
     Retrieve paged list of market data and statistics for `page_size` AI agent tokens ordered by mindshare from Cookie.fun.
-    Outputs an object of type PagedAgentsResponse, which has a field `data` containing a list of AgentMetrics data objects.
     """
 
     inputs = {
@@ -113,7 +109,6 @@ class GetCookieMetricsPaged(AlphaSwarmTool):
             "maximum": 25,
         },
     }
-    output_type = "object"
 
     def __init__(self, client: Optional[CookieFunClient] = None):
         super().__init__()

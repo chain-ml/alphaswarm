@@ -7,8 +7,7 @@ from alphaswarm.core.tool import AlphaSwarmTool
 
 class GetUsdPrice(AlphaSwarmTool):
     """
-    Get the current price of a cryptocurrency in USD using CoinGecko API.
-    Returns price and 24h price change percentage.
+    Get the current price and 24h price change percentage of a cryptocurrency in USD using CoinGecko API.
     """
 
     inputs = {
@@ -23,7 +22,6 @@ class GetUsdPrice(AlphaSwarmTool):
             "description": "Blockchain to use. For example, 'solana' for Solana tokens, 'base' for Base tokens, 'ethereum' for Ethereum tokens.",
         },
     }
-    output_type = "string"
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)

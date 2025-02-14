@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 class SendTelegramNotification(AlphaSwarmTool):
     """
     Send a Telegram notification to the registered Telegram channel with the given message and priority.
-    Returns a string describing whether the notification was sent successfully or not.""
+    Returns a string describing whether the notification was sent successfully or not.
     """
 
     inputs = {
@@ -27,7 +27,6 @@ class SendTelegramNotification(AlphaSwarmTool):
             "required": True,
         },
     }
-    output_type = "string"
 
     def __init__(self, telegram_bot_token: str, chat_id: int) -> None:
         super().__init__()

@@ -11,10 +11,7 @@ logger = logging.getLogger(__name__)
 
 
 class ExecuteTokenSwap(AlphaSwarmTool):
-    """
-    Execute a token swap on a supported DEX (Uniswap V2/V3 on Ethereum and Base chains).
-    Returns a SwapResult details of the transaction.
-    """
+    """Execute a token swap on a supported DEX (Uniswap V2/V3 on Ethereum and Base chains)."""
 
     inputs = {
         "quote": {
@@ -27,7 +24,6 @@ class ExecuteTokenSwap(AlphaSwarmTool):
             "nullable": True,
         },
     }
-    output_type = "object"
 
     def __init__(self, config: Config, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
