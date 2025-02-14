@@ -6,6 +6,7 @@ import dotenv
 from alphaswarm.agent.agent import AlphaSwarmAgent
 from alphaswarm.agent.clients import TerminalClient
 from alphaswarm.config import CONFIG_PATH, Config
+from alphaswarm.core.tool import AlphaSwarmTool
 from alphaswarm.tools.alchemy import GetAlchemyPriceHistoryByAddress, GetAlchemyPriceHistoryBySymbol
 from alphaswarm.tools.cookie import (
     GetCookieMetricsByContract,
@@ -19,7 +20,6 @@ from alphaswarm.tools.strategy_analysis.generic import AnalyzeTradingStrategy
 from alphaswarm.tools.strategy_analysis.strategy import Strategy
 from alphaswarm.tools.telegram import SendTelegramNotification
 from alphaswarm.utils import read_text_file_to_string
-from smolagents import Tool
 
 
 async def main() -> None:
@@ -32,7 +32,7 @@ async def main() -> None:
 
     strategy = Strategy.from_file(filename=str(CONFIG_PATH / "momentum_strategy_config.md"))
 
-    tools: List[Tool] = [
+    tools: List[AlphaSwarmTool] = [
         GetUsdPrice(),
         GetTokenAddress(config),
         GetTokenPrice(config),

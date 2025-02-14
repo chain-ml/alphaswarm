@@ -6,6 +6,7 @@ import dotenv
 from alphaswarm.agent.agent import AlphaSwarmAgent
 from alphaswarm.agent.clients.telegram_bot import TelegramBot
 from alphaswarm.config import Config
+from alphaswarm.core.tool import AlphaSwarmTool
 from alphaswarm.tools.alchemy import GetAlchemyPriceHistoryByAddress, GetAlchemyPriceHistoryBySymbol
 from alphaswarm.tools.cookie import (
     GetCookieMetricsByContract,
@@ -15,7 +16,6 @@ from alphaswarm.tools.cookie import (
 )
 from alphaswarm.tools.core import GetTokenAddress, GetUsdPrice
 from alphaswarm.tools.exchanges import ExecuteTokenSwap, GetTokenPrice
-from smolagents import Tool
 
 logging.getLogger("smolagents").setLevel(logging.ERROR)
 
@@ -24,7 +24,7 @@ async def main() -> None:
     dotenv.load_dotenv()
     config = Config()
 
-    tools: List[Tool] = [
+    tools: List[AlphaSwarmTool] = [
         GetUsdPrice(),
         GetTokenAddress(config),
         GetTokenPrice(config),
