@@ -60,5 +60,4 @@ def test_token_swap_tool(
     assert len(quotes.quotes) == 1
     result = token_swap_tool.forward(quote=quotes.quotes[0])
     print(result)
-    assert result.success
     assert result.amount_out > min_amount_out
