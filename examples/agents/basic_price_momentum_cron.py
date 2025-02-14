@@ -107,8 +107,8 @@ class PriceMomentumCronAgent(AlphaSwarmAgent):
                     f"  - {self.long_term_periods * 5}min change: {long_term_change:.2f}%"
                 )
 
-            logging.info(f"Short term change: {short_term_change:.2f}%")
-            logging.info(f"Long term change: {long_term_change:.2f}%")
+            logging.info(f"{self.short_term_periods * 5} minute change: {short_term_change:.2f}%")
+            logging.info(f"{self.long_term_periods * 5} minute change: {long_term_change:.2f}%")
 
         logging.info(f"{len(price_alerts)} price alerts found.")
         if len(price_alerts) > 0:
@@ -138,9 +138,9 @@ async def main() -> None:
         token_addresses=token_addresses,
         chain="base-mainnet",
         short_term_minutes=5,
-        short_term_threshold=0.2,
+        short_term_threshold=0.1,
         long_term_minutes=60,
-        long_term_threshold=2.0,
+        long_term_threshold=1.0,
     )
 
     cron_client = CronJobClient(
