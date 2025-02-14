@@ -138,9 +138,9 @@ async def main() -> None:
         token_addresses=token_addresses,
         chain="base-mainnet",
         short_term_minutes=5,
-        short_term_threshold=0.1,
+        short_term_threshold=0.01,
         long_term_minutes=60,
-        long_term_threshold=1.0,
+        long_term_threshold=0.01,
     )
 
     cron_client = CronJobClient(
@@ -151,7 +151,7 @@ async def main() -> None:
         message_generator=agent.get_price_alerts,
         should_process=lambda alerts: len(alerts) > 0,
         skip_message=lambda _: None,
-        max_history=0,
+        max_history=2,  # Last message pair only
     )
     await asyncio.gather(cron_client.start())
 
