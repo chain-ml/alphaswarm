@@ -1,3 +1,5 @@
+import pytest
+
 from alphaswarm.services.cookiefun.cookiefun_client import CookieFunClient, Interval
 from alphaswarm.tools.cookie.cookie_metrics import (
     GetCookieMetricsByTwitter,
@@ -7,6 +9,7 @@ from alphaswarm.tools.cookie.cookie_metrics import (
 )
 
 
+@pytest.mark.skip("Needs Cookie.fun API key")
 def test_get_metrics_by_twitter(cookiefun_client: CookieFunClient) -> None:
     tool = GetCookieMetricsByTwitter(cookiefun_client)
     result = tool.forward(username="cookiedotfun", interval=Interval.SEVEN_DAYS)
@@ -18,6 +21,7 @@ def test_get_metrics_by_twitter(cookiefun_client: CookieFunClient) -> None:
     assert len(result.twitter_usernames) > 0
 
 
+@pytest.mark.skip("Needs Cookie.fun API key")
 def test_get_metrics_by_contract(cookiefun_client: CookieFunClient) -> None:
     tool = GetCookieMetricsByContract(cookiefun_client)
     cookie_address = "0xc0041ef357b183448b235a8ea73ce4e4ec8c265f"  # Cookie token on Base
@@ -29,6 +33,7 @@ def test_get_metrics_by_contract(cookiefun_client: CookieFunClient) -> None:
     assert any(c.contract_address == cookie_address for c in result.contracts)
 
 
+@pytest.mark.skip("Needs Cookie.fun API key")
 def test_get_metrics_by_symbol(cookiefun_client: CookieFunClient) -> None:
     tool = GetCookieMetricsBySymbol(cookiefun_client)
     result = tool.forward(symbol="COOKIE", interval=Interval.SEVEN_DAYS)
@@ -39,6 +44,7 @@ def test_get_metrics_by_symbol(cookiefun_client: CookieFunClient) -> None:
     assert len(result.contracts) > 0
 
 
+@pytest.mark.skip("Needs Cookie.fun API key")
 def test_get_metrics_paged(cookiefun_client: CookieFunClient) -> None:
     tool = GetCookieMetricsPaged(cookiefun_client)
     result = tool.forward(interval=Interval.SEVEN_DAYS, page=1, page_size=10)
