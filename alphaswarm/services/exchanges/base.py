@@ -3,7 +3,7 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from decimal import Decimal
-from typing import Annotated, Any, Generic, List, Optional, Tuple, Type, TypeGuard, TypeVar, Union
+from typing import Annotated, Any, Generic, List, Tuple, Type, TypeGuard, TypeVar, Union
 
 from alphaswarm.config import ChainConfig, Config, TokenInfo
 from pydantic import BaseModel, Field
@@ -25,7 +25,7 @@ class QuoteResult(Generic[TQuote], BaseModel):
 class SwapResult:
     amount_out: Decimal
     amount_in: Decimal
-    tx_hash: Optional[str] = None
+    tx_hash: str
 
     @classmethod
     def build_success(cls, amount_out: Decimal, amount_in: Decimal, tx_hash: str) -> SwapResult:
