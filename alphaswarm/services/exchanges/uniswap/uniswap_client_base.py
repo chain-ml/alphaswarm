@@ -153,7 +153,7 @@ class UniswapClientBase(DEXClient[UniswapQuote]):
         return SwapResult.build_success(
             amount_out=amount_out,
             amount_in=amount_in,
-            tx_hash=swap_receipt["transactionHash"],  # Return the swap tx hash, not the approved tx
+            tx_hash=swap_receipt["transactionHash"].hex(),  # Return the swap tx hash, not the approved tx
         )
 
     def _approve_token_spending(self, token: TokenInfo, raw_amount: int) -> TxReceipt:
