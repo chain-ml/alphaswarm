@@ -4,7 +4,7 @@ from decimal import Decimal
 from typing import List, Optional, Union
 
 from alphaswarm.config import Config
-from alphaswarm.core.base_tool import AlphaSwarmBaseTool
+from alphaswarm.core.tool import AlphaSwarmTool
 from alphaswarm.services.exchanges import DEXFactory, QuoteResult
 from alphaswarm.services.exchanges.jupiter.jupiter import JupiterQuote
 from alphaswarm.services.exchanges.uniswap.uniswap_client_base import UniswapQuote
@@ -26,7 +26,7 @@ class TokenPriceResult:
     quotes: List[TokenQuote]
 
 
-class GetTokenPrice(AlphaSwarmBaseTool):
+class GetTokenPrice(AlphaSwarmTool):
     """
     Get the current price of a token pair from available DEXes.
     Returns a {TokenPriceResult.__name__} object containing a list of {TokenQuote.__name__} objects.

@@ -2,10 +2,10 @@ from datetime import UTC, datetime
 from typing import Any
 
 import requests
-from alphaswarm.core.base_tool import AlphaSwarmBaseTool
+from alphaswarm.core.tool import AlphaSwarmTool
 
 
-class GetUsdPrice(AlphaSwarmBaseTool):
+class GetUsdPrice(AlphaSwarmTool):
     """
     Get the current price of a cryptocurrency in USD using CoinGecko API.
     Returns price and 24h price change percentage.

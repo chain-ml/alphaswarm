@@ -3,12 +3,12 @@ import logging
 from typing import Optional
 
 from alphaswarm.agent.clients.telegram_bot import TelegramApp
-from alphaswarm.core.base_tool import AlphaSwarmBaseTool
+from alphaswarm.core.tool import AlphaSwarmTool
 
 logger = logging.getLogger(__name__)
 
 
-class SendTelegramNotification(AlphaSwarmBaseTool):
+class SendTelegramNotification(AlphaSwarmTool):
     """
     Send a Telegram notification to the registered Telegram channel with the given message and priority.
     Returns a string describing whether the notification was sent successfully or not.""

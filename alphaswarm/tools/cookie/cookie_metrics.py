@@ -1,10 +1,10 @@
 from typing import Optional
 
-from alphaswarm.core.base_tool import AlphaSwarmBaseTool
+from alphaswarm.core.tool import AlphaSwarmTool
 from alphaswarm.services.cookiefun.cookiefun_client import AgentMetrics, CookieFunClient, Interval, PagedAgentsResponse
 
 
-class GetCookieMetricsByTwitter(AlphaSwarmBaseTool):
+class GetCookieMetricsByTwitter(AlphaSwarmTool):
     """
     Retrieve AI agent metrics such as mindshare, market cap, price, liquidity, volume, holders,
     average impressions, average engagements, followers, and top tweets by Twitter username from Cookie.fun
@@ -31,7 +31,7 @@ class GetCookieMetricsByTwitter(AlphaSwarmBaseTool):
         return self.client.get_agent_metrics_by_twitter(username, Interval(interval))
 
 
-class GetCookieMetricsByContract(AlphaSwarmBaseTool):
+class GetCookieMetricsByContract(AlphaSwarmTool):
     """
     Retrieve AI agent metrics such as mindshare, market cap, price, liquidity, volume, holders,
     average impressions, average engagements, followers, and top tweets by contract address from Cookie.fun
@@ -62,7 +62,7 @@ class GetCookieMetricsByContract(AlphaSwarmBaseTool):
         return self.client.get_agent_metrics_by_contract(address, Interval(interval), chain)
 
 
-class GetCookieMetricsBySymbol(AlphaSwarmBaseTool):
+class GetCookieMetricsBySymbol(AlphaSwarmTool):
     """
     Retrieve AI agent metrics such as mindshare, market cap, price, liquidity, volume, holders,
     average impressions, average engagements, followers, and top tweets by token symbol from Cookie.fun
@@ -89,7 +89,7 @@ class GetCookieMetricsBySymbol(AlphaSwarmBaseTool):
         return self.client.get_agent_metrics_by_contract(symbol, Interval(interval))
 
 
-class GetCookieMetricsPaged(AlphaSwarmBaseTool):
+class GetCookieMetricsPaged(AlphaSwarmTool):
     """
     Retrieve paged list of market data and statistics for `page_size` AI agent tokens ordered by mindshare from Cookie.fun.
     Outputs an object of type PagedAgentsResponse, which has a field `data` containing a list of AgentMetrics data objects.
