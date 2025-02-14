@@ -121,6 +121,7 @@ class SolanaClient:
                 if status is not None and status.Finalized:
                     return
             time.sleep(sleep_sec)
+            timeout_sec -= sleep_sec
         raise RuntimeError(f"Failed to get confirmation for transaction '{str(signature)}'")
 
     @staticmethod
