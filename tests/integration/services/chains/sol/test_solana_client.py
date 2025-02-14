@@ -15,6 +15,7 @@ def client(solana_config: ChainConfig) -> SolanaClient:
     return SolanaClient(solana_config)
 
 
+@pytest.mark.skip("Requires a valid Solana wallet")
 @pytest.mark.parametrize(
     "token",
     [
