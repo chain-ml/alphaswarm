@@ -128,6 +128,7 @@ class JupiterClient(DEXClient[JupiterQuote]):
             "swapMode": "ExactIn",
             "amount": str(token_in.convert_to_wei(amount_in)),
             "slippageBps": self._settings.slippage_bps,
+            "restrictIntermediateTokens": "true",
         }
 
         url = f"{self._venue_config.quote_api_url}?{urlencode(params)}"
@@ -146,6 +147,8 @@ class JupiterClient(DEXClient[JupiterQuote]):
             "Content-Type": "application/json",
         }
         response = requests.post(self._venue_config.swap_api_url, json=params, headers=headers)
+        if response.status_code != 200:
+            raise ApiException(response)
         return JupiterSwapTransaction(response.json())
 
     def get_markets_for_tokens(self, tokens: List[TokenInfo]) -> List[Tuple[TokenInfo, TokenInfo]]:

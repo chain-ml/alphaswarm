@@ -111,7 +111,7 @@ class SolanaClient:
             raise RuntimeError("Failed to send transaction. Make sure you have enough token balance.") from e
 
     def _wait_for_confirmation(self, signature: Signature) -> None:
-        timeout_sec = 10
+        timeout_sec = 30
         sleep_sec = 1
         status: Optional[TransactionConfirmationStatus] = None
         while timeout_sec > 0:
