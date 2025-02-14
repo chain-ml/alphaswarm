@@ -121,7 +121,13 @@ class PriceMomentumCronAgent(AlphaSwarmAgent):
 
 async def main() -> None:
     dotenv.load_dotenv()
-    logging.basicConfig(level=logging.INFO)
+
+    logging.basicConfig(
+        format="%(asctime)s - %(levelname)s - %(name)s - %(filename)s:%(lineno)d - %(message)s",
+        datefmt="%Y-%m-%d %H:%M:%S",
+        level=logging.INFO,
+    )
+
     token_addresses = [
         "0x4F9Fd6Be4a90f2620860d680c0d4d5Fb53d1A825",  # AIXBT
         "0x0b3e328455c4059EEb9e3f84b5543F74E24e7E1b",  # VIRTUAL
