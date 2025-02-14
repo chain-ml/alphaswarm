@@ -1,16 +1,34 @@
 import logging
+import time
 from decimal import Decimal
 from typing import Any, Dict
 
 from alphaswarm.config import ChainConfig
 from solana.rpc import api
 from solana.rpc.types import TokenAccountOpts
+from solders.keypair import Keypair
+from solders.message import to_bytes_versioned
 from solders.pubkey import Pubkey
+from solders.rpc.responses import SendTransactionResp
+from solders.signature import Signature
+from solders.transaction import VersionedTransaction
 
 logger = logging.getLogger(__name__)
 
 # Define supported chains
 SUPPORTED_CHAINS = {"solana", "solana_devnet"}
+
+
+class SolSigner:
+    def __init__(self, private_key: str):
+        self._keypair = Keypair.from_base58_string(private_key)
+
+    @property
+    def wallet_address(self) -> str:
+        return str(self._keypair.pubkey())
+
+    def sign(self, message: VersionedTransaction) -> Signature:
+        return self._keypair.sign_message(to_bytes_versioned(message.message))
 
 
 class SolanaClient:
@@ -77,6 +95,33 @@ class SolanaClient:
 
         # Convert to human-readable format
         return balance / 10**decimals
+
+    def process(self, transaction: VersionedTransaction, signer: SolSigner) -> Signature:
+        signature = signer.sign(transaction)
+        signed_tx = VersionedTransaction.populate(transaction.message, [signature])
+        tx_response = self._send_transaction(signed_tx)
+        self._wait_for_confirmation(tx_response.value)
+        return tx_response.value
+
+    def _send_transaction(self, signed_tx: VersionedTransaction) -> SendTransactionResp:
+        try:
+            return self._client.send_transaction(signed_tx)
+        except Exception as e:
+            raise RuntimeError("Failed to send transaction. Make sure you have enough token balance.") from e
+
+    def _wait_for_confirmation(self, signature: Signature) -> None:
+        timeout_sec = 10
+        sleep_sec = 1
+
+        while timeout_sec > 0:
+            tx_status = self._client.get_signature_statuses([signature])
+            response = tx_status.value[0]
+            if response is not None:
+                status = response.confirmation_status
+                if status is not None and status.Finalized:
+                    return
+            time.sleep(sleep_sec)
+        raise RuntimeError(f"Failed to get confirmation for transaction '{str(signature)}'")
 
     @staticmethod
     def _get_decimal(values: Dict[str, Any], key: str) -> Decimal:

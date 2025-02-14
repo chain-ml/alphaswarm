@@ -6,7 +6,6 @@ from decimal import Decimal
 from typing import Any, Generic, List, Optional, Tuple, Type, TypeGuard, TypeVar, Union
 
 from alphaswarm.config import ChainConfig, Config, TokenInfo
-from hexbytes import HexBytes
 
 T = TypeVar("T", bound="DEXClient")
 TQuote = TypeVar("TQuote")
@@ -35,8 +34,8 @@ class SwapResult:
         return cls(success=False, amount_out=Decimal(0), amount_in=amount_in, error=error)
 
     @classmethod
-    def build_success(cls, amount_out: Decimal, amount_in: Decimal, tx_hash: HexBytes) -> SwapResult:
-        return cls(success=True, amount_out=amount_out, amount_in=amount_in, tx_hash=tx_hash.hex())
+    def build_success(cls, amount_out: Decimal, amount_in: Decimal, tx_hash: str) -> SwapResult:
+        return cls(success=True, amount_out=amount_out, amount_in=amount_in, tx_hash=tx_hash)
 
 
 @dataclass

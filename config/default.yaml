@@ -169,6 +169,9 @@ chain_config:
         address: "So11111111111111111111111111111111111111112"
         decimals: 9
         is_native: true
+      USDC:
+        address: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"
+        decimals: 6
       GIGA:
         address: "63LfDmNb3MQ8mw9MtZ2To9bEA2M71kZUUGq5tiJxcqj9"
         decimals: 5
