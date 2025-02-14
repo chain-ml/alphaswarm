@@ -44,7 +44,7 @@ Currently, we are accepting contributions in the following areas:
 3. Ensure the test suite passes
 4. Update the README.md if necessary
 5. Submit the pull request with a clear description of changes
-6. The pull request should pass all linters and static code checks
+6. The pull request should pass all linters and static code checks [see](https://github.com/chain-ml/alphaswarm?tab=readme-ov-file#code-quality)
 7. The pull request needs to be reviewed and accepted by the core team
 
 ## Questions or Need Help?
