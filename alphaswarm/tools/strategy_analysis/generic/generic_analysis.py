@@ -35,9 +35,7 @@ class StrategyAnalysis(BaseModel):
 
 
 class AnalyzeTradingStrategy(AlphaSwarmTool):
-    """
-    Analyze the trading strategy against the provided data and decide if any of the strategy rules are triggered.
-    """
+    """Analyze the trading strategy against the provided data and decide if any of the strategy rules are triggered."""
 
     inputs = {
         "token_data": {

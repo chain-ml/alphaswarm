@@ -85,7 +85,7 @@ class AlphaSwarmTool:
 
         if isinstance(output_type, type) and issubclass(output_type, BaseModel):
             cls.output_type = "object"
-            # could add additional hints after the schema for AlphaSwarmToolInput class?
+            # could add additional hints after the schema for AlphaSwarmToolInput class? or object docstring?
             return (
                 f"Returns a {output_type.__name__} object with the following schema:\n\n"
                 f"{output_type.model_json_schema()}"

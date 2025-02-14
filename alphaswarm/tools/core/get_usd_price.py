@@ -6,9 +6,7 @@ from alphaswarm.core.tool import AlphaSwarmTool
 
 
 class GetUsdPrice(AlphaSwarmTool):
-    """
-    Get the current price and 24h price change percentage of a cryptocurrency in USD using CoinGecko API.
-    """
+    """Get the current price and 24h price change percentage of a cryptocurrency in USD using CoinGecko API."""
 
     inputs = {
         "address": {
