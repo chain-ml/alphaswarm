@@ -151,7 +151,7 @@ class AlphaSwarmAgentClient(ABC, Generic[T_Context]):
             formatted_message.extend(["", "Previous Messages:", "---"])
             for msg in self._message_buffer[channel_id]:
                 formatted_message.append(f"{msg.sender}: {msg.content}")
-            formatted_message.append("---\n")
+            formatted_message.append("---")
 
         formatted_message.extend(["Latest Message:", "---", message, "---"])
 
