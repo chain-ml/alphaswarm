@@ -111,8 +111,9 @@ class SolanaClient:
             raise RuntimeError("Failed to send transaction. Make sure you have enough token balance.") from e
 
     def _wait_for_confirmation(self, signature: Signature) -> None:
-        timeout_sec = 30
-        sleep_sec = 1
+        initial_timeout = 30
+        timeout_sec = initial_timeout
+        sleep_sec = 2
         status: Optional[TransactionConfirmationStatus] = None
         while timeout_sec > 0:
             tx_status = self._client.get_signature_statuses([signature])
@@ -121,10 +122,11 @@ class SolanaClient:
                 status = response.confirmation_status
                 if status is not None and status.Finalized:
                     return
+            logger.warning(f"Status {status} for transaction {str(signature)}. Retrying in {sleep_sec} seconds...")
             time.sleep(sleep_sec)
             timeout_sec -= sleep_sec
         raise RuntimeError(
-            f"Failed to get confirmation for transaction '{str(signature)}' for {timeout_sec} seconds. Last status is {status}"
+            f"Failed to get confirmation for transaction '{str(signature)}' for {initial_timeout} seconds. Last status is {status}"
         )
 
     @staticmethod

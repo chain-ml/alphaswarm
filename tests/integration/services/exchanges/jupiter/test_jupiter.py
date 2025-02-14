@@ -24,10 +24,10 @@ def test_get_token_price(jupiter_client: JupiterClient) -> None:
 @pytest.mark.skip("Requires a funded wallet.")
 def test_swap(jupiter_client: JupiterClient) -> None:
     tokens_config = jupiter_client._chain_config.tokens
-    giga = tokens_config["GIGA"]
+    usdc = tokens_config["usdc"]
     sol = tokens_config["SOL"]
 
-    quote = jupiter_client.get_token_price(token_out=giga, token_in=sol, amount_in=Decimal("0.0001"))
+    quote = jupiter_client.get_token_price(token_out=usdc, token_in=sol, amount_in=Decimal("0.0001"))
     result = jupiter_client.swap(quote)
 
     assert result.amount_out == pytest.approx(Decimal(quote.amount_out), Decimal("0.05"))

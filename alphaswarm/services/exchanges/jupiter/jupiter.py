@@ -142,6 +142,7 @@ class JupiterClient(DEXClient[JupiterQuote]):
         params = {
             "quoteResponse": quote.quote,
             "userPublicKey": self.wallet_address,
+            "dynamicComputeUnitLimit": True,
         }
         headers = {
             "Content-Type": "application/json",
@@ -149,6 +150,7 @@ class JupiterClient(DEXClient[JupiterQuote]):
         response = requests.post(self._venue_config.swap_api_url, json=params, headers=headers)
         if response.status_code != 200:
             raise ApiException(response)
+        logger.debug(response.json())
         return JupiterSwapTransaction(response.json())
 
     def get_markets_for_tokens(self, tokens: List[TokenInfo]) -> List[Tuple[TokenInfo, TokenInfo]]:
