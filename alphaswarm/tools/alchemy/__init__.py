@@ -1,2 +1,1 @@
 from .alchemy_price_history import AlchemyPriceHistoryBySymbol, AlchemyPriceHistoryByAddress
-from .alchemy_price_change import TokenPriceChangeCalculator
