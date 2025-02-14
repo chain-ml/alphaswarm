@@ -144,15 +144,18 @@ class AlphaSwarmAgentClient(ABC, Generic[T_Context]):
 
     def _format_message(self, channel_id: int, message: str) -> str:
         """Format a message for display in the chat"""
-        formatted_message = ""
+        formatted_message = [
+            "Below is the conversation between you and the user. Respond to the latest message from the user keeping in mind the context of the conversation from the previous messages."
+        ]
         if self._message_buffer[channel_id]:
-            formatted_message += "Previous Messages:\n"
+            formatted_message.extend(["", "Previous Messages:", "---"])
             for msg in self._message_buffer[channel_id]:
-                formatted_message += f"- {msg.sender}: {msg.content}\n"
-            formatted_message += "\nLatest Message:\n"
+                formatted_message.append(f"{msg.sender}: {msg.content}")
+            formatted_message.append("---\n")
+
+        formatted_message.extend(["Latest Message:", "---", message, "---"])
 
         new_message = ChatMessage.create(sender="user", content=message)
         self._message_buffer[channel_id].append(new_message)
 
-        formatted_message += message
-        return formatted_message
+        return "\n".join(formatted_message)
