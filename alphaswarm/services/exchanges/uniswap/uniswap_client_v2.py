@@ -6,14 +6,14 @@ from typing import List, Tuple
 
 from alphaswarm.config import ChainConfig, Config, TokenInfo
 from alphaswarm.services.chains.evm import ZERO_ADDRESS
-from alphaswarm.services.exchanges.base import Slippage
+from alphaswarm.services.exchanges.base import QuoteResult, Slippage
 from alphaswarm.services.exchanges.uniswap.constants_v2 import (
     UNISWAP_V2_DEPLOYMENTS,
     UNISWAP_V2_FACTORY_ABI,
     UNISWAP_V2_ROUTER_ABI,
     UNISWAP_V2_VERSION,
 )
-from alphaswarm.services.exchanges.uniswap.uniswap_client_base import UniswapClientBase
+from alphaswarm.services.exchanges.uniswap.uniswap_client_base import UniswapClientBase, UniswapQuote
 from eth_defi.uniswap_v2.pair import fetch_pair_details
 from eth_typing import ChecksumAddress
 from web3.types import TxReceipt
@@ -33,25 +33,21 @@ class UniswapClientV2(UniswapClientBase):
         return self._evm_client.to_checksum_address(UNISWAP_V2_DEPLOYMENTS[self.chain]["factory"])
 
     def _swap(
-        self, token_out: TokenInfo, token_in: TokenInfo, address: str, wei_in: int, slippage_bps: int
+        self,
+        quote: QuoteResult[UniswapQuote],
+        slippage_bps: int,
     ) -> List[TxReceipt]:
         """Execute a swap on Uniswap V2."""
         # Handle token approval and get fresh nonce
+        token_in = quote.token_in
+        token_out = quote.token_out
+        wei_in = token_in.convert_to_wei(quote.amount_in)
+
         approval_receipt = self._approve_token_spending(token_in, wei_in)
-
-        # Get price from V2 pair to calculate minimum output
-        price = self._get_token_price(token_out=token_out, token_in=token_in)
-        if not price:
-            raise ValueError(f"No V2 price found for {token_out.symbol}/{token_in.symbol}")
-
-        # Calculate expected output
-        input_amount_decimal = token_in.convert_from_wei(wei_in)
-        expected_output_decimal = input_amount_decimal * price
-        logger.info(f"Expected output: {expected_output_decimal} {token_out.symbol}")
 
         # Convert expected output to raw integer and apply slippage
         slippage = Slippage(slippage_bps)
-        min_output_raw = slippage.calculate_minimum_amount(token_out.convert_to_wei(expected_output_decimal))
+        min_output_raw = slippage.calculate_minimum_amount(token_out.convert_to_wei(quote.amount_out))
         logger.info(f"Minimum output with {slippage} slippage (raw): {min_output_raw}")
 
         # Build swap path
@@ -65,7 +61,7 @@ class UniswapClientV2(UniswapClientBase):
             wei_in,  # amount in
             min_output_raw,  # minimum amount out
             path,  # swap path
-            address,  # recipient
+            self.wallet_address,  # recipient
             deadline,  # deadline
         )
 
@@ -73,7 +69,9 @@ class UniswapClientV2(UniswapClientBase):
         swap_receipt = self._evm_client.process(swap, self.get_signer())
         return [approval_receipt, swap_receipt]
 
-    def _get_token_price(self, token_out: TokenInfo, token_in: TokenInfo) -> Decimal:
+    def _get_token_price(
+        self, token_out: TokenInfo, token_in: TokenInfo, amount_in: Decimal
+    ) -> QuoteResult[UniswapQuote]:
         # Create factory contract instance
         factory_contract = self._web3.eth.contract(address=self._factory, abi=UNISWAP_V2_FACTORY_ABI)
 
@@ -86,10 +84,21 @@ class UniswapClientV2(UniswapClientBase):
 
         # Get V2 pair details - if reverse false, mid_price = token1_amount / token0_amount
         # token0 of the pair has the lowest address. Reverse if needed
+        price = self._get_price_from_pool(pair_address=pair_address, token_out=token_out, token_in=token_in)
+        quote = UniswapQuote(
+            pool_address=pair_address,
+        )
+
+        return QuoteResult(
+            quote=quote, token_in=token_in, token_out=token_out, amount_in=amount_in, amount_out=price * amount_in
+        )
+
+    def _get_price_from_pool(
+        self, *, pair_address: ChecksumAddress, token_out: TokenInfo, token_in: TokenInfo
+    ) -> Decimal:
         reverse = token_out.checksum_address.lower() < token_in.checksum_address.lower()
         pair = fetch_pair_details(self._web3, pair_address, reverse_token_order=reverse)
         price = pair.get_current_mid_price()
-
         return price
 
     def _get_markets_for_tokens(self, tokens: List[TokenInfo]) -> List[Tuple[TokenInfo, TokenInfo]]:
