@@ -3,6 +3,10 @@ import time
 from decimal import Decimal
 from typing import Any, Dict, Optional
 
+from solders.account_decoder import ParsedAccount
+from spl.token._layouts import ACCOUNT_LAYOUT
+from spl.token.constants import TOKEN_PROGRAM_ID
+
 from alphaswarm.config import ChainConfig
 from solana.rpc import api
 from solana.rpc.types import TokenAccountOpts
@@ -96,6 +100,22 @@ class SolanaClient:
 
         # Convert to human-readable format
         return balance / 10**decimals
+
+    def get_all_token_balance(self, public_key: Pubkey) -> Any:
+        response = self._client.get_token_accounts_by_owner(
+            public_key, TokenAccountOpts(program_id=TOKEN_PROGRAM_ID)
+        )
+
+        result = []
+        for account in response.value:
+            decoded_data = ACCOUNT_LAYOUT.parse(bytes(account.account.data))
+            mint = str(Pubkey(decoded_data.mint))
+            symbol = self._chain_config.get_token_info_by_address(mint).symbol
+            owner = str(Pubkey(decoded_data.owner))
+            amount = decoded_data.amount
+
+            result.append((owner, amount, symbol, mint))
+        return result
 
     def process(self, transaction: VersionedTransaction, signer: SolSigner) -> Signature:
         signature = signer.sign(transaction)
