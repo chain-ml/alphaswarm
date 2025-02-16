@@ -73,10 +73,11 @@ class SolanaClient:
         opts = TokenAccountOpts(mint=token_pubkey)
         token_accounts = self._client.get_token_accounts_by_owner_json_parsed(wallet_pubkey, opts)
 
-        if not token_accounts.value:
-            return Decimal(0)  # No token account found means 0 balance
-
-        # Get balance from account data
+        if not token_accounts.value or not isinstance(token_accounts.value, list):
+            logger.info(f"No token account found for {wallet_address}. Returning balance 0.")
+            return Decimal(0)
+    
+            # Get balance from account data
         account_data = token_accounts.value[0].account.data.parsed
 
         # Type checking to prevent issues (and lint errors)
