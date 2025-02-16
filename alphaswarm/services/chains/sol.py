@@ -106,9 +106,13 @@ class SolanaClient:
 
     def _send_transaction(self, signed_tx: VersionedTransaction) -> SendTransactionResp:
         try:
-            return self._client.send_transaction(signed_tx)
+            response = self._client.send_transaction(signed_tx)
+            if not response.value:
+                raise RuntimeError("Transaction submission failed. No response value received.")
+            return response
         except Exception as e:
-            raise RuntimeError("Failed to send transaction. Make sure you have enough token balance.") from e
+            logger.error(f"Error sending transaction: {str(e)}")
+            raise RuntimeError("Failed to send transaction. Ensure you have enough balance and a valid transaction.") from e
 
     def _wait_for_confirmation(self, signature: Signature) -> None:
         initial_timeout = 30
