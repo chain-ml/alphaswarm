@@ -2,7 +2,7 @@ from datetime import UTC, datetime
 from typing import Any
 
 import requests
-from requests.exceptions import HTTPError, RequestException
+from requests.exceptions import RequestException
 from smolagents import Tool
 
 
@@ -55,7 +55,7 @@ class PriceTool(Tool):
             response = self.session.get(url, params=params, timeout=10)
 
             if response.status_code != 200:
-                raise HTTPError(f"Error: Could not fetch price for {address} (Status: {response.status_code})")
+                raise RuntimeError(f"Error: Could not fetch price for {address} (Status: {response.status_code})")
 
             data = response.json()
 
