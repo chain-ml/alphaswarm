@@ -137,13 +137,13 @@ You can also just chat with me naturally!"""
         update = context.context
         if update.message is None:
             raise ValueError("missing message")
-        await update.message.reply_text(message.content, parse_mode="Markdown")
+        await update.message.reply_text(message.content)
 
     async def on_agent_error(self, context: Context[Update], error: ChatMessage) -> None:
         update = context.context
         if update.message is None:
             raise ValueError("missing message")
-        await update.message.reply_text(error.content, parse_mode="Markdown")
+        await update.message.reply_text(error.content)
 
     async def on_start(self) -> None:
         await self._start()
