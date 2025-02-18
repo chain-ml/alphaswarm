@@ -1,5 +1,6 @@
+import inspect
 from textwrap import dedent
-from typing import Any, Dict, Optional, Sequence, get_type_hints
+from typing import Any, Dict, Optional, Sequence, Type, get_type_hints
 
 from pydantic import BaseModel
 from smolagents import Tool
@@ -8,34 +9,39 @@ from smolagents import Tool
 class AlphaSwarmTool:
     """
     An AlphaSwarm Tool being used by AlphaSwarm Agents.
-
-    Automatically sets the following attributes if not already provided:
-    - name: being class name
-    - description: being docstring of the class
-        + description of the output type schema if forward() returns BaseModel
-        + usage examples if any
-    - output_type: if forward() returns BaseModel or string
     """
 
     name: str
-    """The name of the tool."""
+    """
+    The name of the tool. 
+    Will be automatically set to class name if not provided.
+    """
 
     description: str
-    """The description of the tool."""
+    """
+    The description of the tool, automatically set to docstring of the class if not provided.
+    Will be automatically extended with the output type description if the forward() method returns a BaseModel
+    and examples if any are provided.
+    """
 
-    inputs: Dict[str, Dict[str, Any]] = {}
-    """The input parameters schema of the tool."""
-
-    output_type: str
-    """The type of the tool's output."""
-
-    examples: Sequence[str] = ()
+    examples: Sequence[str]
     """The usage examples of the tool."""
+
+    inputs_descriptions: Dict[str, str]
+    """
+    Mapping of forward() parameter names to their descriptions. 
+    Will be derived from the forward() method docstring if not provided.
+    """
+
+    output_type: Type
+    """forward() output type. Will derived from the function signature if not provided."""
 
     def __init_subclass__(cls, **kwargs: Any) -> None:
         super().__init_subclass__(**kwargs)
 
         cls.name = cls._construct_name()
+        cls.inputs_descriptions = cls._construct_inputs_descriptions()
+        cls.output_type = cls._construct_output_type()
         cls.description = cls._construct_description()
 
     def forward(self, *args: Any, **kwargs: Any) -> Any:
@@ -59,7 +65,7 @@ class AlphaSwarmTool:
         output_type_description = cls._get_output_type_description()
         if output_type_description is not None:
             description_parts.append(output_type_description)
-        if len(cls.examples) > 0:
+        if "examples" in cls.__dict__ and len(cls.examples) > 0:
             description_parts.append(cls._format_examples(cls.examples))
 
         return "\n\n".join(description_parts).strip()
@@ -76,24 +82,14 @@ class AlphaSwarmTool:
 
     @classmethod
     def _get_output_type_description(cls) -> Optional[str]:
-        """
-        Get a description of the return type schema when forward() returns a BaseModel or string
-        and automatically sets output_type attribute for these cases.
-        """
-        hints = get_type_hints(cls.forward)
-        output_type = hints.get("return")
+        """Get a description of the return type schema when forward() returns a BaseModel."""
 
-        if isinstance(output_type, type) and issubclass(output_type, BaseModel):
-            cls.output_type = "object"
+        if issubclass(cls.output_type, BaseModel):
             # could add additional hints after the schema for AlphaSwarmToolInput class? or object docstring?
             return (
-                f"Returns a {output_type.__name__} object with the following schema:\n\n"
-                f"{output_type.model_json_schema()}"
+                f"Returns a {cls.output_type.__name__} object with the following schema:\n\n"
+                f"{cls.output_type.model_json_schema()}"
             )
-        elif output_type is str:
-            cls.output_type = "string"
-            return "Returns a string"
-        # support more types
 
         return None
 
@@ -101,14 +97,118 @@ class AlphaSwarmTool:
     def _format_examples(examples: Sequence[str]) -> str:
         return "Examples:\n" + "\n".join(f"- {example}" for example in examples)
 
-    def to_smolagents(self) -> Tool:
+    @classmethod
+    def _construct_inputs_descriptions(cls) -> Dict[str, str]:
+        """
+        Construct the inputs descriptions
+        Returns inputs_descriptions attribute if provided, otherwise extract from forward() method docstring.
+        """
+        if "inputs_descriptions" in cls.__dict__:
+            return cls.inputs_descriptions
+
+        forward_signature = inspect.signature(cls.forward)
+        params = [param for param in forward_signature.parameters.keys() if param != "self"]
+
+        if not params:
+            return {}
+
+        hints = get_type_hints(cls.forward)
+        params_hints = {param: t for param, t in hints.items() if param != "return"}
+
+        missing_hints = [param for param in params if param not in params_hints]
+        if missing_hints:
+            raise ValueError(f"Missing type hints for forward() method parameters: {', '.join(missing_hints)}")
+
+        docstring = cls.forward.__doc__
+        if not docstring:
+            raise ValueError("Missing docstring for the forward() method. Must contain parameters descriptions.")
+
+        docstring = dedent(docstring).strip()
+        lines = docstring.splitlines()
+
+        # find the Args/Parameters section
+        section_start = None
+        for i, line in enumerate(lines):
+            if line.strip() in ("Args:", "Parameters:"):
+                section_start = i + 1
+                break
+
+        if section_start is None:
+            raise ValueError("Missing Args/Parameters section in the forward() method docstring.")
+
+        inputs_descriptions: Dict[str, str] = {}
+
+        for line in lines[section_start:]:
+            stripped_line = line.strip()
+
+            # expect each parameter line to follow: <param>: <description>
+            if ":" not in stripped_line:
+                continue
+
+            param_name, description = stripped_line.split(":", 1)
+            param_name = param_name.strip()
+            description = description.strip()
+            inputs_descriptions[param_name] = description
+
+        missing_descriptions = [param for param in params if param not in inputs_descriptions]
+        if missing_descriptions:
+            raise ValueError(f"Missing description for parameters: {', '.join(missing_descriptions)}")
+
+        return inputs_descriptions
+
+    @classmethod
+    def _construct_output_type(cls) -> Type:
+        """
+        Construct the output type
+        Returns output_type attribute if provided, otherwise forward() return type from type hints.
+        """
+        if "output_type" in cls.__dict__:
+            return cls.output_type
+
+        hints = get_type_hints(cls.forward)
+        output_type = hints.get("return")
+        if output_type is None:
+            raise ValueError("Missing return type hint for the forward() method")
+
+        if not isinstance(output_type, type):
+            raise RuntimeError("forward() output type hint is not a type")
+
+        return output_type
+
+
+class AlphaSwarmToSmolAgentsToolAdapter:
+    """Adapter class to convert AlphaSwarmTool instances to smolagents Tool instances."""
+
+    @classmethod
+    def adapt(cls, alphaswarm_tool: AlphaSwarmTool) -> Tool:
         tool = Tool()
 
-        tool.name = self.name
-        tool.description = self.description
-        tool.inputs = self.inputs
-        tool.output_type = self.output_type
-
-        tool.forward = self.forward
+        tool.name = alphaswarm_tool.name
+        tool.description = alphaswarm_tool.description
+        tool.inputs = cls._construct_smolagents_inputs(alphaswarm_tool)
+        tool.output_type = cls._get_smolagents_type(alphaswarm_tool.output_type)
+        tool.forward = alphaswarm_tool.forward
 
         return tool
+
+    @classmethod
+    def _construct_smolagents_inputs(cls, alphaswarm_tool: AlphaSwarmTool) -> Dict[str, Any]:
+        hints = get_type_hints(alphaswarm_tool.forward)
+
+        inputs = {}
+        for name, description in alphaswarm_tool.inputs_descriptions.items():
+            inputs.update({name: {"description": description, "type": cls._get_smolagents_type(hints[name])}})
+
+        return inputs
+
+    @staticmethod
+    def _get_smolagents_type(t: Type) -> str:
+        types_to_smolagents_types = {
+            str: "string",
+            bool: "boolean",
+            int: "integer",
+            float: "number",
+            type(None): "null",
+        }
+
+        return types_to_smolagents_types.get(t, "object")
