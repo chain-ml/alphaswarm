@@ -11,6 +11,16 @@ from smolagents import Tool
 
 
 class ForecastingAgent(AlphaSwarmAgent):
+    """
+    This example demonstrates a forecasting agent that uses the `PriceForecastingTool` to forecast the price of a token.
+    The agent and the tool are both experimental. Neither have been validated for accuracy -- these are meant to serve
+    as examples of more innovative ways to use LLMs and agents in DeFi use cases such as trading.
+
+    Example prompts:
+    > What do you think the price of VIRTUAL will be in 6 hours?
+    > Predict the price of AIXBT over the next hour in 5-minute increments.
+    """
+
     def __init__(self) -> None:
         tools: List[Tool] = [
             AlchemyPriceHistoryBySymbol(),
