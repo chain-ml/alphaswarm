@@ -1,9 +1,8 @@
 import asyncio
 import logging
+from typing import Any
 
 from telegram import Update
-from telegram._utils.defaultvalue import DEFAULT_NONE
-from telegram._utils.types import ODVInput
 from telegram.constants import ParseMode
 from telegram.ext import Application, CommandHandler, ContextTypes, MessageHandler, filters
 
@@ -34,10 +33,10 @@ class TelegramApp:
         await self._app.stop()
         await self._app.shutdown()
 
-    async def send_message(self, chat_id: int, *, message: str, parse_mode: ODVInput[str] = DEFAULT_NONE) -> None:
+    async def send_message(self, chat_id: int, message: str, **kwargs: Any) -> None:
         """Send a message to a specific chat"""
         try:
-            await self._app.bot.send_message(chat_id=chat_id, text=message, parse_mode=parse_mode)
+            await self._app.bot.send_message(chat_id=chat_id, text=message, **kwargs)
         except Exception as e:
             logger.error(f"Failed to send Telegram message: {e}")
             raise e
