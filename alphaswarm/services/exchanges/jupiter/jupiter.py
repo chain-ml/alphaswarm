@@ -12,7 +12,6 @@ from alphaswarm.services import ApiException
 from alphaswarm.services.chains.sol import SolanaClient, SolSigner
 from alphaswarm.services.exchanges.base import DEXClient, QuoteResult, SwapResult
 from pydantic import BaseModel, Field
-from pydantic.dataclasses import dataclass
 from solders.transaction import VersionedTransaction
 
 logger = logging.getLogger(__name__)
