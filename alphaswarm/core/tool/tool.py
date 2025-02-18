@@ -195,10 +195,10 @@ class AlphaSwarmToSmolAgentsToolAdapter:
     def _construct_smolagents_inputs(cls, alphaswarm_tool: AlphaSwarmTool) -> Dict[str, Any]:
         hints = get_type_hints(alphaswarm_tool.forward)
 
-        inputs = {}
-        for name, description in alphaswarm_tool.inputs_descriptions.items():
-            inputs.update({name: {"description": description, "type": cls._get_smolagents_type(hints[name])}})
-
+        inputs = {
+            name: {"description": description, "type": cls._get_smolagents_type(hints[name])}
+            for name, description in alphaswarm_tool.inputs_descriptions.items()
+        }
         return inputs
 
     @staticmethod
