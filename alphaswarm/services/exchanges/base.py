@@ -3,18 +3,17 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from decimal import Decimal
-from typing import Any, Generic, List, Optional, Tuple, Type, TypeGuard, TypeVar, Union
+from typing import Annotated, Any, Generic, List, Tuple, Type, TypeGuard, TypeVar, Union
 
 from alphaswarm.config import ChainConfig, Config, TokenInfo
-from hexbytes import HexBytes
+from pydantic import BaseModel, Field
 
 T = TypeVar("T", bound="DEXClient")
 TQuote = TypeVar("TQuote")
 
 
-@dataclass
-class QuoteResult(Generic[TQuote]):
-    quote: TQuote
+class QuoteResult(Generic[TQuote], BaseModel):
+    quote: Annotated[TQuote, Field(repr=False)]
 
     token_in: TokenInfo
     token_out: TokenInfo
@@ -24,19 +23,13 @@ class QuoteResult(Generic[TQuote]):
 
 @dataclass
 class SwapResult:
-    success: bool
     amount_out: Decimal
     amount_in: Decimal
-    tx_hash: Optional[str] = None
-    error: Optional[str] = None
+    tx_hash: str
 
     @classmethod
-    def build_error(cls, error: str, amount_in: Decimal) -> SwapResult:
-        return cls(success=False, amount_out=Decimal(0), amount_in=amount_in, error=error)
-
-    @classmethod
-    def build_success(cls, amount_out: Decimal, amount_in: Decimal, tx_hash: HexBytes) -> SwapResult:
-        return cls(success=True, amount_out=amount_out, amount_in=amount_in, tx_hash=tx_hash.hex())
+    def build_success(cls, amount_out: Decimal, amount_in: Decimal, tx_hash: str) -> SwapResult:
+        return cls(amount_out=amount_out, amount_in=amount_in, tx_hash=tx_hash)
 
 
 @dataclass

@@ -4,7 +4,13 @@ import pytest
 
 from alphaswarm.config import Config
 from alphaswarm.services.chains import EVMClient
+from alphaswarm.tools import GetTokenAddress
 from alphaswarm.tools.exchanges import ExecuteTokenSwapTool, GetTokenPriceTool
+
+
+@pytest.fixture
+def token_address_tool(default_config: Config) -> GetTokenAddress:
+    return GetTokenAddress(default_config)
 
 
 @pytest.fixture
@@ -23,22 +29,35 @@ def sepolia_client(default_config: Config) -> EVMClient:
 
 
 @pytest.mark.skip("Requires a founded wallet. Run manually")
+@pytest.mark.parametrize(
+    "chain,amount_in,token_in,token_out,min_amount_out,dex_type",
+    [
+        ("ethereum_sepolia", Decimal(10), "USDC", "WETH", Decimal("0.00001"), "uniswap_v3"),
+        ("solana", Decimal("0.0001"), "SOL", "USDC", Decimal("0.001"), "jupiter"),
+    ],
+)
 def test_token_swap_tool(
-    token_quote_tool: GetTokenPriceTool, token_swap_tool: ExecuteTokenSwapTool, sepolia_client: EVMClient
+    token_address_tool: GetTokenAddress,
+    token_quote_tool: GetTokenPriceTool,
+    token_swap_tool: ExecuteTokenSwapTool,
+    chain: str,
+    amount_in: Decimal,
+    token_in: str,
+    token_out: str,
+    min_amount_out: Decimal,
+    dex_type: str,
 ) -> None:
-    weth = sepolia_client.get_token_info_by_name("WETH")
-    usdc = sepolia_client.get_token_info_by_name("USDC")
-    amount_in = Decimal(10)
+    address_in = token_address_tool.forward(token_in, chain)
+    address_out = token_address_tool.forward(token_out, chain)
 
     quotes = token_quote_tool.forward(
-        token_out=weth.address,
-        token_in=usdc.address,
+        token_out=address_out,
+        token_in=address_in,
         amount_in=str(amount_in),
-        chain=sepolia_client.chain,
-        dex_type="uniswap_v3",
+        chain=chain,
+        dex_type=dex_type,
     )
     assert len(quotes.quotes) == 1
     result = token_swap_tool.forward(quote=quotes.quotes[0])
     print(result)
-    assert result.success
-    assert result.amount_out < amount_in
+    assert result.amount_out > min_amount_out
