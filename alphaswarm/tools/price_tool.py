@@ -2,6 +2,7 @@ from datetime import UTC, datetime
 from typing import Any
 
 import requests
+from requests.exceptions import HTTPError, RequestException
 from smolagents import Tool
 
 
@@ -54,12 +55,12 @@ class PriceTool(Tool):
             response = self.session.get(url, params=params, timeout=10)
 
             if response.status_code != 200:
-                return f"Error: Could not fetch price for {address} (Status: {response.status_code})"
+                raise HTTPError(f"Error: Could not fetch price for {address} (Status: {response.status_code})")
 
             data = response.json()
 
             if address not in data:
-                return f"Error: Token with address '{address}' not found"
+                raise ValueError(f"Error: Token with address '{address}' not found")
 
             price = data[address]["usd"]
             change_24h = data[address]["usd_24h_change"]
@@ -67,7 +68,7 @@ class PriceTool(Tool):
             timestamp = datetime.now(UTC).strftime("%Y-%m-%d %H:%M:%S UTC")
             return f"[{timestamp}] {address}\n" f"Price: ${price:,.2f}\n" f"24h Change: {change_24h:+.2f}%"
 
-        except requests.RequestException as e:
-            return f"Network error: {str(e)}"
+        except RequestException as e:
+            raise RequestException(f"Network error: {str(e)}") from e
         except Exception as e:
-            return f"Error fetching price: {str(e)}"
+            raise RuntimeError(f"Error fetching price: {str(e)}") from e
