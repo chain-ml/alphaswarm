@@ -2,8 +2,8 @@ from datetime import UTC, datetime
 from typing import Any
 
 import requests
-from requests.exceptions import RequestException
 from alphaswarm.core.tool import AlphaSwarmTool
+from requests.exceptions import RequestException
 
 
 class GetUsdPrice(AlphaSwarmTool):
