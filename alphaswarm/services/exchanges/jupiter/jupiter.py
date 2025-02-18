@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import base64
 import logging
 from decimal import Decimal
 from typing import Annotated, Any, Dict, List, Optional, Tuple
@@ -8,8 +9,11 @@ from urllib.parse import urlencode
 import requests
 from alphaswarm.config import ChainConfig, Config, JupiterSettings, JupiterVenue, TokenInfo
 from alphaswarm.services import ApiException
+from alphaswarm.services.chains.sol import SolanaClient, SolSigner
 from alphaswarm.services.exchanges.base import DEXClient, QuoteResult, SwapResult
 from pydantic import BaseModel, Field
+from pydantic.dataclasses import dataclass
+from solders.transaction import VersionedTransaction
 
 logger = logging.getLogger(__name__)
 
@@ -34,12 +38,24 @@ class RoutePlan(BaseModel):
 
 
 class JupiterQuote(BaseModel):
-    # TODO capture more fields if needed
-    out_amount: Annotated[Decimal, Field(alias="outAmount")]
-    route_plan: Annotated[List[RoutePlan], Field(alias="routePlan")]
+    quote: Dict[str, Any]
 
-    def route_plan_to_string(self) -> str:
-        return "/".join([route.swap_info.amm_key for route in self.route_plan])
+    @property
+    def out_amount(self) -> Decimal:
+        return Decimal(self.quote["outAmount"])
+
+
+class JupiterSwapTransaction:
+    def __init__(self, swap_transaction: Dict[str, Any]):
+        self._swap_transaction = swap_transaction
+
+    @property
+    def swap_transaction_base64(self) -> str:
+        return self._swap_transaction["swapTransaction"]
+
+    def decode_transaction(self) -> VersionedTransaction:
+        tx_bytes = base64.b64decode(self.swap_transaction_base64)
+        return VersionedTransaction.from_bytes(tx_bytes)
 
 
 class JupiterClient(DEXClient[JupiterQuote]):
@@ -50,18 +66,29 @@ class JupiterClient(DEXClient[JupiterQuote]):
         super().__init__(chain_config, JupiterQuote)
         self._settings = settings
         self._venue_config = venue_config
+        self._client = SolanaClient(chain_config)
         logger.info(f"Initialized JupiterClient on chain '{self.chain}'")
 
     def _validate_chain(self, chain: str) -> None:
         if chain != "solana":
             raise ValueError(f"Chain '{chain}' not supported. JupiterClient only supports Solana chain")
 
+    @property
+    def wallet_address(self) -> str:
+        return self._chain_config.wallet_address
+
+    @property
+    def signer(self) -> SolSigner:
+        return SolSigner(self._chain_config.private_key)
+
     def swap(
         self,
         quote: QuoteResult[JupiterQuote],
         slippage_bps: int = 100,
     ) -> SwapResult:
-        raise NotImplementedError("Jupiter swap functionality is not yet implemented")
+        tx = self._build_swap_transaction(quote.quote)
+        tx_signature = self._client.process(tx.decode_transaction(), self.signer)
+        return SwapResult.build_success(quote.amount_out, quote.amount_in, str(tx_signature))
 
     def get_token_price(
         self, token_out: TokenInfo, token_in: TokenInfo, amount_in: Decimal
@@ -73,22 +100,7 @@ class JupiterClient(DEXClient[JupiterQuote]):
         logger.debug(f"Getting amount_out for {token_out.symbol}/{token_in.symbol} on {token_out.chain} using Jupiter")
 
         # Prepare query parameters
-        params = {
-            "inputMint": token_in.address,
-            "outputMint": token_out.address,
-            "swapMode": "ExactIn",
-            "amount": str(token_in.convert_to_wei(amount_in)),
-            "slippageBps": self._settings.slippage_bps,
-        }
-
-        url = f"{self._venue_config.quote_api_url}?{urlencode(params)}"
-
-        response = requests.get(url)
-        if response.status_code != 200:
-            raise ApiException(response)
-
-        result = response.json()
-        quote = JupiterQuote(**result)
+        quote = self._get_quote(token_out, token_in, amount_in)
 
         # Calculate amount_out (token_out per token_in)
         raw_out = quote.out_amount
@@ -98,7 +110,6 @@ class JupiterClient(DEXClient[JupiterQuote]):
         logger.debug(f"- Input: {amount_in} {token_in.symbol}")
         logger.debug(f"- Output: {amount_out} {token_out.symbol}")
         logger.debug(f"- Ratio: {amount_out/amount_in} {token_out.symbol}/{token_in.symbol}")
-        logger.debug(f"- Route: {quote.route_plan}")
 
         return QuoteResult(
             quote=quote,
@@ -107,6 +118,38 @@ class JupiterClient(DEXClient[JupiterQuote]):
             amount_in=amount_in,
             amount_out=amount_out,
         )
+
+    def _get_quote(self, token_out: TokenInfo, token_in: TokenInfo, amount_in: Decimal) -> JupiterQuote:
+        params = {
+            "inputMint": token_in.address,
+            "outputMint": token_out.address,
+            "swapMode": "ExactIn",
+            "amount": str(token_in.convert_to_wei(amount_in)),
+            "slippageBps": self._settings.slippage_bps,
+            "restrictIntermediateTokens": "true",
+        }
+
+        url = f"{self._venue_config.quote_api_url}?{urlencode(params)}"
+        response = requests.get(url)
+        if response.status_code != 200:
+            raise ApiException(response)
+        quote = JupiterQuote(quote=response.json())
+        return quote
+
+    def _build_swap_transaction(self, quote: JupiterQuote) -> JupiterSwapTransaction:
+        params = {
+            "quoteResponse": quote.quote,
+            "userPublicKey": self.wallet_address,
+            "dynamicComputeUnitLimit": True,
+        }
+        headers = {
+            "Content-Type": "application/json",
+        }
+        response = requests.post(self._venue_config.swap_api_url, json=params, headers=headers)
+        if response.status_code != 200:
+            raise ApiException(response)
+        logger.debug(response.json())
+        return JupiterSwapTransaction(response.json())
 
     def get_markets_for_tokens(self, tokens: List[TokenInfo]) -> List[Tuple[TokenInfo, TokenInfo]]:
         """Get list of valid trading pairs between the provided tokens.
