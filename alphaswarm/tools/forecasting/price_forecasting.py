@@ -5,9 +5,9 @@ from typing import Any, List, Optional
 
 from alphaswarm.config import BASE_PATH
 from alphaswarm.core.llm.llm_function import LLMFunctionFromPromptFiles
+from alphaswarm.core.tool import AlphaSwarmTool
 from alphaswarm.services.alchemy import HistoricalPriceBySymbol
 from pydantic import BaseModel, Field
-from smolagents import Tool
 
 
 class PriceForecast(BaseModel):
@@ -22,40 +22,10 @@ class PriceForecastResponse(BaseModel):
     forecast: List[PriceForecast] = Field(description="The forecasted prices of the token")
 
 
-class PriceForecastingTool(Tool):
-    name = "PriceForecastingTool"
-    description = """Forecast the price of a token based on historical price data and supporting context retrieved using other tools.
-    
-    Returns a `PriceForecastResponse` object.
-
-    The `PriceForecastResponse` object has the following fields:
-    - reasoning: The reasoning behind the forecast
-    - historical_price_data: HistoricalPriceBySymbol object passed as input to the tool
-    - forecast: A list of `PriceForecast` objects, each containing a timestamp, a forecasted price, a lower confidence bound, and an upper confidence bound
-
-    A `PriceForecast` object has the following fields:
-    - timestamp: The timestamp of the forecast
-    - price: The forecasted median price of the token
-    - lower_confidence_bound: The lower confidence bound of the forecast
-    - upper_confidence_bound: The upper confidence bound of the forecast
+class ForecastTokenPrice(AlphaSwarmTool):
     """
-    inputs = {
-        "historical_price_data": {
-            "type": "object",
-            "description": "Historical price data for the token; output of AlchemyPriceHistoryBySymbol tool",
-        },
-        "forecast_horizon": {
-            "type": "string",
-            "description": "Instructions for the forecast horizon",
-        },
-        "supporting_context": {
-            "type": "object",
-            "description": """A list of strings, each representing an element of context to support the forecast.
-                Each element should include a source and a timeframe, e.g.: '...details... [Source: Web Search, Timeframe: last 2 days]'""",
-            "nullable": True,
-        },
-    }
-    output_type = "object"
+    Forecast the price of a token based on historical price data and supporting context retrieved using other tools.
+    """
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
@@ -78,6 +48,12 @@ class PriceForecastingTool(Tool):
         forecast_horizon: str,
         supporting_context: Optional[List[str]] = None,
     ) -> PriceForecastResponse:
+        """
+        Args:
+            historical_price_data: Historical price data for the token; output of AlchemyPriceHistoryBySymbol tool
+            forecast_horizon: Instructions for the forecast horizon
+            supporting_context: An optional list of strings, each representing an element of context to support the forecast. Each element should include a source and a timeframe, e.g.: '...details... [Source: Web Search, Timeframe: last 2 days]'
+        """
         response: PriceForecastResponse = self._llm_function.execute(
             user_prompt_params={
                 "supporting_context": (
