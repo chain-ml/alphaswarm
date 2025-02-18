@@ -58,9 +58,7 @@ class PriceMomentumCronAgent(AlphaSwarmAgent):
             ExecuteTokenSwapTool(config=self.config),
         ]
 
-        hints = "Please follow these task-specific instructions:"
-        hints += "When you receive a positive price momentum alert, try to swap 0.0001 WETH for the token."
-        hints += "When you receive a negative price momentum alert, do nothing, because you don't have access to your wallet balances."
+        hints = "Please try to perform the requested swaps."
 
         super().__init__(model_id="anthropic/claude-3-5-sonnet-20241022", tools=tools, hints=hints)
 
@@ -78,11 +76,10 @@ class PriceMomentumCronAgent(AlphaSwarmAgent):
 
         return short_term_change, long_term_change
 
-    def get_price_alerts(self) -> str:
-        """Get price alerts based on configured thresholds."""
-        price_alerts = []
+    def get_trade_alerts(self) -> str:
+        """Get trade instructions based on configured momentum thresholds."""
+        trade_alerts = []
         for address in self.token_addresses:
-
             logging.info(f"Getting price history for {address}")
             price_history = self.price_history_tool.forward(
                 address=address, network=self.chain, interval="5m", history=1  # 1 day of history
@@ -90,7 +87,7 @@ class PriceMomentumCronAgent(AlphaSwarmAgent):
 
             prices = [
                 price.value for price in price_history.data
-            ]  # This is how to get the prices (Decimal type) out of the price history object
+            ]
             short_term_change, long_term_change = self.calculate_price_changes(prices)
 
             # Check if changes meet thresholds and are in same direction
@@ -98,25 +95,26 @@ class PriceMomentumCronAgent(AlphaSwarmAgent):
             long_term_signal = abs(long_term_change) >= self.long_term_threshold
             same_direction = short_term_change * long_term_change > Decimal("0")
 
-            # Alert only if both signals are present and in same direction
-            if short_term_signal and long_term_signal and same_direction:
-                direction = "Upward" if short_term_change > Decimal("0") else "Downward"
-                price_alerts.append(
-                    f"{address} --- {direction} momentum detected:\n"
-                    f"  - {self.short_term_periods * 5}min change: {short_term_change:.2f}%\n"
-                    f"  - {self.long_term_periods * 5}min change: {long_term_change:.2f}%"
-                )
-
+            # Log all signals for monitoring
             logging.info(f"{self.short_term_periods * 5} minute change: {short_term_change:.2f}%")
             logging.info(f"{self.long_term_periods * 5} minute change: {long_term_change:.2f}%")
 
-        logging.info(f"{len(price_alerts)} price alerts found.")
-        if len(price_alerts) > 0:
-            alert_message = f"Price changes have been observed for the following tokens as of {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}: "
-            alert_message += "\n" + "\n".join(price_alerts)
-            return alert_message
-        else:
-            return ""
+            # Only generate trade instructions for positive momentum
+            if short_term_signal and long_term_signal and same_direction and short_term_change > 0:
+                trade_alerts.append(
+                    f"MOMENTUM RULE ACTIVATED:\n"
+                    f"  Action: swap 0.001 WETH for {address}\n on {self.chain}\n"
+                    f"  Signals:\n"
+                    f"    • {self.short_term_periods * 5}min momentum: +{short_term_change:.2f}% (threshold: {self.short_term_threshold}%)\n"
+                    f"    • {self.long_term_periods * 5}min momentum: +{long_term_change:.2f}% (threshold: {self.long_term_threshold}%)"
+                )
+
+        logging.info(f"{len(trade_alerts)} trade opportunities found.")
+        if trade_alerts:
+            timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            header = f"=== Trade Opportunities Found at {timestamp} ===\n"
+            return header + "\n\n".join(trade_alerts)
+        return ""  # No trade alerts if no conditions are met
 
 
 async def main() -> None:
@@ -138,9 +136,9 @@ async def main() -> None:
         token_addresses=token_addresses,
         chain="base-mainnet",
         short_term_minutes=5,
-        short_term_threshold=0.01,
+        short_term_threshold=0.1,
         long_term_minutes=60,
-        long_term_threshold=0.01,
+        long_term_threshold=0.5,
     )
 
     cron_client = CronJobClient(
@@ -148,7 +146,7 @@ async def main() -> None:
         client_id="Price Momentum Cron Agent",
         interval_seconds=300,  # 5 minutes
         response_handler=lambda _: None,
-        message_generator=agent.get_price_alerts,
+        message_generator=agent.get_trade_alerts,
         should_process=lambda alerts: len(alerts) > 0,
         skip_message=lambda _: None,
         max_history=2,  # Last message pair only
