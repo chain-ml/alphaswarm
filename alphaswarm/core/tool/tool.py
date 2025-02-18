@@ -102,4 +102,13 @@ class AlphaSwarmTool:
         return "Examples:\n" + "\n".join(f"- {example}" for example in examples)
 
     def to_smolagents(self) -> Tool:
-        return Tool(name=self.name, description=self.description, inputs=self.inputs, output_type=self.output_type)
+        tool = Tool()
+
+        tool.name = self.name
+        tool.description = self.description
+        tool.inputs = self.inputs
+        tool.output_type = self.output_type
+
+        tool.forward = self.forward
+
+        return tool
