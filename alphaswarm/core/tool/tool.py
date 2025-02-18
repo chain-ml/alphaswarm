@@ -1,6 +1,6 @@
 import inspect
 from textwrap import dedent
-from typing import Any, Dict, Optional, Sequence, Type, get_type_hints
+from typing import Any, Dict, Optional, Sequence, Type, Union, get_args, get_origin, get_type_hints
 
 from pydantic import BaseModel
 from smolagents import Tool
@@ -210,5 +210,13 @@ class AlphaSwarmToSmolAgentsToolAdapter:
             float: "number",
             type(None): "null",
         }
+
+        # handling Optional[type]
+        origin = get_origin(t)
+        if origin is Union:
+            args = get_args(t)
+            non_none_args = [arg for arg in args if arg is not type(None)]
+            if len(non_none_args) == 1:
+                return types_to_smolagents_types.get(non_none_args[0], "object")
 
         return types_to_smolagents_types.get(t, "object")

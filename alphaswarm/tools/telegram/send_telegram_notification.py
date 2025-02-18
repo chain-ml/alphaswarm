@@ -14,20 +14,6 @@ class SendTelegramNotification(AlphaSwarmTool):
     Returns a string describing whether the notification was sent successfully or not.
     """
 
-    inputs = {
-        "message": {
-            "type": "string",
-            "description": "The message to send. When sending alert message, ALWAYS include token symbol or address in the message.",
-            "required": True,
-        },
-        "confidence": {"type": "number", "description": "The confidence score, between 0 and 1.", "required": True},
-        "priority": {
-            "type": "string",
-            "description": "The priority of the alert, one of 'high', 'medium', 'low'.",
-            "required": True,
-        },
-    }
-
     def __init__(self, telegram_bot_token: str, chat_id: int) -> None:
         super().__init__()
 
@@ -42,6 +28,12 @@ class SendTelegramNotification(AlphaSwarmTool):
             self._loop.close()
 
     def forward(self, message: str, confidence: float, priority: str) -> str:
+        """
+        Args:
+            message: The message to send. When sending alert message, ALWAYS include token symbol or address in the message.
+            confidence: The confidence score, between 0 and 1.
+            priority: The priority of the alert, one of 'high', 'medium', 'low'.
+        """
         message_to_send = self.format_alert_message(message=message, confidence=confidence, priority=priority)
 
         async def send_message() -> None:

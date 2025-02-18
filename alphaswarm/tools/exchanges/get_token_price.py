@@ -27,29 +27,6 @@ class TokenPriceResult(BaseModel):
 class GetTokenPrice(AlphaSwarmTool):
     """Get the current price of a token pair from available DEXes."""
 
-    inputs = {
-        "token_out": {
-            "type": "string",
-            "description": "The address of the token we want to buy",
-        },
-        "token_in": {
-            "type": "string",
-            "description": "The address of the token we want to sell",
-        },
-        "amount_in": {"type": "string", "description": "The amount token_in to be sold, in Token", "required": True},
-        "chain": {
-            "type": "string",
-            "description": "Blockchain to use. Must be 'solana' for Solana tokens, 'base' for Base tokens, "
-            "'ethereum' for Ethereum tokens, 'ethereum_sepolia' for Ethereum Sepolia tokens.",
-            "enum": ["solana", "base", "ethereum", "ethereum_sepolia"],
-        },
-        "dex_type": {
-            "type": "string",
-            "description": "Type of DEX to use. If not provided, will check all available venues.",
-            "enum": ["uniswap_v2", "uniswap_v3", "jupiter"],
-            "nullable": True,
-        },
-    }
     # TODO: discuss
     examples = [
         "Get the price of 1 ETH in USDC on ethereum",
@@ -68,7 +45,16 @@ class GetTokenPrice(AlphaSwarmTool):
         chain: str,
         dex_type: Optional[str] = None,
     ) -> TokenPriceResult:
-        """Get token price from DEX(es)"""
+        """
+        Get token price from DEX(es)
+
+        Args:
+            token_out: The address of the token we want to buy
+            token_in: The address of the token we want to sell
+            amount_in: The amount token_in to be sold, in Token
+            chain: Blockchain to use. Must be 'solana' for Solana tokens, 'base' for Base tokens, 'ethereum' for Ethereum tokens, 'ethereum_sepolia' for Ethereum Sepolia tokens.
+            dex_type: Type of DEX to use ("uniswap_v2", "uniswap_v3", "jupiter"). If not provided, will check all available venues.
+        """
         logger.debug(f"Getting price for {token_out}/{token_in} on {chain}")
 
         # Get token info and create TokenInfo objects

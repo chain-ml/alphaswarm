@@ -37,14 +37,6 @@ class StrategyAnalysis(BaseModel):
 class AnalyzeTradingStrategy(AlphaSwarmTool):
     """Analyze the trading strategy against the provided data and decide if any of the strategy rules are triggered."""
 
-    inputs = {
-        "token_data": {
-            "type": "string",
-            "required": True,
-            "description": "A JSON-formatted string containing the token data to analyze, keyed by token symbol.",
-        },
-    }
-
     def __init__(self, strategy: Strategy, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
         self.strategy = strategy
@@ -59,6 +51,10 @@ class AnalyzeTradingStrategy(AlphaSwarmTool):
         )
 
     def forward(self, token_data: str) -> StrategyAnalysis:
+        """
+        Args:
+            token_data: A JSON-formatted string containing the token data to analyze, keyed by token symbol.
+        """
         response = self._llm_function.execute(
             user_prompt_params={
                 "token_data": token_data,

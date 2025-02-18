@@ -2,7 +2,7 @@ import asyncio
 from datetime import datetime
 from typing import Optional, Sequence
 
-from alphaswarm.core.tool import AlphaSwarmTool
+from alphaswarm.core.tool import AlphaSwarmTool, AlphaSwarmToSmolAgentsToolAdapter
 from smolagents import CODE_SYSTEM_PROMPT, CodeAgent, LiteLLMModel
 
 
@@ -29,7 +29,7 @@ class AlphaSwarmAgent:
         system_prompt = system_prompt + "\n" + hints if hints else system_prompt
 
         self._agent = CodeAgent(
-            tools=[tool.to_smolagents() for tool in tools],
+            tools=[AlphaSwarmToSmolAgentsToolAdapter.adapt(tool) for tool in tools],
             model=LiteLLMModel(model_id=model_id),
             system_prompt=system_prompt,
             additional_authorized_imports=["json", "decimal"],

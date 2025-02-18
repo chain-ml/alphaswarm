@@ -8,19 +8,6 @@ from alphaswarm.core.tool import AlphaSwarmTool
 class GetUsdPrice(AlphaSwarmTool):
     """Get the current price and 24h price change percentage of a cryptocurrency in USD using CoinGecko API."""
 
-    inputs = {
-        "address": {
-            "type": "string",
-            "required": True,
-            "description": "The contract address of the token",
-        },
-        "chain": {
-            "type": "string",
-            "required": True,
-            "description": "Blockchain to use. For example, 'solana' for Solana tokens, 'base' for Base tokens, 'ethereum' for Ethereum tokens.",
-        },
-    }
-
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
         self.base_url = "https://api.coingecko.com/api/v3"
@@ -35,8 +22,8 @@ class GetUsdPrice(AlphaSwarmTool):
         Fetch current price and 24h change for a given token
 
         Args:
-            address: Contract address of the token
-            chain: Blockchain to use
+            address: The contract address of the token
+            chain: Blockchain to use. For example, 'solana' for Solana tokens, 'base' for Base tokens, 'ethereum' for Ethereum tokens.
         """
         try:
             # Normalize address to lowercase for consistent comparison

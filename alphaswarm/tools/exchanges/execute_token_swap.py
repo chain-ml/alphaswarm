@@ -13,18 +13,6 @@ logger = logging.getLogger(__name__)
 class ExecuteTokenSwap(AlphaSwarmTool):
     """Execute a token swap on a supported DEX (Uniswap V2/V3 on Ethereum and Base chains)."""
 
-    inputs = {
-        "quote": {
-            "type": "object",
-            "description": f"A {TokenQuote.__name__} previously generated",
-        },
-        "slippage_bps": {
-            "type": "integer",
-            "description": "Maximum slippage in basis points (e.g., 100 = 1%)",
-            "nullable": True,
-        },
-    }
-
     def __init__(self, config: Config, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
         self.config = config
@@ -35,7 +23,13 @@ class ExecuteTokenSwap(AlphaSwarmTool):
         quote: TokenQuote,
         slippage_bps: int = 100,
     ) -> SwapResult:
-        """Execute a token swap."""
+        """
+        Execute a token swap.
+
+        Args:
+            quote: A TokenQuote previously generated
+            slippage_bps: Maximum slippage in basis points (e.g., 100 = 1%)
+        """
         # Create DEX client
         dex_client = DEXFactory.create(dex_name=quote.dex, config=self.config, chain=quote.chain)
 
