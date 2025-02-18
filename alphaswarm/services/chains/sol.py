@@ -3,10 +3,6 @@ import time
 from decimal import Decimal
 from typing import Any, Dict, Optional
 
-from solders.account_decoder import ParsedAccount
-from spl.token._layouts import ACCOUNT_LAYOUT
-from spl.token.constants import TOKEN_PROGRAM_ID
-
 from alphaswarm.config import ChainConfig
 from solana.rpc import api
 from solana.rpc.types import TokenAccountOpts
@@ -17,6 +13,8 @@ from solders.rpc.responses import SendTransactionResp
 from solders.signature import Signature
 from solders.transaction import VersionedTransaction
 from solders.transaction_status import TransactionConfirmationStatus
+from spl.token._layouts import ACCOUNT_LAYOUT
+from spl.token.constants import TOKEN_PROGRAM_ID
 
 logger = logging.getLogger(__name__)
 
@@ -102,9 +100,7 @@ class SolanaClient:
         return balance / 10**decimals
 
     def get_all_token_balance(self, public_key: Pubkey) -> Any:
-        response = self._client.get_token_accounts_by_owner(
-            public_key, TokenAccountOpts(program_id=TOKEN_PROGRAM_ID)
-        )
+        response = self._client.get_token_accounts_by_owner(public_key, TokenAccountOpts(program_id=TOKEN_PROGRAM_ID))
 
         result = []
         for account in response.value:

@@ -5,7 +5,7 @@ import pytest
 from alphaswarm.config import ChainConfig, Config
 from alphaswarm.services.alchemy.alchemy_client import AlchemyClient
 
-main_net_chains = ["ethereum", "base" ]
+main_net_chains = ["ethereum", "base"]
 test_net_chains = ["ethereum_sepolia", "base_sepolia"]
 all_chains = main_net_chains + test_net_chains
 
@@ -81,6 +81,7 @@ def test_get_all_transfers(alchemy_client: AlchemyClient, chain_config: ChainCon
         wallet=chain_config.wallet_address, chain=chain_config.chain, incoming=False
     )
 
+
 def test_get_transfers_invalid_chain(alchemy_client: AlchemyClient) -> None:
     with pytest.raises(ValueError, match="Unsupported chain invalid_chain"):
         alchemy_client.get_transfers(wallet="0x123", chain="invalid_chain", incoming=False)
@@ -90,9 +91,7 @@ def test_get_transfers_invalid_chain(alchemy_client: AlchemyClient) -> None:
 @pytest.mark.skip("Needs a wallet")
 def test_get_token_balances(alchemy_client: AlchemyClient, chain_config: ChainConfig, chain: str) -> None:
     # Test outgoing transfers
-    balances = alchemy_client.get_token_balances(
-        wallet=chain_config.wallet_address, chain=chain_config.chain
-    )
+    balances = alchemy_client.get_token_balances(wallet=chain_config.wallet_address, chain=chain_config.chain)
 
     assert len(balances) > 0
     assert balances[0].value > 0

@@ -4,7 +4,8 @@ import logging
 from decimal import Decimal
 from typing import List, Tuple
 
-from alphaswarm.config import ChainConfig, Config, TokenInfo
+from alphaswarm.config import ChainConfig, Config
+from alphaswarm.core.token import TokenInfo
 from alphaswarm.services.chains.evm import ZERO_ADDRESS
 from alphaswarm.services.exchanges.base import QuoteResult, Slippage
 from alphaswarm.services.exchanges.uniswap.constants_v2 import (

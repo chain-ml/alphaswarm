@@ -2,14 +2,12 @@ from __future__ import annotations
 
 import logging
 import os
-from decimal import Decimal
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Sequence
 
 import yaml
 from alphaswarm import BASE_PATH
-from eth_typing import ChecksumAddress
+from alphaswarm.core.token import TokenInfo
 from pydantic.dataclasses import dataclass
-from web3 import Web3
 
 logger = logging.getLogger(__name__)
 
@@ -19,28 +17,13 @@ NATIVE_TOKENS = {"ethereum": ["ETH"], "ethereum_sepolia": ["ETH"], "base": ["ETH
 CONFIG_PATH = BASE_PATH / "config"
 
 
-@dataclass
-class TokenInfo:
-    symbol: str
-    address: str
-    decimals: int
-    chain: str
-    is_native: bool = False
+class WalletInfo:
+    def __init__(self, address: str, chain: str) -> None:
+        self._address = address
+        self._chain = chain
 
-    def convert_to_wei(self, amount: Decimal) -> int:
-        return int(amount * (10**self.decimals))
-
-    def convert_from_wei(self, amount: Union[int, Decimal]) -> Decimal:
-        return Decimal(amount) / (10**self.decimals)
-
-    def address_to_path(self) -> str:
-        # Remove '0x' and pad to 20 bytes
-        return self.address.removeprefix("0x").zfill(40)
-
-    @property
-    def checksum_address(self) -> ChecksumAddress:
-        """Get the checksum address for this token"""
-        return Web3.to_checksum_address(self.address)
+    def __str__(self) -> str:
+        return f"`{self._address}` on `{self._chain}` chain"
 
 
 @dataclass
@@ -302,3 +285,28 @@ class Config:
     def get_venue_settings_jupiter(self) -> JupiterSettings:
         values = self._config["trading_venues"]["jupiter"]["settings"]
         return JupiterSettings(**values)
+
+
+def get_wallets_info() -> Sequence[WalletInfo]:
+    """Get wallet information from environment variables for all supported chains.
+
+    Returns:
+        Sequence[WalletInfo]: List of wallet information objects.
+    """
+    wallet_env_mapping = {
+        "ethereum": "ETH_WALLET_ADDRESS",
+        "ethereum_sepolia": "ETH_SEPOLIA_WALLET_ADDRESS",
+        "base": "BASE_WALLET_ADDRESS",
+        "base_sepolia": "BASE_SEPOLIA_WALLET_ADDRESS",
+        "solana": "SOL_WALLET_ADDRESS",
+        "solana_devnet": "SOL_DEVNET_WALLET_ADDRESS",
+        "solana_testnet": "SOL_TESTNET_WALLET_ADDRESS",
+    }
+
+    wallets = []
+    for chain, env_var in wallet_env_mapping.items():
+        address = os.getenv(env_var)
+        if address:
+            wallets.append(WalletInfo(address=address, chain=chain))
+
+    return wallets

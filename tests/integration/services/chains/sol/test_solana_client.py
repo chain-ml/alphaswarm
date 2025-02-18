@@ -37,6 +37,7 @@ def test_sol_signer(solana_config: ChainConfig) -> None:
 
     assert signer.wallet_address == solana_config.wallet_address
 
+
 def test_sol_get_all_tokens(client: SolanaClient, solana_config: ChainConfig) -> None:
     result = client.get_all_token_balance(Pubkey.from_string(solana_config.wallet_address))
     print(result)

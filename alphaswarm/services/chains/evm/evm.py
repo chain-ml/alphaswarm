@@ -3,7 +3,8 @@ import time
 from decimal import Decimal
 from typing import Callable, List, Optional, TypeVar
 
-from alphaswarm.config import ChainConfig, TokenInfo
+from alphaswarm.config import ChainConfig
+from alphaswarm.core.token import TokenInfo
 from eth_account import Account
 from eth_account.datastructures import SignedTransaction
 from eth_defi.revert_reason import fetch_transaction_revert_reason
