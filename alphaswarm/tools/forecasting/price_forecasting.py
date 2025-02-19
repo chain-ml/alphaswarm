@@ -5,7 +5,7 @@ from typing import Any, List, Optional
 
 from alphaswarm.config import BASE_PATH
 from alphaswarm.core.llm.llm_function import LLMFunctionFromPromptFiles
-from alphaswarm.core.tool import AlphaSwarmTool
+from alphaswarm.core.tool import AlphaSwarmToolBase
 from alphaswarm.services.alchemy import HistoricalPriceBySymbol
 from pydantic import BaseModel, Field
 
@@ -22,7 +22,7 @@ class PriceForecastResponse(BaseModel):
     forecast: List[PriceForecast] = Field(description="The forecasted prices of the token")
 
 
-class ForecastTokenPrice(AlphaSwarmTool):
+class ForecastTokenPrice(AlphaSwarmToolBase):
     """
     Forecast the price of a token based on historical price data and supporting context retrieved using other tools.
     """

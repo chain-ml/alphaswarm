@@ -4,7 +4,7 @@ from typing import List
 import dotenv
 from alphaswarm.agent.agent import AlphaSwarmAgent
 from alphaswarm.agent.clients import TerminalClient
-from alphaswarm.core.tool import AlphaSwarmTool
+from alphaswarm.core.tool import AlphaSwarmToolBase
 from alphaswarm.tools.alchemy import GetAlchemyPriceHistoryBySymbol
 from alphaswarm.tools.cookie.cookie_metrics import GetCookieMetricsBySymbol, GetCookieMetricsPaged
 from alphaswarm.tools.forecasting import ForecastTokenPrice
@@ -22,7 +22,7 @@ class ForecastingAgent(AlphaSwarmAgent):
     """
 
     def __init__(self) -> None:
-        tools: List[AlphaSwarmTool] = [
+        tools: List[AlphaSwarmToolBase] = [
             GetAlchemyPriceHistoryBySymbol(),
             GetCookieMetricsBySymbol(),
             GetCookieMetricsPaged(),

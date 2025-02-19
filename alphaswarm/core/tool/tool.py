@@ -1,3 +1,4 @@
+import abc
 import inspect
 from textwrap import dedent
 from typing import Any, Dict, Optional, Sequence, Type, Union, get_args, get_origin, get_type_hints
@@ -6,7 +7,7 @@ from pydantic import BaseModel
 from smolagents import Tool
 
 
-class AlphaSwarmTool:
+class AlphaSwarmToolBase(abc.ABC):
     """
     An AlphaSwarm Tool being used by AlphaSwarm Agents.
     """
@@ -44,9 +45,10 @@ class AlphaSwarmTool:
         cls.output_type = cls._construct_output_type()
         cls.description = cls._construct_description()
 
+    @abc.abstractmethod
     def forward(self, *args: Any, **kwargs: Any) -> Any:
         """The tool implementation."""
-        raise NotImplementedError
+        pass
 
     @classmethod
     def _construct_name(cls) -> str:
@@ -177,10 +179,10 @@ class AlphaSwarmTool:
 
 
 class AlphaSwarmToSmolAgentsToolAdapter:
-    """Adapter class to convert AlphaSwarmTool instances to smolagents Tool instances."""
+    """Adapter class to convert AlphaSwarmToolBase instances to smolagents Tool instances."""
 
     @classmethod
-    def adapt(cls, alphaswarm_tool: AlphaSwarmTool) -> Tool:
+    def adapt(cls, alphaswarm_tool: AlphaSwarmToolBase) -> Tool:
         tool = Tool()
 
         tool.name = alphaswarm_tool.name
@@ -192,7 +194,7 @@ class AlphaSwarmToSmolAgentsToolAdapter:
         return tool
 
     @classmethod
-    def _construct_smolagents_inputs(cls, alphaswarm_tool: AlphaSwarmTool) -> Dict[str, Any]:
+    def _construct_smolagents_inputs(cls, alphaswarm_tool: AlphaSwarmToolBase) -> Dict[str, Any]:
         hints = get_type_hints(alphaswarm_tool.forward)
 
         inputs = {

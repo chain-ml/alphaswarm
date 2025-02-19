@@ -2,18 +2,18 @@ from typing import Tuple
 
 import pytest
 from pydantic import BaseModel, Field
-from alphaswarm.core.tool import AlphaSwarmTool
+from alphaswarm.core.tool import AlphaSwarmToolBase
 from smolagents import Tool
 
 from alphaswarm.core.tool.tool import AlphaSwarmToSmolAgentsToolAdapter
 
 
-def alphaswarm_tool_and_smolagents_tool(tool: AlphaSwarmTool) -> Tuple[AlphaSwarmTool, Tool]:
+def alphaswarm_tool_and_smolagents_tool(tool: AlphaSwarmToolBase) -> Tuple[AlphaSwarmToolBase, Tool]:
     return tool, AlphaSwarmToSmolAgentsToolAdapter.adapt(tool)
 
 
 def test_base() -> None:
-    class MyTool(AlphaSwarmTool):
+    class MyTool(AlphaSwarmToolBase):
         """This is my tool description"""
 
         def forward(self) -> None:
@@ -27,7 +27,7 @@ def test_base() -> None:
 
 
 def test_multiline_description() -> None:
-    class MyTool(AlphaSwarmTool):
+    class MyTool(AlphaSwarmToolBase):
         """
         This is my multiline
         tool description
@@ -46,7 +46,7 @@ def test_multiline_description() -> None:
 def test_missing_description() -> None:
     with pytest.raises(ValueError) as e:
 
-        class MyTool(AlphaSwarmTool):
+        class MyTool(AlphaSwarmToolBase):
             def forward(self) -> None:
                 raise NotImplementedError
 
@@ -54,7 +54,7 @@ def test_missing_description() -> None:
 
 
 def test_override() -> None:
-    class MyTool(AlphaSwarmTool):
+    class MyTool(AlphaSwarmToolBase):
         """This is my tool description"""
 
         name = "MyTool2"
@@ -76,7 +76,7 @@ def test_output_type_base_model() -> None:
         name: str = Field(..., description="The name of the person")
         age: int = Field(..., description="The age of the person")
 
-    class MyTool(AlphaSwarmTool):
+    class MyTool(AlphaSwarmToolBase):
         """This is my BaseModel tool description"""
 
         def forward(self) -> MyModel:
@@ -94,7 +94,7 @@ def test_output_type_base_model() -> None:
 
 
 def test_with_examples() -> None:
-    class MyTool(AlphaSwarmTool):
+    class MyTool(AlphaSwarmToolBase):
         """This is my tool description"""
 
         examples = ["Example 1", "Example 2"]
@@ -116,7 +116,7 @@ def test_with_examples() -> None:
 def test_incorrect_inputs_descriptions() -> None:
     with pytest.raises(ValueError) as e:
 
-        class MyTool(AlphaSwarmTool):
+        class MyTool(AlphaSwarmToolBase):
             """This is my tool description"""
 
             def forward(self, a: str, b) -> None:  # type: ignore
@@ -126,7 +126,7 @@ def test_incorrect_inputs_descriptions() -> None:
 
     with pytest.raises(ValueError) as e:
 
-        class MyTool_v2(AlphaSwarmTool):
+        class MyTool_v2(AlphaSwarmToolBase):
             """This is my tool description"""
 
             def forward(self, a: str, b: int) -> None:
@@ -136,7 +136,7 @@ def test_incorrect_inputs_descriptions() -> None:
 
     with pytest.raises(ValueError) as e:
 
-        class MyTool_v3(AlphaSwarmTool):
+        class MyTool_v3(AlphaSwarmToolBase):
             """This is my tool description"""
 
             def forward(self, a: str, b: int) -> None:
@@ -147,7 +147,7 @@ def test_incorrect_inputs_descriptions() -> None:
 
     with pytest.raises(ValueError) as e:
 
-        class MyTool_v4(AlphaSwarmTool):
+        class MyTool_v4(AlphaSwarmToolBase):
             """This is my tool description"""
 
             def forward(self, a: str, b: int) -> None:
@@ -161,7 +161,7 @@ def test_incorrect_inputs_descriptions() -> None:
 
 
 def test_inputs_descriptions() -> None:
-    class MyTool(AlphaSwarmTool):
+    class MyTool(AlphaSwarmToolBase):
         """This is my tool description"""
 
         def forward(self, a: str, b: int) -> None:
@@ -182,7 +182,7 @@ def test_inputs_descriptions() -> None:
 
 @pytest.mark.skip("Not implemented yet.")
 def test_multiline_inputs_descriptions() -> None:
-    class MyTool(AlphaSwarmTool):
+    class MyTool(AlphaSwarmToolBase):
         """This is my tool description"""
 
         def forward(self, a: str, b: int) -> None:

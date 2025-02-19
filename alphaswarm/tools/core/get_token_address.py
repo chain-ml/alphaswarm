@@ -1,10 +1,10 @@
 from typing import Any
 
 from alphaswarm.config import Config
-from alphaswarm.core.tool import AlphaSwarmTool
+from alphaswarm.core.tool import AlphaSwarmToolBase
 
 
-class GetTokenAddress(AlphaSwarmTool):
+class GetTokenAddress(AlphaSwarmToolBase):
     """Get the token address for known token symbols"""
 
     def __init__(self, config: Config, *args: Any, **kwargs: Any) -> None:

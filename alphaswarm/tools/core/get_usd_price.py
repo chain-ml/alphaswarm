@@ -2,11 +2,11 @@ from datetime import UTC, datetime
 from typing import Any
 
 import requests
-from alphaswarm.core.tool import AlphaSwarmTool
+from alphaswarm.core.tool import AlphaSwarmToolBase
 from requests.exceptions import RequestException
 
 
-class GetUsdPrice(AlphaSwarmTool):
+class GetUsdPrice(AlphaSwarmToolBase):
     """Get the current price and 24h price change percentage of a cryptocurrency in USD using CoinGecko API."""
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:

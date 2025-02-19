@@ -6,7 +6,7 @@ import dotenv
 from alphaswarm.agent.agent import AlphaSwarmAgent
 from alphaswarm.agent.clients import TerminalClient
 from alphaswarm.config import CONFIG_PATH, Config
-from alphaswarm.core.tool import AlphaSwarmTool
+from alphaswarm.core.tool import AlphaSwarmToolBase
 from alphaswarm.tools.alchemy import GetAlchemyPriceHistoryByAddress, GetAlchemyPriceHistoryBySymbol
 from alphaswarm.tools.cookie import (
     GetCookieMetricsByContract,
@@ -32,7 +32,7 @@ async def main() -> None:
 
     strategy = Strategy.from_file(filename=str(CONFIG_PATH / "momentum_strategy_config.md"))
 
-    tools: List[AlphaSwarmTool] = [
+    tools: List[AlphaSwarmToolBase] = [
         GetUsdPrice(),
         GetTokenAddress(config),
         GetTokenPrice(config),

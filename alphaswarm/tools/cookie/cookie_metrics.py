@@ -1,10 +1,10 @@
 from typing import Optional
 
-from alphaswarm.core.tool import AlphaSwarmTool
+from alphaswarm.core.tool import AlphaSwarmToolBase
 from alphaswarm.services.cookiefun.cookiefun_client import AgentMetrics, CookieFunClient, Interval, PagedAgentsResponse
 
 
-class GetCookieMetricsByTwitter(AlphaSwarmTool):
+class GetCookieMetricsByTwitter(AlphaSwarmToolBase):
     """
     Retrieve AI agent metrics such as mindshare, market cap, price, liquidity, volume, holders,
     average impressions, average engagements, followers, and top tweets by Twitter username from Cookie.fun
@@ -23,7 +23,7 @@ class GetCookieMetricsByTwitter(AlphaSwarmTool):
         return self.client.get_agent_metrics_by_twitter(username, Interval(interval))
 
 
-class GetCookieMetricsByContract(AlphaSwarmTool):
+class GetCookieMetricsByContract(AlphaSwarmToolBase):
     """
     Retrieve AI agent metrics such as mindshare, market cap, price, liquidity, volume, holders,
     average impressions, average engagements, followers, and top tweets by contract address from Cookie.fun
@@ -43,7 +43,7 @@ class GetCookieMetricsByContract(AlphaSwarmTool):
         return self.client.get_agent_metrics_by_contract(address, Interval(interval), chain)
 
 
-class GetCookieMetricsBySymbol(AlphaSwarmTool):
+class GetCookieMetricsBySymbol(AlphaSwarmToolBase):
     """
     Retrieve AI agent metrics such as mindshare, market cap, price, liquidity, volume, holders,
     average impressions, average engagements, followers, and top tweets by token symbol from Cookie.fun
@@ -62,7 +62,7 @@ class GetCookieMetricsBySymbol(AlphaSwarmTool):
         return self.client.get_agent_metrics_by_contract(symbol, Interval(interval))
 
 
-class GetCookieMetricsPaged(AlphaSwarmTool):
+class GetCookieMetricsPaged(AlphaSwarmToolBase):
     """
     Retrieve paged list of market data and statistics for `page_size` AI agent tokens ordered by mindshare from Cookie.fun.
     """

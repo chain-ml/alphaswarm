@@ -2,7 +2,7 @@ import logging
 from typing import Any
 
 from alphaswarm.config import Config
-from alphaswarm.core.tool import AlphaSwarmTool
+from alphaswarm.core.tool import AlphaSwarmToolBase
 from alphaswarm.services.exchanges import DEXFactory, SwapResult
 
 from .get_token_price import TokenQuote
@@ -10,7 +10,7 @@ from .get_token_price import TokenQuote
 logger = logging.getLogger(__name__)
 
 
-class ExecuteTokenSwap(AlphaSwarmTool):
+class ExecuteTokenSwap(AlphaSwarmToolBase):
     """Execute a token swap on a supported DEX (Uniswap V2/V3 on Ethereum and Base chains)."""
 
     def __init__(self, config: Config, *args: Any, **kwargs: Any) -> None:

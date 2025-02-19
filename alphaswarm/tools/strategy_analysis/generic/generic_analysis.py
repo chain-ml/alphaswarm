@@ -5,7 +5,7 @@ from typing import Any, Dict, List
 
 from alphaswarm import BASE_PATH
 from alphaswarm.core.llm.llm_function import LLMFunctionFromPromptFiles
-from alphaswarm.core.tool import AlphaSwarmTool
+from alphaswarm.core.tool import AlphaSwarmToolBase
 from pydantic import BaseModel, Field
 
 from ..strategy import Strategy
@@ -34,7 +34,7 @@ class StrategyAnalysis(BaseModel):
     alerts: List[AlertItem] = Field(description="List of triggered rules and their details", default_factory=list)
 
 
-class AnalyzeTradingStrategy(AlphaSwarmTool):
+class AnalyzeTradingStrategy(AlphaSwarmToolBase):
     """Analyze the trading strategy against the provided data and decide if any of the strategy rules are triggered."""
 
     def __init__(self, strategy: Strategy, *args: Any, **kwargs: Any) -> None:
