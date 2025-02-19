@@ -32,8 +32,7 @@ class TokenInfo:
         return Web3.to_checksum_address(self.address)
 
 
+@dataclass
 class TokenAmount:
-    def __init__(self, token_info: TokenInfo, value: Decimal) -> None:
-        self._token_info = token_info
-        self._value = value
-
+    token_info: TokenInfo
+    value: Decimal

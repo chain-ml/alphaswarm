@@ -1,8 +1,8 @@
 from __future__ import annotations
 
 from typing import Sequence
-from ...config import WalletInfo
 
+from ...config import WalletInfo
 
 
 class Portfolio:
