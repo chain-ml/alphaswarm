@@ -6,7 +6,7 @@ Thank you for your interest in contributing to AlphaSwarm! This guide focuses on
 
 Currently, we are accepting contributions in the following areas:
 
-- **Tools**: Located in `alphaswarm/tools/`
+- **Tools**: Located in `alphaswarm/tools/`, see [this guide](docs/tools.md) for more details
   - Utility functions and classes
   - Metrics collection and analysis
   - Helper tools and scripts
@@ -42,9 +42,9 @@ Currently, we are accepting contributions in the following areas:
 1. Update documentation if needed
 2. Add tests for new functionality
 3. Ensure the test suite passes
-4. Update the README.md if necessary
+4. Update the `README.md` and `.env.example` if necessary
 5. Submit the pull request with a clear description of changes
-6. The pull request should pass all linters and static code checks [see](https://github.com/chain-ml/alphaswarm?tab=readme-ov-file#code-quality)
+6. The pull request should pass all linters and static code checks, [see](https://github.com/chain-ml/alphaswarm?tab=readme-ov-file#code-quality)
 7. The pull request needs to be reviewed and accepted by the core team
 
 ## Questions or Need Help?

@@ -1,0 +1,161 @@
+# Contributing Tools to AlphaSwarm
+
+## Overview
+
+This guide will walk you through creating and contributing new tools to the AlphaSwarm ecosystem.
+For general contributing guidelines, see [CONTRIBUTING.md](../CONTRIBUTING.md).
+
+## Tool Architecture
+
+Tools in AlphaSwarm follow a class-based architecture inheriting from `AlphaSwarmToolBase`. Each tool is designed to be:
+
+- 🎯 **Single-Purpose**: Focused on one specific functionality
+- 📝 **Self-Documenting**: Using Python docstrings and type hints
+- 🔌 **Modular**: Easy to compose with other tools
+- 🧪 **Testable**: With clear input/output contracts
+
+## Creating a New Tool
+
+### 1. Basic Structure
+
+Create a new Python file in the appropriate subdirectory under `alphaswarm/tools/`. Here's a template for a new tool:
+
+```python
+from typing import Optional
+from pydantic import BaseModel
+
+from alphaswarm.core.tool import AlphaSwarmToolBase
+
+# Optional: Define input/output models if needed
+class MyToolOutput(BaseModel):
+    result: str
+    confidence: float
+
+class DoSomethingCool(AlphaSwarmToolBase):
+    """
+    A clear description of what your tool does.
+    Include key features and any important notes about usage.
+    That's what agent will see!
+    """
+
+    # Optional: Provide usage examples
+    examples = [
+        "Input: x=5 -> Output: {'result': 'processed', 'confidence': 0.95}",
+        "Input: x=None -> Output: {'result': 'error', 'confidence': 0.0}"
+    ]
+
+    def forward(self, input_value: str, optional_param: Optional[int] = None) -> MyToolOutput:
+        """Process the input and return a result.
+
+        Args:
+            input_value: Description of the input value
+            optional_param: Description of the optional parameter
+
+        Returns:
+            MyToolOutput object containing the result and confidence
+        """
+        # Implementation here
+        return MyToolOutput(result="processed", confidence=0.95)
+```
+
+### 2. Key Components
+
+#### Required Elements
+
+1. **Class Documentation**:
+   - Clear description of the tool's purpose
+   - Usage notes and requirements
+   - Any important caveats or limitations
+
+2. **Type Hints**:
+   - All parameters must have type hints
+   - Return type must be explicitly defined
+   - Use `Optional[]` for optional parameters
+
+3. **Parameter Documentation**:
+   - Each parameter must be documented in the `forward()` method's docstring
+   - Follow the format: `param_name: Description of the parameter`
+
+#### Optional Elements
+
+1. **Usage Examples**:
+   ```python
+   examples = [
+       "example input -> example output",
+       "another example -> another output"
+   ]
+   ```
+
+2. **Input/Output Models**:
+   - Use Pydantic models for structured data
+   - Helps with validation and documentation
+
+### 3. Best Practices
+
+1. **Error Handling**:
+   ```python
+   def forward(self, input: str) -> Result:
+       try:
+           # Core logic here
+           return Result(...)
+       except ValueError as e:
+           raise ValueError(f"Invalid input: {str(e)}")
+       except Exception as e:
+           raise RuntimeError(f"Unexpected error: {str(e)}")
+   ```
+
+2. **Input Validation**:
+   - Validate inputs early
+   - Provide clear error messages
+
+3. **Documentation**:
+   - Include docstrings for all public methods
+   - Document any side effects
+   - Provide usage examples
+
+4. **Testing**:
+   - Create unit tests in `tests/unit/tools/` - that are ones that are not dependent on external services
+   - Create integration tests if needed in `tests/integration/tools/` - that are ones that could be dependent on external services, e.g. require API keys
+
+## Integration Into the Repo
+
+### 1. Directory Structure
+
+```
+alphaswarm/
+├── tools/
+│   ├── your_category/
+│   │   ├── __init__.py
+│   │   └── do_something_cool.py
+│   └── __init__.py
+└── tests/
+    ├── unit/
+    │   └── tools/
+    │       └── your_category/
+    │           └── test_do_something_cool.py
+    └── integration/
+        └── tools/
+            └── your_category/
+                └── test_do_something_cool.py
+```
+
+If you're introducing a new category of tools, create an `__init__.py` file with appropriate imports.
+
+### 2. Naming Conventions
+
+We use the following naming conventions for tools:
+
+- Tool implementation files should be named without the `tool` suffix, as they are located in the `tools/` directory.
+- Tool classes should be named without the `Tool` suffix.
+- Tool classes names should reflect the action taken, e.g. `FetchTokenPrice` instead of `TokenPriceFetching`.
+
+## Example Tools
+
+For a complete example, refer to any tool in the `alphaswarm/tools/` directory.
+Here's an example of a tool that fetches the usd price of a token: [GetUsdPrice](../alphaswarm/tools/core/get_usd_price.py).
+
+## Support
+
+Need help? Check our [Discord](https://discord.gg/theoriq-dev) or open an issue on GitHub.
+
+Remember: Tools are a critical part of AlphaSwarm's ecosystem. Well-designed tools make the entire system more powerful and useful for everyone.
