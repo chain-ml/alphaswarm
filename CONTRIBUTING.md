@@ -11,7 +11,7 @@ Currently, we are accepting contributions in the following areas:
   - Metrics collection and analysis
   - Helper tools and scripts
 
-- **Services**: Located in `alphaswarm/services/`
+- **Services**: Located in `alphaswarm/services/`, see [this guide](docs/services.md) for more details
   - Service implementations
   - Client libraries
   - Service utilities
