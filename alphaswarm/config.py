@@ -161,7 +161,8 @@ class Config:
             env_var = value["fromEnvVar"]
             env_value = os.getenv(env_var, "")
             if not env_value:
-                raise ValueError(f"Environment variable {env_var} not found")
+                logger.warning(f"Required environment variable {env_var} not found in .env file")
+                return ""
             return env_value
         return value
 
