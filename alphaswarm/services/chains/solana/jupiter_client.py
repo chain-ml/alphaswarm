@@ -1,6 +1,7 @@
 from typing import Annotated, Any, Final, List, Optional
 
 import requests
+from alphaswarm.config import TokenInfo
 from alphaswarm.services import ApiException
 from pydantic import Field
 from pydantic.dataclasses import dataclass
@@ -22,10 +23,13 @@ class JupiterTokenInfo:
     permanent_delegate: Annotated[Optional[str], Field(default=None)]
     tags: Annotated[List[str], Field(default_factory=list)]
 
+    def to_token_info(self) -> TokenInfo:
+        return TokenInfo(symbol=self.symbol, decimals=self.decimals, address=self.address, chain="solana")
+
 
 class JupiterClient:
-    BASE_URL: Final[str] = "https://api.jup.ag/"
-    TOKEN_URL: Final[str] = "https://api.jup.ag/tokens/v1/token/{address}"
+    BASE_URL: Final[str] = "https://api.jup.ag"
+    TOKEN_URL: Final[str] = f"{BASE_URL}/tokens/v1/token/{{address}}"
 
     def get_token_info(self, token_address: str) -> JupiterTokenInfo:
         response = requests.get(self.TOKEN_URL.format(address=token_address))

@@ -3,7 +3,8 @@ import time
 from decimal import Decimal
 from typing import Any, Dict, Optional
 
-from alphaswarm.config import ChainConfig
+from alphaswarm.config import ChainConfig, TokenInfo
+from alphaswarm.services.chains.solana.jupiter_client import JupiterClient
 from solana.rpc import api
 from solana.rpc.types import TokenAccountOpts
 from solders.keypair import Keypair
@@ -46,6 +47,14 @@ class SolanaClient:
         """Validate that the chain is supported by SolanaClient"""
         if chain not in SUPPORTED_CHAINS:
             raise ValueError(f"Chain '{chain}' is not supported by SolanaClient. Supported chains: {SUPPORTED_CHAINS}")
+
+    def get_token_info(self, token_address: str) -> TokenInfo:
+        result = self._chain_config.get_token_info_by_address_or_none(token_address)
+        if result is not None:
+            return result
+
+        client = JupiterClient()
+        return client.get_token_info(token_address).to_token_info()
 
     def get_token_balance(self, token: str, wallet_address: str) -> Decimal:
         """Get token balance for a wallet address.
