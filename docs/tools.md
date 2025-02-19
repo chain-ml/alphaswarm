@@ -22,14 +22,15 @@ Create a new Python file in the appropriate subdirectory under `alphaswarm/tools
 
 ```python
 from typing import Optional
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from alphaswarm.core.tool import AlphaSwarmToolBase
 
 # Optional: Define input/output models if needed
+# This information will be automatically added to the tool's documentation and passed to the agent!
 class MyToolOutput(BaseModel):
-    result: str
-    confidence: float
+    result: str = Field(description="The result of the tool")
+    confidence: float = Field(description="The confidence in the result, from 0 to 1")
 
 class DoSomethingCool(AlphaSwarmToolBase):
     """
@@ -139,8 +140,6 @@ alphaswarm/
                 └── test_do_something_cool.py
 ```
 
-If you're introducing a new category of tools, create an `__init__.py` file with appropriate imports.
-
 ### 2. Naming Conventions
 
 We use the following naming conventions for tools:
@@ -152,7 +151,10 @@ We use the following naming conventions for tools:
 ## Example Tools
 
 For a complete example, refer to any tool in the `alphaswarm/tools/` directory.
-Here's an example of a tool that fetches the USD price of a token: [GetUsdPrice](../alphaswarm/tools/core/get_usd_price.py).
+Here are some examples:
+- Tool that fetches the USD price of a token with CoinGecko API: [GetUsdPrice](../alphaswarm/tools/core/get_usd_price.py)
+- Tool that uses Alchemy service: [GetAlchemyPriceHistoryBySymbol](../alphaswarm/tools/alchemy/alchemy_price_history.py)
+- Tool that uses LLM to analyze trading strategies: [AnalyzeTradingStrategy](../alphaswarm/tools/strategy_analysis/generic/generic_analysis.py)
 
 ## Support
 
