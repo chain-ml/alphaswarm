@@ -9,7 +9,7 @@ from urllib.parse import urlencode
 import requests
 from alphaswarm.config import ChainConfig, Config, JupiterSettings, JupiterVenue, TokenInfo
 from alphaswarm.services import ApiException
-from alphaswarm.services.chains.sol import SolanaClient, SolSigner
+from alphaswarm.services.chains.solana import SolanaClient, SolSigner
 from alphaswarm.services.exchanges.base import DEXClient, QuoteResult, SwapResult
 from pydantic import BaseModel, Field
 from solders.transaction import VersionedTransaction
