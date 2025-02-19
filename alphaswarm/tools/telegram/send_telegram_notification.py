@@ -4,6 +4,7 @@ from typing import Optional
 
 from alphaswarm.agent.clients.telegram_bot import TelegramApp
 from smolagents import Tool
+from telegram.constants import ParseMode
 
 logger = logging.getLogger(__name__)
 
@@ -45,7 +46,9 @@ class SendTelegramNotificationTool(Tool):
         message_to_send = self.format_alert_message(message=message, confidence=confidence, priority=priority)
 
         async def send_message() -> None:
-            await self._telegram_app.send_message(chat_id=self.chat_id, message=message_to_send, parse_mode="Markdown")
+            await self._telegram_app.send_message(
+                chat_id=self.chat_id, message=message_to_send, parse_mode=ParseMode.MARKDOWN
+            )
 
         self._loop.run_until_complete(send_message())
 
