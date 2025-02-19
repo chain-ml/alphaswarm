@@ -1,11 +1,11 @@
 from __future__ import annotations
 
 from abc import abstractmethod
-from typing import Iterable, List
+from typing import Iterable, List, Self
 
 from solders.pubkey import Pubkey
 
-from ...config import WalletInfo
+from ...config import Config, WalletInfo
 from ...core.token import TokenAmount
 from ..alchemy import AlchemyClient
 from ..chains import EVMClient, SolanaClient
@@ -30,6 +30,18 @@ class Portfolio:
             result.extend(portfolio.get_token_balances())
 
         return result
+
+    @classmethod
+    def from_config(cls, config: Config) -> Self:
+        portfolios: List[PortfolioBase] = []
+        for chain in config.get_supported_networks():
+            chain_config = config.get_chain_config(chain)
+            wallet_info = WalletInfo.from_chain_config(chain_config)
+            if chain == "solana":
+                portfolios.append(PortfolioSolana(wallet_info, SolanaClient(chain_config)))
+            if chain in ["ethereum", "ethereum_sepolia", "base"]:
+                portfolios.append(PortfolioEvm(wallet_info, EVMClient(chain_config), AlchemyClient.from_env()))
+        return cls(portfolios)
 
 
 class PortfolioEvm(PortfolioBase):

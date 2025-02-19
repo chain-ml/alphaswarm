@@ -234,6 +234,8 @@ class Config:
 
     def get_supported_networks(self) -> list:
         """Get list of supported networks for current environment"""
+        if self._network_env == "all":
+            return self._config["chain_config"].keys()
         return self._config["network_environments"].get(self._network_env, [])
 
     def get(self, key_path: str, default: Any = None) -> Any:

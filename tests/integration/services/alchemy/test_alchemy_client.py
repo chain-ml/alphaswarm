@@ -81,6 +81,9 @@ def test_get_all_transfers(alchemy_client: AlchemyClient, chain_config: ChainCon
         wallet=chain_config.wallet_address, chain=chain_config.chain, incoming=False
     )
 
+    assert len(in_transfers) > 0
+    assert len(out_transfers) > 0
+
 
 def test_get_transfers_invalid_chain(alchemy_client: AlchemyClient) -> None:
     with pytest.raises(ValueError, match="Unsupported chain invalid_chain"):
