@@ -101,7 +101,7 @@ chain_config:
       fromEnvVar: ETH_SEPOLIA_RPC_URL
     tokens:
       WETH:
-        address: "0xfff9976782d46cc05630d1f6ebab18b2324d6b14"
+        address: "0xfFf9976782d46CC05630D1f6eBAb18b2324d6B14"
         decimals: 18
       USDC:
         address: "0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238"

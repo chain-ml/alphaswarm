@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from abc import abstractmethod
-from typing import Iterable, List, Self
+from typing import Iterable, List, Optional, Self
 
 from solders.pubkey import Pubkey
 
@@ -19,15 +19,20 @@ class PortfolioBase:
     def get_token_balances(self) -> List[TokenAmount]:
         pass
 
+    @property
+    def chain(self) -> str:
+        return self._wallet.chain
+
 
 class Portfolio:
     def __init__(self, portfolios: Iterable[PortfolioBase]) -> None:
         self._portfolios = list(portfolios)
 
-    def get_token_balances(self) -> List[TokenAmount]:
+    def get_token_balances(self, chain: Optional[str] = None) -> List[TokenAmount]:
         result = []
         for portfolio in self._portfolios:
-            result.extend(portfolio.get_token_balances())
+            if chain is None or chain == portfolio.chain:
+                result.extend(portfolio.get_token_balances())
 
         return result
 
