@@ -2,7 +2,8 @@ from decimal import Decimal
 
 import pytest
 
-from alphaswarm.config import Config, TokenInfo
+from alphaswarm.config import Config
+from alphaswarm.core.token import TokenInfo
 from alphaswarm.services.exchanges.uniswap import UniswapClientV3
 
 BASE_WETH_USDC_005 = "0xd0b53D9277642d899DF5C87A3966A349A798F224"

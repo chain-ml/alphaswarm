@@ -1,4 +1,5 @@
 import pytest
+from solders.pubkey import Pubkey
 
 from alphaswarm.config import ChainConfig, Config
 from alphaswarm.services.chains.solana import SolSigner, SolanaClient
@@ -34,3 +35,11 @@ def test_sol_signer(solana_config: ChainConfig) -> None:
     signer = SolSigner(solana_config.private_key)
 
     assert signer.wallet_address == solana_config.wallet_address
+
+
+@pytest.mark.skip("Requires a valid Solana wallet")
+def test_get_all_token_balances(client: SolanaClient, solana_config: ChainConfig) -> None:
+    result = client.get_all_token_balances(Pubkey.from_string(solana_config.wallet_address))
+    assert len(result) > 0
+    for item in result:
+        assert item.value > 0, f"balance for token {item.token_info.symbol}"
