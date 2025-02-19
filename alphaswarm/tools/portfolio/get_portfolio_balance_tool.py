@@ -2,7 +2,7 @@ from typing import Any, Dict, List, Optional
 
 from alphaswarm.config import Config
 from alphaswarm.core.token import TokenAmount
-from alphaswarm.services.portfolio.portfolio import Portfolio
+from alphaswarm.services.portfolio import Portfolio
 from smolagents import Tool
 
 

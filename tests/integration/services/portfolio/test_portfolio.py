@@ -2,7 +2,7 @@ import pytest
 
 from alphaswarm.config import Config
 from alphaswarm.services.alchemy import AlchemyClient
-from alphaswarm.services.portfolio.portfolio import Portfolio
+from alphaswarm.services.portfolio import Portfolio
 
 
 @pytest.mark.skip("Need wallet")
