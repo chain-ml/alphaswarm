@@ -1,8 +1,7 @@
 import pytest
 
 from alphaswarm.config import ChainConfig, Config
-from alphaswarm.services.chains import SolanaClient
-from alphaswarm.services.chains.sol import SolSigner
+from alphaswarm.services.chains.solana import SolSigner, SolanaClient
 
 
 @pytest.fixture
