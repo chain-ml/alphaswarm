@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import logging
 import os
-from typing import Any, Dict, List, Optional, Sequence
+from typing import Any, Dict, List, Optional, Self, Sequence
 
 import yaml
 from alphaswarm import BASE_PATH
@@ -22,8 +22,20 @@ class WalletInfo:
         self._address = address
         self._chain = chain
 
+    @property
+    def address(self) -> str:
+        return self._address
+
+    @property
+    def chain(self) -> str:
+        return self._chain
+
     def __str__(self) -> str:
         return f"`{self._address}` on `{self._chain}` chain"
+
+    @classmethod
+    def from_chain_config(cls, chain_config: ChainConfig) -> Self:
+        return cls(address=chain_config.wallet_address, chain=chain_config.chain)
 
 
 @dataclass
