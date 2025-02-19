@@ -12,7 +12,7 @@ T = TypeVar("T", bound="DEXClient")
 TQuote = TypeVar("TQuote")
 
 
-class QuoteResult(Generic[TQuote], BaseModel):
+class QuoteResult(BaseModel, Generic[TQuote]):
     quote: Annotated[TQuote, Field(repr=False)]
 
     token_in: TokenInfo

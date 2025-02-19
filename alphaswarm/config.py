@@ -113,6 +113,12 @@ class JupiterSettings:
     slippage_bps: int
 
 
+@dataclass
+class LLMConfig:
+    provider: str
+    model_id: str
+
+
 class Config:
     _instance = None
 
@@ -302,3 +308,18 @@ class Config:
     def get_venue_settings_jupiter(self) -> JupiterSettings:
         values = self._config["trading_venues"]["jupiter"]["settings"]
         return JupiterSettings(**values)
+
+    def get_llm_config(self) -> LLMConfig:
+        """Determine LLM provider and model based on available API keys"""
+        if os.getenv("OPENAI_API_KEY"):
+            return LLMConfig(
+                provider="openai",
+                model_id=os.getenv("DEFAULT_OPENAI_MODEL", "gpt-4o-mini")
+            )
+        elif os.getenv("ANTHROPIC_API_KEY"):
+            return LLMConfig(
+                provider="anthropic",
+                model_id=os.getenv("DEFAULT_ANTHROPIC_MODEL", "claude-3-sonnet-20240229")
+            )
+        else:
+            raise ValueError("No LLM API keys found in environment variables")

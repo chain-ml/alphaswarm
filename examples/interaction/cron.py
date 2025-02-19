@@ -26,8 +26,8 @@ async def main() -> None:
     tools: List[Tool] = [PriceTool(), GetTokenPriceTool(config), AlchemyPriceHistoryBySymbol()]
 
     # Initialize the AlphaSwarm agent with the price tools
-    agent = AlphaSwarmAgent(tools=tools, model_id="anthropic/claude-3-5-sonnet-20241022")
-
+    llm_config = config.get_llm_config()
+    agent = AlphaSwarmAgent(tools=tools, model_id=llm_config.model_id)
     def generate_message_cron_job1() -> str:
         # Randomly generate price queries for major cryptocurrencies
         # Returns "quit" occasionally to potentially terminate the job
