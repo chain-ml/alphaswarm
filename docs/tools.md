@@ -114,8 +114,8 @@ class DoSomethingCool(AlphaSwarmToolBase):
    - Provide usage examples
 
 4. **Testing**:
-   - Create unit tests in `tests/unit/tools/` - that are ones that are not dependent on external services
-   - Create integration tests if needed in `tests/integration/tools/` - that are ones that could be dependent on external services, e.g. require API keys
+   - Create unit tests in `tests/unit/tools/` - these are ones that are not dependent on external services
+   - Create integration tests if needed in `tests/integration/tools/` - these are ones that could be dependent on external services, e.g. require API keys
 
 ## Integration Into the Repo
 
@@ -152,7 +152,7 @@ We use the following naming conventions for tools:
 ## Example Tools
 
 For a complete example, refer to any tool in the `alphaswarm/tools/` directory.
-Here's an example of a tool that fetches the usd price of a token: [GetUsdPrice](../alphaswarm/tools/core/get_usd_price.py).
+Here's an example of a tool that fetches the USD price of a token: [GetUsdPrice](../alphaswarm/tools/core/get_usd_price.py).
 
 ## Support
 
