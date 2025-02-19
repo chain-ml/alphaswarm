@@ -26,7 +26,7 @@ class AlphaSwarmToolBase(abc.ABC):
     """
 
     examples: Sequence[str]
-    """The usage examples of the tool."""
+    """Usage examples for the tool, preferably in the form of expected input -> expected output."""
 
     inputs_descriptions: Dict[str, str]
     """
@@ -35,7 +35,7 @@ class AlphaSwarmToolBase(abc.ABC):
     """
 
     output_type: Type
-    """forward() output type. Will derived from the function signature if not provided."""
+    """forward() return type. Will derived from the function signature if not provided."""
 
     def __init_subclass__(cls, **kwargs: Any) -> None:
         super().__init_subclass__(**kwargs)
@@ -47,7 +47,16 @@ class AlphaSwarmToolBase(abc.ABC):
 
     @abc.abstractmethod
     def forward(self, *args: Any, **kwargs: Any) -> Any:
-        """The tool implementation."""
+        """Execute the tool's core functionality.
+
+        This method must be implemented by subclasses to define the tool's behavior.
+        Type hints and docstring are required and used to generate tool metadata.
+        Arguments should be documented in the following format:
+
+        Args:
+            param_name: Description of the first parameter
+            param_name2: Description of the second parameter
+        """
         pass
 
     @classmethod
