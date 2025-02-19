@@ -35,9 +35,9 @@ class GetAlchemyPriceHistoryByAddress(AlphaSwarmTool):
         """
         Args:
             address: Hex Address of the token to retrieve price history for
-            network: Name of the network hosting the token.
-            interval: Time interval between data points, one of "5m", "1h", "1d".
             history: Number of days to look back price history for. Max history for each interval - (5m, 7d), (1h, 30d), (1d, 365d).
+            interval: Time interval between data points, one of "5m", "1h", "1d".
+            network: Name of the network hosting the token.
         """
         end_time = datetime.now(timezone.utc)
         start_time = end_time - timedelta(days=history)

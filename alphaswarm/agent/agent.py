@@ -2,7 +2,8 @@ import asyncio
 from datetime import datetime
 from typing import Optional, Sequence
 
-from alphaswarm.core.tool import AlphaSwarmTool, AlphaSwarmToSmolAgentsToolAdapter
+from alphaswarm.core.tool import AlphaSwarmTool
+from alphaswarm.core.tool.tool import AlphaSwarmToSmolAgentsToolAdapter
 from smolagents import CODE_SYSTEM_PROMPT, CodeAgent, LiteLLMModel
 
 

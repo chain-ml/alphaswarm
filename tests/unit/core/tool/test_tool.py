@@ -2,8 +2,10 @@ from typing import Tuple
 
 import pytest
 from pydantic import BaseModel, Field
-from alphaswarm.core.tool import AlphaSwarmTool, AlphaSwarmToSmolAgentsToolAdapter
+from alphaswarm.core.tool import AlphaSwarmTool
 from smolagents import Tool
+
+from alphaswarm.core.tool.tool import AlphaSwarmToSmolAgentsToolAdapter
 
 
 def alphaswarm_tool_and_smolagents_tool(tool: AlphaSwarmTool) -> Tuple[AlphaSwarmTool, Tool]:

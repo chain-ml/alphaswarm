@@ -30,9 +30,9 @@ class ForecastingAgent(AlphaSwarmAgent):
         ]
 
         hints = """P.S. Here are some hints to help you succeed:
-        - Use the `AlchemyPriceHistoryBySymbol` tool to get the historical price data for the token
-        - Use the `CookieMetricsBySymbol` tool to get metrics about the subject token
-        - Use the `CookieMetricsPaged` tool to get a broader market overview of related AI agent tokens
+        - Use the `GetAlchemyPriceHistoryBySymbol` tool to get the historical price data for the token
+        - Use the `GetCookieMetricsBySymbol` tool to get metrics about the subject token
+        - Use the `GetCookieMetricsPaged` tool to get a broader market overview of related AI agent tokens
         - Use the `ForecastTokenPrice` once you have gathered the necessary data to produce a forecast
         - Please respond with the output of the `ForecastTokenPrice` directly -- we don't need to reformat it.
         """

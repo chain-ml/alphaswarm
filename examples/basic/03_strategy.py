@@ -1,9 +1,10 @@
-from typing import Dict
+from typing import Dict, List
 
 import dotenv
 import yaml
 from alphaswarm.agent.agent import AlphaSwarmAgent
 from alphaswarm.config import Config
+from alphaswarm.core.tool import AlphaSwarmTool
 from alphaswarm.tools.exchanges import ExecuteTokenSwap
 from alphaswarm.tools.strategy_analysis import AnalyzeTradingStrategy, Strategy
 
@@ -16,7 +17,7 @@ strategy = Strategy(
     model_id="anthropic/claude-3-5-sonnet-20241022",
 )
 
-tools = [
+tools: List[AlphaSwarmTool] = [
     AnalyzeTradingStrategy(strategy),  # Check a trading strategy
     ExecuteTokenSwap(config),  # Execute a token swap on a supported DEX (Uniswap V2/V3 on Ethereum and Base chains)
 ]

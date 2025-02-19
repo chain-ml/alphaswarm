@@ -1,3 +1,3 @@
-from .tool import AlphaSwarmTool, AlphaSwarmToSmolAgentsToolAdapter
+from .tool import AlphaSwarmTool
 
-__all__ = ["AlphaSwarmTool", "AlphaSwarmToSmolAgentsToolAdapter"]
+__all__ = ["AlphaSwarmTool"]

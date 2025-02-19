@@ -53,7 +53,7 @@ class GetTokenPrice(AlphaSwarmTool):
             token_in: The address of the token we want to sell
             amount_in: The amount token_in to be sold, in Token
             chain: Blockchain to use. Must be 'solana' for Solana tokens, 'base' for Base tokens, 'ethereum' for Ethereum tokens, 'ethereum_sepolia' for Ethereum Sepolia tokens.
-            dex_type: Type of DEX to use ("uniswap_v2", "uniswap_v3", "jupiter"). If not provided, will check all available venues.
+            dex_type: Optional type of DEX to use ("uniswap_v2", "uniswap_v3", "jupiter"). If not provided, will check all available venues.
         """
         logger.debug(f"Getting price for {token_out}/{token_in} on {chain}")
 

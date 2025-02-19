@@ -17,12 +17,7 @@ class ExecuteTokenSwap(AlphaSwarmTool):
         super().__init__(*args, **kwargs)
         self.config = config
 
-    def forward(
-        self,
-        *,
-        quote: TokenQuote,
-        slippage_bps: int = 100,
-    ) -> SwapResult:
+    def forward(self, quote: TokenQuote, slippage_bps: int = 100) -> SwapResult:
         """
         Execute a token swap.
 
