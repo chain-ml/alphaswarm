@@ -97,7 +97,7 @@ def test_with_examples() -> None:
     class MyTool(AlphaSwarmToolBase):
         """This is my tool description"""
 
-        examples = ["Example 1", "Example 2"]
+        examples = ["Examples:", "- Example 1", "- Example 2"]
 
         def forward(self) -> float:
             raise NotImplementedError
@@ -105,7 +105,6 @@ def test_with_examples() -> None:
     tool, smolagents_tool = alphaswarm_tool_and_smolagents_tool(MyTool())
     for t in [tool, smolagents_tool]:
         assert t.description.startswith("This is my tool description")
-        assert "Examples:" in t.description
         for example in MyTool.examples:
             assert example in t.description
 

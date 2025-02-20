@@ -27,10 +27,10 @@ class TokenPriceResult(BaseModel):
 class GetTokenPrice(AlphaSwarmToolBase):
     """Get the current price of a token pair from available DEXes."""
 
-    # TODO: discuss
     examples = [
-        "Get the price of 1 ETH in USDC on ethereum",
-        "Get the price of 1 GIGA in SOL on solana",
+        "Here are some sample inputs on when to use this tool:",
+        "- Get the price of 1 ETH in USDC on ethereum",
+        "- Get the price of 1 GIGA in SOL on solana",
     ]
 
     def __init__(self, config: Config) -> None:
@@ -81,8 +81,6 @@ class GetTokenPrice(AlphaSwarmToolBase):
         if len(prices) == 0:
             logger.warning(f"No valid prices found for out/in {token_out}/{token_in}")
             raise RuntimeError(f"No valid prices found for {token_out}/{token_in}")
-
-        # Get current timestamp
 
         # If we have multiple prices, return them all
         result = TokenPriceResult(quotes=prices)

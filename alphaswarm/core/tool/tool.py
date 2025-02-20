@@ -26,7 +26,10 @@ class AlphaSwarmToolBase(abc.ABC):
     """
 
     examples: Sequence[str]
-    """Usage examples for the tool, preferably in the form of expected input -> expected output."""
+    """
+    Usage examples for the tool, could be any of: "when" to use the tool, "how" to use it, "what" to expect from it.
+    Treat it as additional hints passed to the agent through the tool description.
+    """
 
     inputs_descriptions: Dict[str, str]
     """
@@ -77,7 +80,7 @@ class AlphaSwarmToolBase(abc.ABC):
         if output_type_description is not None:
             description_parts.append(output_type_description)
         if "examples" in cls.__dict__ and len(cls.examples) > 0:
-            description_parts.append(cls._format_examples(cls.examples))
+            description_parts.append("\n".join(cls.examples))
 
         return "\n\n".join(description_parts).strip()
 
@@ -103,10 +106,6 @@ class AlphaSwarmToolBase(abc.ABC):
             )
 
         return None
-
-    @staticmethod
-    def _format_examples(examples: Sequence[str]) -> str:
-        return "Examples:\n" + "\n".join(f"- {example}" for example in examples)
 
     @classmethod
     def _construct_inputs_descriptions(cls) -> Dict[str, str]:
