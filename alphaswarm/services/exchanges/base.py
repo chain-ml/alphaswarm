@@ -21,8 +21,7 @@ class QuoteResult(Generic[TQuote], BaseModel):
     amount_out: Decimal
 
 
-@dataclass
-class SwapResult:
+class SwapResult(BaseModel):
     amount_out: Decimal
     amount_in: Decimal
     tx_hash: str

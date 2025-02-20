@@ -1,17 +1,18 @@
-from typing import Dict
+from typing import Dict, List
 
 import dotenv
 import yaml
 from alphaswarm.agent.agent import AlphaSwarmAgent
 from alphaswarm.config import Config
-from alphaswarm.tools.exchanges.get_token_price_tool import GetTokenPriceTool
+from alphaswarm.core.tool import AlphaSwarmToolBase
+from alphaswarm.tools.exchanges.get_token_price import GetTokenPrice
 
 dotenv.load_dotenv()
 config = Config()
 
 # Initialize tools
-tools = [
-    GetTokenPriceTool(config),  # Get the price of a token pair from available DEXes
+tools: List[AlphaSwarmToolBase] = [
+    GetTokenPrice(config),  # Get the price of a token pair from available DEXes
 ]
 
 # Create the agent

@@ -1,4 +1,4 @@
 from .evm import EVMClient
-from .sol import SolanaClient
+from .solana import SolanaClient
 
 __all__ = ["EVMClient", "SolanaClient"]
