@@ -240,14 +240,17 @@ class AlchemyClient:
         return parsed_balances
 
     def network_url(self, chain: str) -> str:
+        return self.DEFAULT_NETWORK_URL.format(network=self.chain_to_network(chain), api_key=self.api_key)
+        
+    def chain_to_network(self, chain: str) -> str:
         if chain == "ethereum":
-            return self.DEFAULT_NETWORK_URL.format(network="eth-mainnet", api_key=self.api_key)
+            return "eth-mainnet"
         elif chain == "ethereum_sepolia":
-            return self.DEFAULT_NETWORK_URL.format(network="eth-sepolia", api_key=self.api_key)
+            return "eth-sepolia"
         elif chain == "base":
-            return self.DEFAULT_NETWORK_URL.format(network="base-mainnet", api_key=self.api_key)
+            return "base-mainnet"
         elif chain == "base_sepolia":
-            return self.DEFAULT_NETWORK_URL.format(network="base-sepolia", api_key=self.api_key)
+            return "base-sepolia"
         else:
             raise ValueError(f"Unsupported chain {chain}")
 
