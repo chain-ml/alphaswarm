@@ -8,15 +8,14 @@ from alphaswarm.core.token import TokenAmount
 from alphaswarm.services.chains.evm import ERC20Contract, EVMClient, EVMSigner
 from alphaswarm.services.exchanges.base import DEXClient, QuoteResult, SwapResult
 from eth_typing import ChecksumAddress, HexAddress
-from pydantic.dataclasses import dataclass
+from pydantic import BaseModel
 from web3.types import TxReceipt
 
 # Set up logger
 logger = logging.getLogger(__name__)
 
 
-@dataclass
-class UniswapQuote:
+class UniswapQuote(BaseModel):
     pool_address: ChecksumAddress
 
 
