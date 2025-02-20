@@ -1,4 +1,4 @@
-from .generic.generic_analysis import GenericStrategyAnalysisTool
+from .generic import AnalyzeTradingStrategy
 from .strategy import Strategy
 
-__all__ = ["GenericStrategyAnalysisTool", "Strategy"]
+__all__ = ["AnalyzeTradingStrategy", "Strategy"]

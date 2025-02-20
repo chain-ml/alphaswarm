@@ -1,15 +1,18 @@
+from typing import Dict, List
+
 import dotenv
 from alphaswarm.agent import AlphaSwarmAgent
 from alphaswarm.config import Config
-from alphaswarm.tools import GetTokenAddress
+from alphaswarm.core.tool import AlphaSwarmToolBase
+from alphaswarm.tools.core import GetTokenAddress
 from alphaswarm.tools.exchanges import GetTokenPriceTool
 
 dotenv.load_dotenv()
 config = Config()
 
 # Initialize tools
-tools = [
-    GetTokenPriceTool(config),  # Get the price of a token pair from available DEXes given addresses
+tools: List[AlphaSwarmToolBase] = [
+    GetTokenPrice(config),  # Get the price of a token pair from available DEXes given addresses
     GetTokenAddress(config),  # Get token address from a symbol
 ]
 

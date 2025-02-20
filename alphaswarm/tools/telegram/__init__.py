@@ -1,3 +1,3 @@
-from .send_telegram_notification import SendTelegramNotificationTool
+from .send_telegram_notification import SendTelegramNotification
 
-__all__ = ["SendTelegramNotificationTool"]
+__all__ = ["SendTelegramNotification"]

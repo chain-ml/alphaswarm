@@ -1,6 +1,10 @@
+from typing import Dict, List
+
 import dotenv
 from alphaswarm.agent import AlphaSwarmAgent
 from alphaswarm.config import Config
+from alphaswarm.core.tool import AlphaSwarmToolBase
+from alphaswarm.tools.exchanges import ExecuteTokenSwap
 from alphaswarm.tools import GetTokenAddress
 from alphaswarm.tools.exchanges import ExecuteTokenSwapTool
 
@@ -8,8 +12,8 @@ dotenv.load_dotenv()
 config = Config(network_env="test")  # Use a testnet environment (as defined in config/default.yaml)
 
 # Initialize tools
-tools = [
-    ExecuteTokenSwapTool(config),  # Execute a token swap on a supported DEX
+tools: List[AlphaSwarmToolBase] = [
+    ExecuteTokenSwap(config),  # Execute a token swap on a supported DEX
     GetTokenAddress(config),  # Get token address from a symbol
 ]
 
