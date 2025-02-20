@@ -20,7 +20,7 @@ class TokenAmount:
     @property
     def is_zero(self) -> bool:
         """Check if the token amount is zero"""
-        return self.base_units == 0
+        return self.value == Decimal(0)
 
     def __str__(self) -> str:
         """Return a human-readable string representation like '1.5 ETH'"""
