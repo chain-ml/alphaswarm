@@ -4,7 +4,8 @@ import logging
 from decimal import Decimal
 from typing import Any, Dict, List, Optional, Self, Tuple, Union
 
-from alphaswarm.config import ChainConfig, Config, TokenInfo, UniswapV3Settings
+from alphaswarm.config import ChainConfig, Config, UniswapV3Settings
+from alphaswarm.core.token import TokenInfo
 from alphaswarm.services.chains.evm import ZERO_ADDRESS, EVMClient, EVMContract, EVMSigner
 from alphaswarm.services.exchanges.base import QuoteResult, Slippage
 from alphaswarm.services.exchanges.uniswap.constants_v3 import (

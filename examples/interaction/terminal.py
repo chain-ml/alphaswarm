@@ -6,21 +6,21 @@ import dotenv
 from alphaswarm.agent.agent import AlphaSwarmAgent
 from alphaswarm.agent.clients import TerminalClient
 from alphaswarm.config import CONFIG_PATH, Config
-from alphaswarm.tools import GetTokenAddress
-from alphaswarm.tools.alchemy import AlchemyPriceHistoryByAddress, AlchemyPriceHistoryBySymbol
-from alphaswarm.tools.cookie.cookie_metrics import (
-    CookieMetricsByContract,
-    CookieMetricsBySymbol,
-    CookieMetricsByTwitter,
-    CookieMetricsPaged,
+from alphaswarm.core.tool import AlphaSwarmToolBase
+from alphaswarm.tools.alchemy import GetAlchemyPriceHistoryByAddress, GetAlchemyPriceHistoryBySymbol
+from alphaswarm.tools.cookie import (
+    GetCookieMetricsByContract,
+    GetCookieMetricsBySymbol,
+    GetCookieMetricsByTwitter,
+    GetCookieMetricsPaged,
 )
-from alphaswarm.tools.exchanges import ExecuteTokenSwapTool, GetTokenPriceTool
-from alphaswarm.tools.price_tool import PriceTool
-from alphaswarm.tools.strategy_analysis.generic import GenericStrategyAnalysisTool
+from alphaswarm.tools.core import GetTokenAddress, GetUsdPrice
+from alphaswarm.tools.exchanges import ExecuteTokenSwap, GetTokenPrice
+from alphaswarm.tools.portfolio import GetPortfolioBalance
+from alphaswarm.tools.strategy_analysis.generic import AnalyzeTradingStrategy
 from alphaswarm.tools.strategy_analysis.strategy import Strategy
-from alphaswarm.tools.telegram import SendTelegramNotificationTool
+from alphaswarm.tools.telegram import SendTelegramNotification
 from alphaswarm.utils import read_text_file_to_string
-from smolagents import Tool
 
 
 async def main() -> None:
@@ -33,19 +33,20 @@ async def main() -> None:
 
     strategy = Strategy.from_file(filename=str(CONFIG_PATH / "momentum_strategy_config.md"))
 
-    tools: List[Tool] = [
-        PriceTool(),
+    tools: List[AlphaSwarmToolBase] = [
+        GetUsdPrice(),
         GetTokenAddress(config),
-        GetTokenPriceTool(config),
-        AlchemyPriceHistoryByAddress(),
-        AlchemyPriceHistoryBySymbol(),
-        GenericStrategyAnalysisTool(strategy=strategy),
-        CookieMetricsByContract(),
-        CookieMetricsBySymbol(),
-        CookieMetricsByTwitter(),
-        CookieMetricsPaged(),
-        SendTelegramNotificationTool(telegram_bot_token=telegram_bot_token, chat_id=chat_id),
-        ExecuteTokenSwapTool(config),
+        GetTokenPrice(config),
+        GetAlchemyPriceHistoryByAddress(),
+        GetAlchemyPriceHistoryBySymbol(),
+        AnalyzeTradingStrategy(strategy=strategy),
+        GetCookieMetricsByContract(),
+        GetCookieMetricsBySymbol(),
+        GetCookieMetricsByTwitter(),
+        GetCookieMetricsPaged(),
+        SendTelegramNotification(telegram_bot_token=telegram_bot_token, chat_id=chat_id),
+        ExecuteTokenSwap(config),
+        GetPortfolioBalance(config),
     ]  # Add your tools here
 
     # Optional step to provide a custom system prompt.
@@ -65,7 +66,10 @@ async def main() -> None:
     hints = read_text_file_to_string(CONFIG_PATH / "trading_strategy_agent_hints.txt")
 
     agent = AlphaSwarmAgent(
-        tools=tools, model_id="anthropic/claude-3-5-sonnet-20241022", system_prompt=system_prompt, hints=hints
+        tools=tools,
+        model_id="anthropic/claude-3-5-sonnet-20241022",
+        system_prompt=system_prompt,
+        hints=hints,
     )
 
     terminal = TerminalClient("AlphaSwarm terminal", agent)

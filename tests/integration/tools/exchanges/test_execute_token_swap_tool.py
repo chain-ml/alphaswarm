@@ -4,8 +4,8 @@ import pytest
 
 from alphaswarm.config import Config
 from alphaswarm.services.chains import EVMClient
-from alphaswarm.tools import GetTokenAddress
-from alphaswarm.tools.exchanges import ExecuteTokenSwapTool, GetTokenPriceTool
+from alphaswarm.tools.core import GetTokenAddress
+from alphaswarm.tools.exchanges import ExecuteTokenSwap, GetTokenPrice
 
 
 @pytest.fixture
@@ -14,13 +14,13 @@ def token_address_tool(default_config: Config) -> GetTokenAddress:
 
 
 @pytest.fixture
-def token_quote_tool(default_config: Config) -> GetTokenPriceTool:
-    return GetTokenPriceTool(default_config)
+def token_quote_tool(default_config: Config) -> GetTokenPrice:
+    return GetTokenPrice(default_config)
 
 
 @pytest.fixture
-def token_swap_tool(default_config: Config) -> ExecuteTokenSwapTool:
-    return ExecuteTokenSwapTool(default_config)
+def token_swap_tool(default_config: Config) -> ExecuteTokenSwap:
+    return ExecuteTokenSwap(default_config)
 
 
 @pytest.fixture
@@ -38,8 +38,8 @@ def sepolia_client(default_config: Config) -> EVMClient:
 )
 def test_token_swap_tool(
     token_address_tool: GetTokenAddress,
-    token_quote_tool: GetTokenPriceTool,
-    token_swap_tool: ExecuteTokenSwapTool,
+    token_quote_tool: GetTokenPrice,
+    token_swap_tool: ExecuteTokenSwap,
     chain: str,
     amount_in: Decimal,
     token_in: str,
