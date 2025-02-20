@@ -20,7 +20,7 @@ Services are encouraged to encapsulate all the business logic for a specific fea
 
 ### 1. Basic Structure
 
-A new service should follow a clear and consistent structure. Your service code should reside under the appropriate category within the `alphaswarm/services/` directory. A typical directory structure might look like this:
+A new service should follow a clear and consistent structure. Before creating a new service category, ensure that none of the existing categories fits your new service. Your service code should reside under the appropriate category within the `alphaswarm/services/` directory. A typical directory structure might look like this:
 
 ```
 alphaswarm/
