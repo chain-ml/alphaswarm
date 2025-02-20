@@ -121,7 +121,7 @@ class DoSomethingCool(AlphaSwarmToolBase):
 ## Integration Into the Repo
 
 ### 1. Directory Structure
-
+Before creating a new tool category, ensure that none of the existing categories fits your new tool. 
 ```
 alphaswarm/
 ├── tools/
