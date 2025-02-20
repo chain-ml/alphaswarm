@@ -34,10 +34,10 @@ class TelegramApp:
         await self._app.stop()
         await self._app.shutdown()
 
-    async def send_message(self, chat_id: int, *, message: str, parse_mode: str = ParseMode.MARKDOWN) -> None:
+    async def send_message(self, chat_id: int, message: str, **kwargs: Any) -> None:
         """Send a message to a specific chat"""
         try:
-            await self._app.bot.send_message(chat_id=chat_id, text=message, parse_mode=parse_mode)
+            await self._app.bot.send_message(chat_id=chat_id, text=message, **kwargs)
         except Exception as e:
             logger.error(f"Failed to send Telegram message: {e}")
             raise e
@@ -147,13 +147,13 @@ You can also just chat with me naturally!"""
         update = context.context
         if update.message is None:
             raise ValueError("missing message")
-        await update.message.reply_text(message.content, parse_mode="Markdown")
+        await update.message.reply_text(message.content)
 
     async def on_agent_error(self, context: Context[Update], error: ChatMessage) -> None:
         update = context.context
         if update.message is None:
             raise ValueError("missing message")
-        await update.message.reply_text(error.content, parse_mode="Markdown")
+        await update.message.reply_text(error.content)
 
     async def on_start(self) -> None:
         await self._start()

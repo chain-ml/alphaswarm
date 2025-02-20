@@ -9,10 +9,9 @@ from urllib.parse import urlencode
 import requests
 from alphaswarm.config import ChainConfig, Config, JupiterSettings, JupiterVenue, TokenInfo
 from alphaswarm.services import ApiException
-from alphaswarm.services.chains.sol import SolanaClient, SolSigner
+from alphaswarm.services.chains.solana import SolanaClient, SolSigner
 from alphaswarm.services.exchanges.base import DEXClient, QuoteResult, SwapResult
 from pydantic import BaseModel, Field
-from pydantic.dataclasses import dataclass
 from solders.transaction import VersionedTransaction
 
 logger = logging.getLogger(__name__)
@@ -32,14 +31,12 @@ class SwapInfo(BaseModel):
         return self.model_dump(by_alias=True)
 
 
-@dataclass
-class RoutePlan:
+class RoutePlan(BaseModel):
     swap_info: Annotated[SwapInfo, Field(alias="swapInfo")]
     percent: int
 
 
-@dataclass
-class JupiterQuote:
+class JupiterQuote(BaseModel):
     quote: Dict[str, Any]
 
     @property
