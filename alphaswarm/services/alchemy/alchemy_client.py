@@ -69,6 +69,8 @@ class Transfer(BaseModel):
 
     @field_validator("value", mode="before")
     def convert_to_decimal(cls, value: str | int | float | Decimal) -> Decimal:
+        if value is None:
+            return Decimal(0)
         if isinstance(value, Decimal):
             return value
         return Decimal(str(value))
@@ -186,7 +188,6 @@ class AlchemyClient:
 
     def get_transfers(self, *, wallet: str, chain: str, incoming: bool = False) -> List[Transfer]:
         """Fetch raw ERC20 token transfer data from Alchemy API for a given wallet and chain."""
-
         address_key = "toAddress" if incoming else "fromAddress"
         payload = {
             "id": 1,
@@ -196,7 +197,7 @@ class AlchemyClient:
                 {
                     "fromBlock": "0x0",
                     "toBlock": "latest",
-                    address_key: wallet.lower(),
+                    address_key: wallet,
                     "category": ["erc20"],
                     "order": "asc",
                     "withMetadata": True,
@@ -216,15 +217,16 @@ class AlchemyClient:
         if transfers is None or not isinstance(transfers, list):
             raise RuntimeError("Alchemy response JSON does not contain a 'result.transfers' list.")
 
-        parsed_transfers = [Transfer(**transfer) for transfer in transfers]
+        parsed_transfers = [Transfer(**transfer) for transfer in transfers if transfer["asset"] is not None]
         return parsed_transfers
 
     def get_token_balances(self, *, wallet: str, chain: str) -> List[Balance]:
+
         payload = {
             "id": 1,
             "jsonrpc": "2.0",
             "method": "alchemy_getTokenBalances",
-            "params": [wallet.lower(), "erc20"],
+            "params": [wallet],
         }
         data = self._make_request(url=self.network_url(chain=chain), data=payload)
         result = data.get("result")
@@ -240,10 +242,12 @@ class AlchemyClient:
     def network_url(self, chain: str) -> str:
         if chain == "ethereum":
             return self.DEFAULT_NETWORK_URL.format(network="eth-mainnet", api_key=self.api_key)
-        elif chain == "base":
-            return self.DEFAULT_NETWORK_URL.format(network="base-mainnet", api_key=self.api_key)
         elif chain == "ethereum_sepolia":
             return self.DEFAULT_NETWORK_URL.format(network="eth-sepolia", api_key=self.api_key)
+        elif chain == "base":
+            return self.DEFAULT_NETWORK_URL.format(network="base-mainnet", api_key=self.api_key)
+        elif chain == "base_sepolia":
+            return self.DEFAULT_NETWORK_URL.format(network="base-sepolia", api_key=self.api_key)
         else:
             raise ValueError(f"Unsupported chain {chain}")
 

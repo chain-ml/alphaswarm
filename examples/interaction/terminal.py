@@ -14,6 +14,10 @@ from alphaswarm.tools.cookie import (
     GetCookieMetricsByTwitter,
     GetCookieMetricsPaged,
 )
+from alphaswarm.tools.exchanges import ExecuteTokenSwapTool, GetTokenPriceTool
+from alphaswarm.tools.portfolio.get_portfolio_balance_tool import GetPortfolioBalanceTool
+from alphaswarm.tools.price_tool import PriceTool
+from alphaswarm.tools.strategy_analysis.generic import GenericStrategyAnalysisTool
 from alphaswarm.tools.core import GetTokenAddress, GetUsdPrice
 from alphaswarm.tools.exchanges import ExecuteTokenSwap, GetTokenPrice
 from alphaswarm.tools.strategy_analysis.generic import AnalyzeTradingStrategy
@@ -45,6 +49,7 @@ async def main() -> None:
         GetCookieMetricsPaged(),
         SendTelegramNotification(telegram_bot_token=telegram_bot_token, chat_id=chat_id),
         ExecuteTokenSwap(config),
+        GetPortfolioBalanceTool(config),
     ]  # Add your tools here
 
     # Optional step to provide a custom system prompt.
@@ -64,7 +69,10 @@ async def main() -> None:
     hints = read_text_file_to_string(CONFIG_PATH / "trading_strategy_agent_hints.txt")
 
     agent = AlphaSwarmAgent(
-        tools=tools, model_id="anthropic/claude-3-5-sonnet-20241022", system_prompt=system_prompt, hints=hints
+        tools=tools,
+        model_id="anthropic/claude-3-5-sonnet-20241022",
+        system_prompt=system_prompt,
+        hints=hints,
     )
 
     terminal = TerminalClient("AlphaSwarm terminal", agent)
