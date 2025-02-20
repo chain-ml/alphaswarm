@@ -1,7 +1,7 @@
 import pytest
 
 from alphaswarm.config import Config
-from alphaswarm.tools import GetTokenAddress
+from alphaswarm.tools.core import GetTokenAddress
 
 
 @pytest.fixture

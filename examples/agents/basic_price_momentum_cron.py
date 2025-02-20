@@ -9,9 +9,9 @@ from alphaswarm.agent.agent import AlphaSwarmAgent
 from alphaswarm.agent.clients import CronJobClient
 from alphaswarm.config import Config
 from alphaswarm.services.alchemy import AlchemyClient
-from alphaswarm.tools.alchemy import AlchemyPriceHistoryByAddress
-from alphaswarm.tools.exchanges import ExecuteTokenSwapTool, GetTokenPriceTool
-from alphaswarm.tools.get_token_address import GetTokenAddress
+from alphaswarm.tools.alchemy import GetAlchemyPriceHistoryByAddress
+from alphaswarm.tools.exchanges import ExecuteTokenSwap, GetTokenPrice
+from alphaswarm.tools.core import GetTokenAddress
 
 
 class PriceMomentumCronAgent(AlphaSwarmAgent):
@@ -43,7 +43,7 @@ class PriceMomentumCronAgent(AlphaSwarmAgent):
 
         self.alchemy_client = AlchemyClient.from_env()
         self.config = Config()
-        self.price_history_tool = AlchemyPriceHistoryByAddress(self.alchemy_client)
+        self.price_history_tool = GetAlchemyPriceHistoryByAddress(self.alchemy_client)
         self.token_addresses = token_addresses
         self.chain = chain
 
@@ -54,8 +54,8 @@ class PriceMomentumCronAgent(AlphaSwarmAgent):
 
         tools = [
             GetTokenAddress(config=self.config),
-            GetTokenPriceTool(config=self.config),
-            ExecuteTokenSwapTool(config=self.config),
+            GetTokenPrice(config=self.config),
+            ExecuteTokenSwap(config=self.config),
         ]
 
         hints = "Please try to perform the requested swaps."

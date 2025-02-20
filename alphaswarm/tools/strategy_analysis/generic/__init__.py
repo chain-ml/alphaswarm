@@ -1,3 +1,3 @@
-from alphaswarm.tools.strategy_analysis.generic.generic_analysis import GenericStrategyAnalysisTool
+from .generic_analysis import AnalyzeTradingStrategy
 
-__all__ = ["GenericStrategyAnalysisTool"]
+__all__ = ["AnalyzeTradingStrategy"]

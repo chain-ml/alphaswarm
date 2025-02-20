@@ -4,59 +4,34 @@ from decimal import Decimal
 from typing import List, Optional, Union
 
 from alphaswarm.config import Config
+from alphaswarm.core.tool import AlphaSwarmToolBase
 from alphaswarm.services.exchanges import DEXFactory, QuoteResult
 from alphaswarm.services.exchanges.jupiter.jupiter import JupiterQuote
 from alphaswarm.services.exchanges.uniswap.uniswap_client_base import UniswapQuote
-from pydantic.dataclasses import dataclass
-from smolagents import Tool
+from pydantic import BaseModel
 
 logger = logging.getLogger(__name__)
 
 
-@dataclass
-class TokenQuote:
+class TokenQuote(BaseModel):
     datetime: str
     dex: str
     chain: str
     quote: QuoteResult[Union[UniswapQuote, JupiterQuote]]
 
 
-@dataclass
-class TokenPriceResult:
+class TokenPriceResult(BaseModel):
     quotes: List[TokenQuote]
 
 
-class GetTokenPriceTool(Tool):
-    name = "get_token_price"
-    description = (
-        "Get the current price of a token pair from available DEXes. "
-        f"Returns a {TokenPriceResult.__name__} object containing a list of {TokenQuote.__name__} objects."
-        "Examples: 'Get the price of 1 ETH in USDC on ethereum', 'Get the price of 1 GIGA in SOL on solana'"
-    )
-    inputs = {
-        "token_out": {
-            "type": "string",
-            "description": "The address of the token we want to buy",
-        },
-        "token_in": {
-            "type": "string",
-            "description": "The address of the token we want to sell",
-        },
-        "amount_in": {"type": "string", "description": "The amount token_in to be sold, in Token", "required": True},
-        "chain": {
-            "type": "string",
-            "description": "Blockchain to use. Must be 'solana' for Solana tokens, 'base' for Base tokens, "
-            "'ethereum' for Ethereum tokens, 'ethereum_sepolia' for Ethereum Sepolia tokens.",
-            "enum": ["solana", "base", "ethereum", "ethereum_sepolia"],
-        },
-        "dex_type": {
-            "type": "string",
-            "description": "Type of DEX to use. If not provided, will check all available venues.",
-            "enum": ["uniswap_v2", "uniswap_v3", "jupiter"],
-            "nullable": True,
-        },
-    }
-    output_type = "object"
+class GetTokenPrice(AlphaSwarmToolBase):
+    """Get the current price of a token pair from available DEXes."""
+
+    examples = [
+        "Here are some sample inputs on when to use this tool:",
+        "- Get the price of 1 ETH in USDC on ethereum",
+        "- Get the price of 1 GIGA in SOL on solana",
+    ]
 
     def __init__(self, config: Config) -> None:
         super().__init__()
@@ -70,7 +45,16 @@ class GetTokenPriceTool(Tool):
         chain: str,
         dex_type: Optional[str] = None,
     ) -> TokenPriceResult:
-        """Get token price from DEX(es)"""
+        """
+        Get token price from DEX(es)
+
+        Args:
+            token_out: The address of the token we want to buy
+            token_in: The address of the token we want to sell
+            amount_in: The amount token_in to be sold, in Token
+            chain: Blockchain to use. Must be 'solana' for Solana tokens, 'base' for Base tokens, 'ethereum' for Ethereum tokens, 'ethereum_sepolia' for Ethereum Sepolia tokens.
+            dex_type: Optional type of DEX to use ("uniswap_v2", "uniswap_v3", "jupiter"). If not provided, will check all available venues.
+        """
         logger.debug(f"Getting price for {token_out}/{token_in} on {chain}")
 
         # Get token info and create TokenInfo objects
@@ -97,8 +81,6 @@ class GetTokenPriceTool(Tool):
         if len(prices) == 0:
             logger.warning(f"No valid prices found for out/in {token_out}/{token_in}")
             raise RuntimeError(f"No valid prices found for {token_out}/{token_in}")
-
-        # Get current timestamp
 
         # If we have multiple prices, return them all
         result = TokenPriceResult(quotes=prices)
