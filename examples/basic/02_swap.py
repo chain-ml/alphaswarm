@@ -1,17 +1,18 @@
-from typing import Dict
+from typing import Dict, List
 
 import dotenv
 import yaml
 from alphaswarm.agent.agent import AlphaSwarmAgent
 from alphaswarm.config import Config
-from alphaswarm.tools.exchanges.execute_token_swap_tool import ExecuteTokenSwapTool
+from alphaswarm.core.tool import AlphaSwarmToolBase
+from alphaswarm.tools.exchanges import ExecuteTokenSwap
 
 dotenv.load_dotenv()
 config = Config(network_env="test")  # Use a testnet environment (as defined in config/default.yaml)
 
 # Initialize tools
-tools = [
-    ExecuteTokenSwapTool(config),  # Execute a token swap on a supported DEX (Uniswap V2/V3 on Ethereum and Base chains)
+tools: List[AlphaSwarmToolBase] = [
+    ExecuteTokenSwap(config),  # Execute a token swap on a supported DEX (Uniswap V2/V3 on Ethereum and Base chains)
 ]
 
 # Create the agent

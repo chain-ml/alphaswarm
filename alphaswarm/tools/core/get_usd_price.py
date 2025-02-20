@@ -2,31 +2,12 @@ from datetime import UTC, datetime
 from typing import Any
 
 import requests
+from alphaswarm.core.tool import AlphaSwarmToolBase
 from requests.exceptions import RequestException
-from smolagents import Tool
 
 
-class PriceTool(Tool):
-    """Tool for getting current price of crypto tokens using CoinGecko API"""
-
-    name = "price_tool"
-    description = """
-    Get the current price of a cryptocurrency in USD.
-    Returns price and 24h price change percentage.
-    """
-    inputs = {
-        "address": {
-            "type": "string",
-            "required": True,
-            "description": "The contract address of the token",
-        },
-        "chain": {
-            "type": "string",
-            "required": True,
-            "description": "Blockchain to use. For example, 'solana' for Solana tokens, 'base' for Base tokens, 'ethereum' for Ethereum tokens.",
-        },
-    }
-    output_type = "string"
+class GetUsdPrice(AlphaSwarmToolBase):
+    """Get the current price and 24h price change percentage of a cryptocurrency in USD using CoinGecko API."""
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
@@ -42,8 +23,8 @@ class PriceTool(Tool):
         Fetch current price and 24h change for a given token
 
         Args:
-            address: Contract address of the token
-            chain: Blockchain to use
+            address: The contract address of the token
+            chain: Blockchain to use. For example, 'solana' for Solana tokens, 'base' for Base tokens, 'ethereum' for Ethereum tokens.
         """
         try:
             # Normalize address to lowercase for consistent comparison

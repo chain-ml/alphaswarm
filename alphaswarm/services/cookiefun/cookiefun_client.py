@@ -6,8 +6,7 @@ from typing import Any, Dict, List, Optional, Tuple
 import requests
 from alphaswarm.config import Config
 from alphaswarm.services.api_exception import ApiException
-from pydantic import Field
-from pydantic.dataclasses import dataclass
+from pydantic import BaseModel, Field
 
 # Set up logging
 logger = logging.getLogger(__name__)
@@ -18,14 +17,12 @@ class Interval(str, Enum):
     SEVEN_DAYS = "_7Days"
 
 
-@dataclass
-class Contract:
+class Contract(BaseModel):
     chain: int = Field(default=0)
     contract_address: str = Field(default="", alias="contractAddress")
 
 
-@dataclass
-class Tweet:
+class Tweet(BaseModel):
     tweet_url: str = Field(default="", alias="tweetUrl")
     tweet_author_profile_image_url: str = Field(default="", alias="tweetAuthorProfileImageUrl")
     tweet_author_display_name: str = Field(default="", alias="tweetAuthorDisplayName")
@@ -33,8 +30,7 @@ class Tweet:
     impressions_count: int = Field(default=0, alias="impressionsCount")
 
 
-@dataclass
-class AgentMetrics:
+class AgentMetrics(BaseModel):
     contracts: List[Contract] = Field(default_factory=list)
     mindshare: float = Field(default=0.0)
     price: float = Field(default=0.0)
@@ -58,8 +54,7 @@ class AgentMetrics:
     top_tweets: List[Tweet] = Field(default_factory=list, alias="topTweets")
 
 
-@dataclass
-class PagedAgentsResponse:
+class PagedAgentsResponse(BaseModel):
     """Response from the paged agents endpoint"""
 
     data: List[AgentMetrics] = Field(default_factory=list)
