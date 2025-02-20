@@ -113,7 +113,7 @@ class UniswapClientBase(DEXClient[UniswapQuote]):
         token_out_contract = ERC20Contract(self._evm_client, token_out.checksum_address)
         token_in = quote.token_in
         token_in_contract = ERC20Contract(self._evm_client, token_in.checksum_address)
-        amount_in = quote.amount_in
+        amount_in = token_in.to_amount(quote.amount_in)
 
         logger.info(f"Initiating token swap for {token_in.symbol} to {token_out.symbol}")
         logger.info(f"Wallet address: {self.wallet_address}")
@@ -122,18 +122,16 @@ class UniswapClientBase(DEXClient[UniswapQuote]):
         gas_balance = self._evm_client.get_native_balance(self.wallet_address)
 
         # Log balances
-        out_balance = token_out.convert_from_wei(token_out_contract.get_balance(self.wallet_address))
-        in_balance = token_in.convert_from_wei(token_in_contract.get_balance(self.wallet_address))
+        out_balance = token_out.to_amount_from_base_units(token_out_contract.get_balance(self.wallet_address))
+        in_balance = token_in.to_amount_from_base_units(token_in_contract.get_balance(self.wallet_address))
         eth_balance = Decimal(gas_balance) / (10**18)
 
-        logger.info(f"Balance of {token_out.symbol}: {out_balance:,.8f}")
-        logger.info(f"Balance of {token_in.symbol}: {in_balance:,.8f}")
+        logger.info(f"Balance of {out_balance}")
+        logger.info(f"Balance of {in_balance}")
         logger.info(f"ETH balance for gas: {eth_balance:,.6f}")
 
         if in_balance < amount_in:
-            raise ValueError(
-                f"Cannot perform swap, as you have {in_balance} {token_in.symbol}. Need at least {amount_in}"
-            )
+            raise ValueError(f"Cannot perform swap, as you have {in_balance}. Need at least {amount_in}")
 
         # Each DEX trade is two transactions
         # 1) ERC-20.approve()
@@ -152,7 +150,7 @@ class UniswapClientBase(DEXClient[UniswapQuote]):
 
         return SwapResult.build_success(
             amount_out=amount_out,
-            amount_in=amount_in,
+            amount_in=amount_in.value,
             tx_hash=swap_receipt["transactionHash"].hex(),  # Return the swap tx hash, not the approved tx
         )
 

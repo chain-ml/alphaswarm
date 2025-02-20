@@ -148,7 +148,7 @@ class UniswapClientV3(UniswapClientBase):
 
         token_in = quote.token_in
         token_out = quote.token_out
-        wei_in = token_in.convert_to_wei(quote.amount_in)
+        wei_in = token_in.convert_to_base_units(quote.amount_in)
         approval_receipt = self._approve_token_spending(token_in, wei_in)
 
         # Build a swap transaction
@@ -156,7 +156,7 @@ class UniswapClientV3(UniswapClientBase):
         logger.info(f"Using Uniswap V3 pool at address: {pool.address} (raw fee tier: {pool.raw_fee})")
 
         # Convert expected output to raw integer
-        raw_output = token_out.convert_to_wei(quote.amount_out)
+        raw_output = token_out.convert_to_base_units(quote.amount_out)
         logger.info(f"Expected output amount (raw): {raw_output}")
 
         # Calculate price impact

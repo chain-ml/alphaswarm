@@ -51,10 +51,10 @@ class ERC20Contract(EVMContract):
         return self.contract.functions.allowance(owner, spender).call()
 
     def get_allowance_token(self, owner: ChecksumAddress, spender: ChecksumAddress) -> Decimal:
-        return self.details.convert_from_wei(self.get_allowance(owner, spender))
+        return self.details.convert_from_base_units(self.get_allowance(owner, spender))
 
     def approve_token(self, signer: EVMSigner, spender: ChecksumAddress, value: Decimal) -> TxReceipt:
-        return self.approve(signer, spender, self.details.convert_to_wei(value))
+        return self.approve(signer, spender, self.details.convert_to_base_units(value))
 
     def approve(self, signer: EVMSigner, spender: ChecksumAddress, value: Union[Wei, int]) -> TxReceipt:
         return self._client.process(self.contract.functions.approve(spender, value), signer)

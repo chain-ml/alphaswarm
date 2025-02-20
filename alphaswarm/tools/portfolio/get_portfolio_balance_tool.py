@@ -25,4 +25,4 @@ class GetPortfolioBalanceTool(Tool):
         self._portfolio = Portfolio.from_config(config)
 
     def forward(self, chain: Optional[str]) -> List[TokenAmount]:
-        return self._portfolio.get_token_balances(chain)
+        return self._portfolio.get_token_balances(chain).get_all_balances()

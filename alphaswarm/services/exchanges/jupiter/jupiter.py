@@ -8,6 +8,7 @@ from urllib.parse import urlencode
 
 import requests
 from alphaswarm.config import ChainConfig, Config, JupiterSettings, JupiterVenue, TokenInfo
+from alphaswarm.core.token import BaseUnit
 from alphaswarm.services import ApiException
 from alphaswarm.services.chains.solana import SolanaClient, SolSigner
 from alphaswarm.services.exchanges.base import DEXClient, QuoteResult, SwapResult
@@ -43,8 +44,8 @@ class JupiterQuote:
     quote: Dict[str, Any]
 
     @property
-    def out_amount(self) -> Decimal:
-        return Decimal(self.quote["outAmount"])
+    def out_amount(self) -> BaseUnit:
+        return BaseUnit(self.quote["outAmount"])
 
 
 class JupiterSwapTransaction:
@@ -105,8 +106,8 @@ class JupiterClient(DEXClient[JupiterQuote]):
         quote = self._get_quote(token_out, token_in, amount_in)
 
         # Calculate amount_out (token_out per token_in)
-        raw_out = quote.out_amount
-        amount_out = token_out.convert_from_wei(raw_out)
+        raw_out = BaseUnit(quote.out_amount)
+        amount_out = token_out.convert_from_base_units(raw_out)
         # Log quote details
         logger.debug("Quote successful:")
         logger.debug(f"- Input: {amount_in} {token_in.symbol}")
@@ -126,7 +127,7 @@ class JupiterClient(DEXClient[JupiterQuote]):
             "inputMint": token_in.address,
             "outputMint": token_out.address,
             "swapMode": "ExactIn",
-            "amount": str(token_in.convert_to_wei(amount_in)),
+            "amount": str(token_in.convert_to_base_units(amount_in)),
             "slippageBps": self._settings.slippage_bps,
             "restrictIntermediateTokens": "true",
         }
