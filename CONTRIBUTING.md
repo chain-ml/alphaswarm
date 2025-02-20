@@ -28,7 +28,7 @@ Currently, we are accepting contributions in the following areas:
 
 - Decimal are used to represent floating point token value in the codebase.
 - int are used to represent integer token value in base units (wei for Eth, atomic for Sol, ...).
-- float must be avoided for any token value representation.
+- float must be avoided for any token value representation because of there lack of precision.
 
 ## Code Style Guidelines
 
