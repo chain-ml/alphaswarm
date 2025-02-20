@@ -4,8 +4,8 @@ from pathlib import Path
 from typing import Any, Dict, List
 
 from alphaswarm import BASE_PATH
-from alphaswarm.core.tool import AlphaSwarmToolBase
 from alphaswarm.core.llm import LLMFunctionTemplated
+from alphaswarm.core.tool import AlphaSwarmToolBase
 from pydantic import BaseModel, Field
 
 from ..strategy import Strategy
