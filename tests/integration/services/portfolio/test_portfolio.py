@@ -35,6 +35,7 @@ chains = [
     "base"
 ]
 @pytest.mark.parametrize("chain", chains)
+@pytest.mark.skip("Need wallet")
 def test_portfolio_get_positions(chain: str, evm_portfolio: PortfolioEvm) -> None:
     result = evm_portfolio.get_positions()
     for item in result:
