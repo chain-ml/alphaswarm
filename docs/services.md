@@ -25,7 +25,7 @@ A new service should follow a clear and consistent structure. Your service code 
 ```
 alphaswarm/
 ├── services/
-│   ├── your_category/
+│   ├── service_category/
 │   │   ├── __init__.py
 │   │   └── my_custom_service.py
 │   └── __init__.py
