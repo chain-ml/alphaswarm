@@ -1,13 +1,11 @@
-from typing import Dict, List
+from typing import List
 
 import dotenv
 from alphaswarm.agent import AlphaSwarmAgent
 from alphaswarm.config import Config
-from alphaswarm.tools import GetTokenAddress
-from alphaswarm.tools.exchanges import ExecuteTokenSwapTool, GetTokenPriceTool
-from alphaswarm.tools.strategy_analysis import GenericStrategyAnalysisTool, Strategy
 from alphaswarm.core.tool import AlphaSwarmToolBase
-from alphaswarm.tools.exchanges import ExecuteTokenSwap
+from alphaswarm.tools.core import GetTokenAddress
+from alphaswarm.tools.exchanges import ExecuteTokenSwap, GetTokenPrice
 from alphaswarm.tools.strategy_analysis import AnalyzeTradingStrategy, Strategy
 
 dotenv.load_dotenv()
@@ -20,8 +18,8 @@ strategy = Strategy(
 )
 
 tools: List[AlphaSwarmToolBase] = [
-    GetTokenPrice(config),  # Get the price of a token pair from available DEXes given addresses
     GetTokenAddress(config),  # Get token address from a symbol
+    GetTokenPrice(config),  # Get the price of a token pair from available DEXes given addresses
     AnalyzeTradingStrategy(strategy),  # Check a trading strategy
     ExecuteTokenSwap(config),  # Execute a token swap on a supported DEX (Uniswap V2/V3 on Ethereum and Base chains)
 ]
