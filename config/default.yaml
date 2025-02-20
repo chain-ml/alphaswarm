@@ -40,6 +40,22 @@ trading_venues:
     settings:
       slippage_bps: 100  # 1%, swaps currently not supported for Jupiter
 
+#WIP
+portfolio:
+  chains:
+    ethereum:
+      transaction:
+        max_amount: 0.01
+      token_base: WETH
+      wallet_address:
+        fromEnvVar: ETH_WALLET_ADDRESS
+      private_key:
+        fromEnvVar: ETH_PRIVATE_KEY
+      excluded_tokens:
+        - symbol: DAI
+        - address: "0xacfe6019ed1a7dc6f7b508c02d1b04ec88cc21bf"
+
+
 # Chain Configuration
 # WARNING: These configurations will need to be checked for accuracy
 chain_config:
@@ -85,7 +101,7 @@ chain_config:
       fromEnvVar: ETH_SEPOLIA_RPC_URL
     tokens:
       WETH:
-        address: "0xfff9976782d46cc05630d1f6ebab18b2324d6b14"
+        address: "0xfFf9976782d46CC05630D1f6eBAb18b2324d6B14"
         decimals: 18
       USDC:
         address: "0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238"
