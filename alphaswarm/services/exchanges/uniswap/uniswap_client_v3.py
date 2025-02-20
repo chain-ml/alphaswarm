@@ -5,7 +5,7 @@ from decimal import Decimal
 from typing import Any, Dict, List, Optional, Self, Tuple, Union
 
 from alphaswarm.config import ChainConfig, Config, UniswapV3Settings
-from alphaswarm.core.token import TokenInfo
+from alphaswarm.core.token import TokenAmount, TokenInfo
 from alphaswarm.services.chains.evm import ZERO_ADDRESS, EVMClient, EVMContract, EVMSigner
 from alphaswarm.services.exchanges.base import QuoteResult, Slippage
 from alphaswarm.services.exchanges.uniswap.constants_v3 import (
@@ -148,8 +148,8 @@ class UniswapClientV3(UniswapClientBase):
 
         token_in = quote.token_in
         token_out = quote.token_out
-        wei_in = token_in.convert_to_base_units(quote.amount_in)
-        approval_receipt = self._approve_token_spending(token_in, wei_in)
+        wei_in = token_in.to_amount(quote.amount_in)
+        approval_receipt = self._approve_token_spending(wei_in)
 
         # Build a swap transaction
         pool = self._get_pool_by_address(quote.quote.pool_address)
@@ -164,7 +164,7 @@ class UniswapClientV3(UniswapClientBase):
         logger.info(f"Pool liquidity: {pool_liquidity}")
 
         # Estimate price impact (simplified)
-        price_impact = (wei_in * Slippage.base_point) / pool_liquidity  # in bps
+        price_impact = (wei_in.base_units * Slippage.base_point) / pool_liquidity  # in bps
         logger.info(f"Estimated price impact: {price_impact:.2f} bps")
 
         # Check if price impact is too high relative to slippage
@@ -189,7 +189,7 @@ class UniswapClientV3(UniswapClientBase):
             fee=pool.raw_fee,
             recipient=self.wallet_address,
             deadline=int(self._evm_client.get_block_latest()["timestamp"] + 300),
-            amount_in=wei_in,
+            amount_in=wei_in.base_units,
             amount_out_minimum=min_output_raw,
             sqrt_price_limit_x96=0,
         )
@@ -200,16 +200,14 @@ class UniswapClientV3(UniswapClientBase):
 
         return [approval_receipt, swap_receipt]
 
-    def _get_token_price(
-        self, token_out: TokenInfo, token_in: TokenInfo, amount_in: Decimal
-    ) -> QuoteResult[UniswapQuote]:
-        pool = self._get_pool(token_out, token_in)
+    def _get_token_price(self, token_out: TokenInfo, amount_in: TokenAmount) -> QuoteResult[UniswapQuote]:
+        pool = self._get_pool(token_out, amount_in.token_info)
         price = self._get_token_price_from_pool(token_out, pool)
         return QuoteResult(
-            token_in=token_in,
+            token_in=amount_in.token_info,
             token_out=token_out,
-            amount_in=amount_in,
-            amount_out=price * amount_in,  # TODO: substract fees?
+            amount_in=amount_in.value,
+            amount_out=price * amount_in.value,  # TODO: substract fees?
             quote=UniswapQuote(pool_address=pool.address),
         )
 

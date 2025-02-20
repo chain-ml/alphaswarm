@@ -5,7 +5,7 @@ from decimal import Decimal
 from typing import List, Tuple
 
 from alphaswarm.config import ChainConfig, Config
-from alphaswarm.core.token import TokenInfo
+from alphaswarm.core.token import TokenAmount, TokenInfo
 from alphaswarm.services.chains.evm import ZERO_ADDRESS
 from alphaswarm.services.exchanges.base import QuoteResult, Slippage
 from alphaswarm.services.exchanges.uniswap.constants_v2 import (
@@ -42,9 +42,9 @@ class UniswapClientV2(UniswapClientBase):
         # Handle token approval and get fresh nonce
         token_in = quote.token_in
         token_out = quote.token_out
-        wei_in = token_in.convert_to_base_units(quote.amount_in)
+        wei_in = token_in.to_amount(quote.amount_in)
 
-        approval_receipt = self._approve_token_spending(token_in, wei_in)
+        approval_receipt = self._approve_token_spending(wei_in)
 
         # Convert expected output to raw integer and apply slippage
         slippage = Slippage(slippage_bps)
@@ -70,13 +70,12 @@ class UniswapClientV2(UniswapClientBase):
         swap_receipt = self._evm_client.process(swap, self.get_signer())
         return [approval_receipt, swap_receipt]
 
-    def _get_token_price(
-        self, token_out: TokenInfo, token_in: TokenInfo, amount_in: Decimal
-    ) -> QuoteResult[UniswapQuote]:
+    def _get_token_price(self, token_out: TokenInfo, amount_in: TokenAmount) -> QuoteResult[UniswapQuote]:
         # Create factory contract instance
         factory_contract = self._web3.eth.contract(address=self._factory, abi=UNISWAP_V2_FACTORY_ABI)
 
         # Get pair address from factory using checksum addresses
+        token_in = amount_in.token_info
         pair_address = factory_contract.functions.getPair(token_out.checksum_address, token_in.checksum_address).call()
 
         if pair_address == ZERO_ADDRESS:
@@ -91,7 +90,11 @@ class UniswapClientV2(UniswapClientBase):
         )
 
         return QuoteResult(
-            quote=quote, token_in=token_in, token_out=token_out, amount_in=amount_in, amount_out=price * amount_in
+            quote=quote,
+            token_in=token_in,
+            token_out=token_out,
+            amount_in=amount_in.value,
+            amount_out=price * amount_in.value,
         )
 
     def _get_price_from_pool(

@@ -24,7 +24,7 @@ class TokenAmount:
 
     def __str__(self) -> str:
         """Return a human-readable string representation like '1.5 ETH'"""
-        return f"{self.value} {self.token_info.symbol:,.8f}"
+        return f"{self.value:,.8f} {self.token_info.symbol}"
 
     def __eq__(self, other: object) -> bool:
         """Check if two token amounts are equal (same token and value)"""
@@ -95,3 +95,7 @@ class TokenInfo:
         if isinstance(other, TokenInfo):
             return self.address == other.address and self.chain == other.chain
         return False
+
+    @classmethod
+    def Ethereum(cls) -> TokenInfo:
+        return cls(symbol="ETH", decimals=18, is_native=True, chain="ethereum", address="")

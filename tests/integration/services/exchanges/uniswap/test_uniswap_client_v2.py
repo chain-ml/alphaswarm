@@ -52,7 +52,7 @@ def test_swap_eth_sepolia(client: UniswapClientV2, chain: str) -> None:
     usdc = client.chain_config.get_token_info("USDC")
     weth = client.chain_config.get_token_info("WETH")
 
-    quote = client.get_token_price(token_out=usdc, token_in=weth, amount_in=Decimal("0.0001"))
+    quote = client.get_token_price(token_out=usdc, amount_in=weth.to_amount(Decimal("0.0001")))
     assert quote.amount_out > quote.amount_in
 
     result = client.swap(quote)
