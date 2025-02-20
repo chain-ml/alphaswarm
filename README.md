@@ -5,6 +5,7 @@ AlphaSwarm is a starter kit for building LLM-powered AI agents that interpret na
 ## Features
 
 ### AI-Powered Trading with Agents
+
 - 🤖 LLM-powered agents capable of processing complex, unstructured signals for trading decisions
 - 🧠 Intelligent tool selection and chaining for complex multi-step analysis
 - 🚀 Dynamic composition and execution of Python code using available tools
@@ -12,15 +13,17 @@ AlphaSwarm is a starter kit for building LLM-powered AI agents that interpret na
 - 📊 Iterative agentic reasoning to evaluate market conditions, weigh multiple input signals, and make trading decisions given input trading strategy
 
 ### Trading & Execution
+
 - ⚡ Real-time strategy execution and monitoring
 - 🔔 Flexible execution modes:
   - Automated trading alerts via Telegram
   - Autonomous trade execution
 - 🔄 Multi-chain support with growing DEX integrations:
-  - Ethereum, Base, Coming Soon: Solana 
+  - Ethereum, Base, Coming Soon: Solana
   - Uniswap V2/V3, Coming Soon: Jupiter
 
 ### Modular Architecture
+
 - 🛠️ Extensible plugin system for:
   - Data sources and signals
   - Trading strategies
@@ -30,16 +33,17 @@ AlphaSwarm is a starter kit for building LLM-powered AI agents that interpret na
 - 🔌 Easy integration of new data sources and execution venues
 
 ### Roadmap
+
 - 🌐 Integration with Theoriq protocol to connect with growing ecosystem of agents and swarms providing trading strategies and signals
 
 ## Prerequisites
 
 - Python 3.11 or higher
-   - Download and install Python from [here](https://www.python.org/downloads/)
-   - Verify installation with `python --version`
+  - Download and install Python from [here](https://www.python.org/downloads/)
+  - Verify installation with `python --version`
 - [Poetry](https://python-poetry.org/docs/) (package manager)
-   - Install Poetry with `pipx install poetry`
-   - Verify installation with `poetry --version`
+  - Install Poetry with `pipx install poetry`
+  - Verify installation with `poetry --version`
 - Basic understanding of crypto trading concepts
 
 ## Getting Started
@@ -51,12 +55,14 @@ First, ensure you have all prerequisites installed, including Python and poetry.
 Then follow these steps:
 
 1. Clone the repository:
+
 ```bash
 git clone https://github.com/chain-ml/alphaswarm.git
 cd alphaswarm
 ```
 
 2. Install dependencies:
+
 ```bash
 # For basic installation
 poetry install
@@ -72,11 +78,13 @@ Note: Poetry manages its own virtual environments, so a separate virtual environ
 Before running the framework, you'll need to obtain several API keys:
 
 1. **LLM API Key**:
+
    - [Anthropic API Key](https://docs.anthropic.com/en/api/getting-started) if using Claude models (default)
    - [OpenAI API Key](https://platform.openai.com/docs/quickstart) if using GPT models
    - or any other LLM provider [supported by LiteLLM](https://models.litellm.ai/)
 
 2. **Blockchain Access**:
+
    - [Alchemy API Key](https://www.alchemy.com/) (required for blockchain data)
    - RPC URLs from [Alchemy](https://www.alchemy.com/) or [Infura](https://www.infura.io/) or another RPC provider of choice
 
@@ -87,6 +95,7 @@ Before running the framework, you'll need to obtain several API keys:
 ### 3. Environment Configuration
 
 1. Create your environment file:
+
 ```bash
 cp .env.example .env
 ```
@@ -96,37 +105,44 @@ cp .env.example .env
 #### Required environment variables:
 
 LLM Configuration (at least one required):
+
 - `ANTHROPIC_API_KEY`: Your Anthropic API key if using Claude models (default)
 - `OPENAI_API_KEY`: Your OpenAI API key if using GPT models
 - For any other provider ensure to follow the same pattern
 
 Blockchain Access:
+
 - `ALCHEMY_API_KEY`: Your Alchemy API key for accessing blockchain data
 
 Ethereum Configuration (only if using Ethereum):
+
 - `ETH_RPC_URL`: RPC endpoint URL for connecting to Ethereum network
 - `ETH_WALLET_ADDRESS`: Your Ethereum wallet address for trading
 - `ETH_PRIVATE_KEY`: Private key for your Ethereum wallet
 
 Base Configuration (only if using Base):
-- `BASE_RPC_URL`: RPC endpoint URL for connecting to Base network  
+
+- `BASE_RPC_URL`: RPC endpoint URL for connecting to Base network
 - `BASE_WALLET_ADDRESS`: Your Base wallet address for trading
 - `BASE_PRIVATE_KEY`: Private key for your Base wallet
 
 #### Optional configurations:
 
 Testing environment variables:
+
 - `ETH_SEPOLIA_RPC_URL`: Your Sepolia testnet RPC endpoint URL
 - `ETH_SEPOLIA_WALLET_ADDRESS`: Your Ethereum wallet address for Sepolia testnet
 - `ETH_SEPOLIA_PRIVATE_KEY`: Private key for your Sepolia testnet wallet
 
 Notification settings:
+
 - `TELEGRAM_BOT_TOKEN`: Required for sending alerts via Telegram bot
 - `TELEGRAM_CHAT_ID`: Required chat ID for receiving Telegram alerts
 - `TELEGRAM_SERVER_IP`: IP address for Telegram server (defaults to 0.0.0.0)
 - `TELEGRAM_SERVER_PORT`: Port for Telegram server (defaults to 8000)
 
 Logging configuration:
+
 - `LOG_LEVEL`: Sets logging verbosity level (defaults to INFO)
 - `LOG_FORMAT`: Custom format for log messages (default: "%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 
@@ -142,9 +158,10 @@ Logging configuration:
 The framework uses YAML configuration files to define trading venues, token pairs, and other application-specific and trading-related settings. The main configuration file is `config/default.yaml`.
 
 Key configuration sections:
+
 - **Network Environments**: Production and test network configurations
 - **Trading Venues**: Supported DEXs with their supported pairs and settings for each chain
-- **Chain Configuration**: 
+- **Chain Configuration**:
   - Chain-specific wallet and RPC settings
   - Token addresses and decimals
   - Gas settings and transaction parameters
@@ -159,11 +176,25 @@ See [examples/README.md](examples/README.md) for more information about usage ex
 ## Development
 
 ### Running Tests
+
 ```bash
-poetry run pytest
+# Run all tests
+make all-tests
+
+# Run specific test suites
+make unit-tests
+make integration-tests  # Requires API keys to be specified
 ```
 
 ### Code Quality
+
+The project uses:
+
+- Black for code formatting
+- isort for import sorting
+- ruff for linting
+- mypy for type checking
+
 ```bash
 # Format code
 poetry run black .
@@ -175,6 +206,7 @@ poetry run mypy .
 ```
 
 or use Makefile shortcuts:
+
 ```bash
 make dev-lint
 ```
@@ -186,6 +218,8 @@ For security concerns, please review our [Security Policy](SECURITY.md). We take
 ## Support
 
 Need help? Check out our [Support Guide](SUPPORT.md) for ways to get assistance.
+
+We provide support and welcome feedback on our [Discord](https://discord.gg/theoriq-dev). We consider your feedback a gift and truly appreciate your meaningful contributions, which play a vital role in evolving our codebase.
 
 ## Contributing
 
@@ -206,6 +240,7 @@ By using AlphaSwarm, you acknowledge and agree that:
 3. **No Financial Advice**: Nothing in this software constitutes financial, investment, legal, or tax advice. All trading strategies, examples, and code snippets are for illustrative purposes only.
 
 4. **User Responsibility**: Users are solely responsible for:
+
    - Understanding the risks involved
    - Conducting their own due diligence
    - Securing their private keys and funds
@@ -213,6 +248,7 @@ By using AlphaSwarm, you acknowledge and agree that:
    - Setting appropriate risk management parameters
 
 5. **No Warranty**: The software is provided "AS IS", without warranty of any kind, express or implied. The developers and contributors:
+
    - Make no representations about its suitability for any purpose
    - Take no responsibility for any financial losses incurred
    - Do not guarantee the accuracy or reliability of any trading signals or decisions
@@ -224,4 +260,3 @@ USE OF THIS SOFTWARE FOR TRADING WITH REAL FUNDS SHOULD ONLY BE DONE WITH EXTREM
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-

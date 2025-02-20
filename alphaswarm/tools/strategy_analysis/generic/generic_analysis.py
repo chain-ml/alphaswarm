@@ -4,9 +4,9 @@ from pathlib import Path
 from typing import Any, Dict, List
 
 from alphaswarm import BASE_PATH
+from alphaswarm.core.tool import AlphaSwarmToolBase
 from alphaswarm.core.llm import LLMFunctionTemplated
 from pydantic import BaseModel, Field
-from smolagents import Tool
 
 from ..strategy import Strategy
 
@@ -34,20 +34,8 @@ class StrategyAnalysis(BaseModel):
     alerts: List[AlertItem] = Field(description="List of triggered rules and their details", default_factory=list)
 
 
-class GenericStrategyAnalysisTool(Tool):
-    name = "GenericStrategyAnalysisTool"
-    description = """Analyze the trading strategy against the provided data and decide if any of the strategy rules are triggered. 
-    Returns a StrategyAnalysis object, which contains a summary of the analysis and a list of triggered rules and their details.
-    This tool will apply the same strategy rules that is found under the "## Strategy Rules" section of the User Context.
-    """
-    inputs = {
-        "token_data": {
-            "type": "string",
-            "required": True,
-            "description": "A JSON-formatted string containing the token data to analyze, keyed by token symbol.",
-        },
-    }
-    output_type = "object"
+class AnalyzeTradingStrategy(AlphaSwarmToolBase):
+    """Analyze the trading strategy against the provided data and decide if any of the strategy rules are triggered."""
 
     def __init__(self, strategy: Strategy, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
@@ -63,6 +51,10 @@ class GenericStrategyAnalysisTool(Tool):
         )
 
     def forward(self, token_data: str) -> StrategyAnalysis:
+        """
+        Args:
+            token_data: A JSON-formatted string containing the token data to analyze, keyed by token symbol.
+        """
         response = self._llm_function.execute(
             user_prompt_params={
                 "token_data": token_data,

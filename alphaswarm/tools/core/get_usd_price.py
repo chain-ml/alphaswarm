@@ -2,30 +2,12 @@ from datetime import UTC, datetime
 from typing import Any
 
 import requests
-from smolagents import Tool
+from alphaswarm.core.tool import AlphaSwarmToolBase
+from requests.exceptions import RequestException
 
 
-class PriceTool(Tool):
-    """Tool for getting current price of crypto tokens using CoinGecko API"""
-
-    name = "price_tool"
-    description = """
-    Get the current price of a cryptocurrency in USD.
-    Returns price and 24h price change percentage.
-    """
-    inputs = {
-        "address": {
-            "type": "string",
-            "required": True,
-            "description": "The contract address of the token",
-        },
-        "chain": {
-            "type": "string",
-            "required": True,
-            "description": "Blockchain to use. For example, 'solana' for Solana tokens, 'base' for Base tokens, 'ethereum' for Ethereum tokens.",
-        },
-    }
-    output_type = "string"
+class GetUsdPrice(AlphaSwarmToolBase):
+    """Get the current price and 24h price change percentage of a cryptocurrency in USD using CoinGecko API."""
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
@@ -41,8 +23,8 @@ class PriceTool(Tool):
         Fetch current price and 24h change for a given token
 
         Args:
-            address: Contract address of the token
-            chain: Blockchain to use
+            address: The contract address of the token
+            chain: Blockchain to use. For example, 'solana' for Solana tokens, 'base' for Base tokens, 'ethereum' for Ethereum tokens.
         """
         try:
             # Normalize address to lowercase for consistent comparison
@@ -54,12 +36,12 @@ class PriceTool(Tool):
             response = self.session.get(url, params=params, timeout=10)
 
             if response.status_code != 200:
-                return f"Error: Could not fetch price for {address} (Status: {response.status_code})"
+                raise RuntimeError(f"Error: Could not fetch price for {address} (Status: {response.status_code})")
 
             data = response.json()
 
             if address not in data:
-                return f"Error: Token with address '{address}' not found"
+                raise ValueError(f"Error: Token with address '{address}' not found")
 
             price = data[address]["usd"]
             change_24h = data[address]["usd_24h_change"]
@@ -67,7 +49,7 @@ class PriceTool(Tool):
             timestamp = datetime.now(UTC).strftime("%Y-%m-%d %H:%M:%S UTC")
             return f"[{timestamp}] {address}\n" f"Price: ${price:,.2f}\n" f"24h Change: {change_24h:+.2f}%"
 
-        except requests.RequestException as e:
-            return f"Network error: {str(e)}"
+        except RequestException as e:
+            raise RequestException(f"Network error: {str(e)}") from e
         except Exception as e:
-            return f"Error fetching price: {str(e)}"
+            raise RuntimeError(f"Error fetching price: {str(e)}") from e

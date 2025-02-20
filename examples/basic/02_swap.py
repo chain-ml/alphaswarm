@@ -1,18 +1,24 @@
+from typing import Dict, List
+
 import dotenv
+import yaml
 from alphaswarm.agent.agent import AlphaSwarmAgent
 from alphaswarm.config import Config
-from alphaswarm.tools.exchanges.execute_token_swap_tool import ExecuteTokenSwapTool
+from alphaswarm.core.tool import AlphaSwarmToolBase
+from alphaswarm.tools.exchanges import ExecuteTokenSwap
 
 dotenv.load_dotenv()
 config = Config(network_env="test")  # Use a testnet environment (as defined in config/default.yaml)
 
 # Initialize tools
-tools = [
-    ExecuteTokenSwapTool(config),  # Execute a token swap on a supported DEX (Uniswap V2/V3 on Ethereum and Base chains)
+tools: List[AlphaSwarmToolBase] = [
+    ExecuteTokenSwap(config),  # Execute a token swap on a supported DEX (Uniswap V2/V3 on Ethereum and Base chains)
 ]
 
 # Create the agent
-agent = AlphaSwarmAgent(tools=tools, model_id="anthropic/claude-3-5-sonnet-20241022")
+token_addresses: Dict[str, str] = config.get_chain_config("ethereum_sepolia").get_token_address_mapping()
+hints = "Here are token addresses: \n" + yaml.dump(token_addresses)  # So agent knows addresses to query
+agent = AlphaSwarmAgent(tools=tools, model_id="anthropic/claude-3-5-sonnet-20241022", hints=hints)
 
 
 # Interact with the agent

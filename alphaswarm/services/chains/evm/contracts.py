@@ -1,7 +1,7 @@
 from decimal import Decimal
 from typing import Optional, Union
 
-from alphaswarm.config import TokenInfo
+from alphaswarm.core.token import TokenInfo
 from alphaswarm.services.chains.evm.constants_erc20 import ERC20_ABI
 from eth_typing import ChecksumAddress
 from web3.contract import Contract
