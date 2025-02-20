@@ -101,8 +101,9 @@ class JupiterClient(DEXClient[JupiterQuote]):
         quote = self._get_quote(token_out, amount_in)
 
         # Calculate amount_out (token_out per token_in)
-        raw_out = BaseUnit(quote.out_amount)
+        raw_out = quote.out_amount
         amount_out = token_out.to_amount_from_base_units(raw_out)
+
         # Log quote details
         logger.debug("Quote successful:")
         logger.debug(f"- Input: {amount_in}")
