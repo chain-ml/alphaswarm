@@ -27,7 +27,8 @@ from pydantic import BaseModel, Field
 from alphaswarm.core.tool import AlphaSwarmToolBase
 
 # Optional: Define input/output models if needed
-# This information will be automatically added to the tool's documentation and passed to the agent!
+# If you inherit from pydantic.BaseModel, schema information 
+# will be automatically added to the tool's documentation and passed to the agent!
 class MyToolOutput(BaseModel):
     result: str = Field(description="The result of the tool")
     confidence: float = Field(description="The confidence in the result, from 0 to 1")
@@ -41,8 +42,8 @@ class DoSomethingCool(AlphaSwarmToolBase):
 
     # Optional: Provide usage examples
     examples = [
-        "Input: x=5 -> Output: {'result': 'processed', 'confidence': 0.95}",
-        "Input: x=None -> Output: {'result': 'error', 'confidence': 0.0}"
+       "Example 1", 
+       "Example 2"
     ]
 
     def forward(self, input_value: str, optional_param: Optional[int] = None) -> MyToolOutput:
@@ -82,8 +83,10 @@ class DoSomethingCool(AlphaSwarmToolBase):
 1. **Usage Examples**:
    ```python
    examples = [
-       "example input -> example output",
-       "another example -> another output"
+       "Here's when to use this tool:",
+       "- When user asks to do something cool",
+       "Here's how to use this tool"
+       "- 'Do something cool with value 'abc'' -> DoSomethingCool(input_value='abc'). This will produce MyToolOutput(result='processed', confidence=0.95)"
    ]
    ```
 
@@ -121,7 +124,9 @@ class DoSomethingCool(AlphaSwarmToolBase):
 ## Integration Into the Repo
 
 ### 1. Directory Structure
-Before creating a new tool category, ensure that none of the existing categories fits your new tool. 
+
+Before creating a new tool category, ensure that none of the existing categories fits your new tool.
+
 ```
 alphaswarm/
 ├── tools/
