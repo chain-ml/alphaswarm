@@ -1,12 +1,9 @@
 import asyncio
-import logging
 from typing import Optional
 
 from alphaswarm.agent.clients.telegram_bot import TelegramApp
 from alphaswarm.core.tool import AlphaSwarmToolBase
 from telegram.constants import ParseMode
-
-logger = logging.getLogger(__name__)
 
 
 class SendTelegramNotification(AlphaSwarmToolBase):
