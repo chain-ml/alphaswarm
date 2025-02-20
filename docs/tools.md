@@ -125,7 +125,7 @@ class DoSomethingCool(AlphaSwarmToolBase):
 ```
 alphaswarm/
 ├── tools/
-│   ├── your_category/
+│   ├── tool_category/
 │   │   ├── __init__.py
 │   │   └── do_something_cool.py
 │   └── __init__.py
