@@ -100,7 +100,7 @@ class DoSomethingCool(AlphaSwarmToolBase):
            # Core logic here
            return Result(...)
        except ValueError as e:
-           raise ValueError(f"Invalid input: {str(e)}")
+           raise ValueError(f"Invalid input: {str(e)}") from e
        except Exception as e:
            raise RuntimeError(f"Unexpected error: {str(e)}")
    ```
