@@ -136,7 +136,7 @@ alphaswarm/
     │           └── test_do_something_cool.py
     └── integration/
         └── tools/
-            └── your_category/
+            └── tool_category/
                 └── test_do_something_cool.py
 ```
 
