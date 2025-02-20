@@ -14,12 +14,9 @@ from alphaswarm.tools.cookie import (
     GetCookieMetricsByTwitter,
     GetCookieMetricsPaged,
 )
-from alphaswarm.tools.exchanges import ExecuteTokenSwapTool, GetTokenPriceTool
-from alphaswarm.tools.portfolio.get_portfolio_balance_tool import GetPortfolioBalanceTool
-from alphaswarm.tools.price_tool import PriceTool
-from alphaswarm.tools.strategy_analysis.generic import GenericStrategyAnalysisTool
 from alphaswarm.tools.core import GetTokenAddress, GetUsdPrice
 from alphaswarm.tools.exchanges import ExecuteTokenSwap, GetTokenPrice
+from alphaswarm.tools.portfolio import GetPortfolioBalance
 from alphaswarm.tools.strategy_analysis.generic import AnalyzeTradingStrategy
 from alphaswarm.tools.strategy_analysis.strategy import Strategy
 from alphaswarm.tools.telegram import SendTelegramNotification
@@ -49,7 +46,7 @@ async def main() -> None:
         GetCookieMetricsPaged(),
         SendTelegramNotification(telegram_bot_token=telegram_bot_token, chat_id=chat_id),
         ExecuteTokenSwap(config),
-        GetPortfolioBalanceTool(config),
+        GetPortfolioBalance(config),
     ]  # Add your tools here
 
     # Optional step to provide a custom system prompt.

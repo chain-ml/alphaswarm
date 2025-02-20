@@ -219,6 +219,7 @@ class AlphaSwarmToSmolAgentsToolAdapter:
             int: "integer",
             float: "number",
             type(None): "null",
+            list: "array",
         }
 
         # handling Optional[type]
