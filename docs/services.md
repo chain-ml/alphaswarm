@@ -36,7 +36,7 @@ alphaswarm/
     │           └── test_my_custom_service.py
     └── integration/
         └── services/
-            └── your_category/
+            └── service_category/
                 └── test_my_custom_service.py
 ```
 
