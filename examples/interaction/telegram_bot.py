@@ -22,7 +22,7 @@ logging.getLogger("smolagents").setLevel(logging.ERROR)
 
 async def main() -> None:
     dotenv.load_dotenv()
-    config = Config()
+    config = Config(network_env="all")
 
     tools: List[AlphaSwarmToolBase] = [
         GetUsdPrice(),
