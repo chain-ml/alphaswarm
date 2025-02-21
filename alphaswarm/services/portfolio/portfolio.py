@@ -121,52 +121,57 @@ class PortfolioBase:
         return self._wallet.chain
 
     @classmethod
-    def compute_pnl_fifo(
+    def compute_pnl(
         cls, positions: Sequence[PortfolioSwap], base_token: TokenInfo, pricing_function: PricingFunction
     ) -> PortfolioPNL:
         items = sorted(positions, key=lambda x: x.block_number)
-        purchases: Dict[str, deque[PortfolioSwap]] = defaultdict(deque)
-        sells: Dict[str, deque[PortfolioSwap]] = defaultdict(deque)
+        per_asset = defaultdict(list)
         for position in items:
             if position.sold.token_info.address == base_token.address:
-                purchases[position.bought.token_info.address].append(position)
+                per_asset[position.bought.token_info.address].append(position)
             if position.bought.token_info.address == base_token.address:
-                sells[position.sold.token_info.address].append(position)
+                per_asset[position.sold.token_info.address].append(position)
 
         result = PortfolioPNL()
-        for asset, swaps in sells.items():
+        for asset, swaps in per_asset.items():
             result.add_details(
                 asset,
-                cls.compute_pnl_fifo_for_pair(purchases[asset], swaps, pricing_function(asset, base_token.address)),
+                cls.compute_pnl_fifo_for_pair(swaps, base_token, pricing_function(asset, base_token.address)),
             )
 
         return result
 
     @classmethod
     def compute_pnl_fifo_for_pair(
-        cls, purchases: deque[PortfolioSwap], sells: deque[PortfolioSwap], asset_price: Decimal
+        cls, swaps: List[PortfolioSwap], base_token: TokenInfo, asset_price: Decimal
     ) -> List[PortfolioPNLDetail]:
-        purchases_it = iter(purchases)
+        purchases: deque[PortfolioSwap] = deque()
         bought_position: Optional[PortfolioSwap] = None
         buy_remaining = Decimal(0)
         result: List[PortfolioPNLDetail] = []
-        for sell in sells:
-            sell_remaining = sell.sold.value
+        for swap in swaps:
+            if swap.sold.token_info.address == base_token.address:
+                purchases.append(swap)
+                continue
+
+            sell_remaining = swap.sold.value
             while sell_remaining > 0:
-                if bought_position is None or buy_remaining <= 0:
-                    bought_position = next(purchases_it, None)
-                    if bought_position is None:
+                if buy_remaining <= 0 or bought_position is None:
+                    try:
+                        bought_position = purchases.popleft()
+                    except IndexError:
                         raise RuntimeError("Missing bought position to compute PNL")
                     buy_remaining = bought_position.bought.value
+
                 sold_quantity = min(sell_remaining, buy_remaining)
-                result.append(PortfolioRealizedPNLDetail(bought_position, sell, sold_quantity))
+                result.append(PortfolioRealizedPNLDetail(bought_position, swap, sold_quantity))
                 sell_remaining -= sold_quantity
                 buy_remaining -= sold_quantity
 
         if buy_remaining > 0 and bought_position is not None:
             result.append(PortfolioUnrealizedPNLDetail(bought_position, asset_price, buy_remaining))
 
-        for bought_position in purchases_it:
+        for bought_position in purchases:
             result.append(PortfolioUnrealizedPNLDetail(bought_position, asset_price, bought_position.bought.value))
 
         return result

@@ -66,7 +66,7 @@ def test_portfolio_compute_pnl_fifo_one_asset__sell_from_first_swap(weth: TokenI
         ]
     )
 
-    pnl = PortfolioBase.compute_pnl_fifo(positions, weth, lambda asset, base: Decimal(1))
+    pnl = PortfolioBase.compute_pnl(positions, weth, lambda asset, base: Decimal(1))
 
     usdc_pnl = iter(pnl._details_per_asset[usdc.address])
     assert_detail(next(usdc_pnl), sold_amount=5, buying_price="0.1", selling_price="0.4", pnl="1.5", realized=True)
@@ -90,7 +90,7 @@ def test_portfolio_compute_pnl_fifo_one_asset__sell_from_multiple_swaps(weth: To
         ]
     )
 
-    pnl = PortfolioBase.compute_pnl_fifo(positions, weth, lambda asset, base: Decimal(1))
+    pnl = PortfolioBase.compute_pnl(positions, weth, lambda asset, base: Decimal(1))
     usdc_pnl = iter(pnl._details_per_asset[usdc.address])
     assert_detail(next(usdc_pnl), sold_amount=5, buying_price="0.1", selling_price=".15", pnl=".25", realized=True)
     assert_detail(next(usdc_pnl), sold_amount=5, buying_price="0.1", selling_price="1", pnl="4.5", realized=True)
@@ -100,19 +100,6 @@ def test_portfolio_compute_pnl_fifo_one_asset__sell_from_multiple_swaps(weth: To
     assert pnl.pnl(PnlMode.REALIZED) == Decimal("5.78")
     assert pnl.pnl(PnlMode.UNREALIZED) == Decimal(0)
     assert pnl.pnl() == Decimal("5.78")
-
-
-def test_portfolio_compute_pnl__wrong_ordering_raise_exception(weth: TokenInfo, usdc: TokenInfo) -> None:
-    positions = create_swaps(
-        [
-            (10, usdc, 1, weth),
-            (1, weth, 10, usdc),
-            (10, usdc, 1, weth),
-        ]
-    )
-
-    with pytest.raises(ValueError):
-        PortfolioBase.compute_pnl_fifo(positions, weth, lambda asset, base: Decimal(1))
 
 
 def test_portoflio_compute_pnl__bought_exhausted_raise_exception(weth: TokenInfo, usdc: TokenInfo) -> None:
@@ -125,4 +112,4 @@ def test_portoflio_compute_pnl__bought_exhausted_raise_exception(weth: TokenInfo
     )
 
     with pytest.raises(RuntimeError):
-        PortfolioBase.compute_pnl_fifo(positions, weth, lambda asset, base: Decimal(1))
+        PortfolioBase.compute_pnl(positions, weth, lambda asset, base: Decimal(1))
