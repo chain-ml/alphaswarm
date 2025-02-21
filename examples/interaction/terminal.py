@@ -25,7 +25,7 @@ from alphaswarm.utils import read_text_file_to_string
 
 async def main() -> None:
     dotenv.load_dotenv()
-    config = Config(network_env="all")
+    config = Config()
 
     telegram_config = config.get("telegram", {})
     telegram_bot_token = telegram_config.get("bot_token")

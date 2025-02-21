@@ -17,7 +17,7 @@ logging.getLogger("smolagents").setLevel(logging.ERROR)
 
 async def main() -> None:
     dotenv.load_dotenv()
-    config = Config(network_env="all")
+    config = Config()
 
     # Initialize tools for price-related operations
     # GetUsdPrice: General price queries
