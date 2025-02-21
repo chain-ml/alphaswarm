@@ -148,16 +148,16 @@ class PriceMomentumCronAgent(AlphaSwarmAgent):
                     logging.info(momentum_str)
                 # sell signal
                 elif short_term_change < 0:
-                    momentum_str = f"Strong downward momentum detected for {address}:\n"
                     logging.info(momentum_str)
+                timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                 signals.append(
                     momentum_str + f"  - {self.short_term_periods * 5}min change: +{short_term_change:.2f}%\n"
                     f"  - {self.long_term_periods * 5}min change: +{long_term_change:.2f}%"
                 )
         if not signals:
             return ""
-        timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        return f"=== Momentum Trade Signal Found at {timestamp} ===\n{'\n'.join(signals)}"
+        signals_str = "\n".join(signals)
+        return f"=== Momentum Trade Signal Found at {timestamp} ===\n{signals_str}"
 
     def calculate_price_changes(self, prices: List[Decimal]) -> Tuple[Decimal, Decimal]:
         """Calculate short and long term price changes."""
