@@ -108,10 +108,9 @@ class PriceMomentumCronAgent(AlphaSwarmAgent):
             f"=== Portfolio Balance Summary at {timestamp} ===",
             "```csv",
             "symbol,address,amount",
+            *[f"{token.token_info.symbol},{token.token_info.address},{token.value}" for token in tokens],
+            "```"
         ]
-        for token in tokens:
-            balance_info.append(f"{token.token_info.symbol},{token.token_info.address},{token.value}")
-        balance_info.append("```")
         logging.info("Portfolio Balance retrieved")
         return "\n".join(balance_info)
 
