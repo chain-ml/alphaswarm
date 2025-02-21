@@ -42,9 +42,9 @@ class UniswapClientV2(UniswapClientBase):
         # Handle token approval and get fresh nonce
         token_in = quote.token_in
         token_out = quote.token_out
-        wei_in = token_in.to_amount(quote.amount_in)
+        amount_in = token_in.to_amount(quote.amount_in)
 
-        approval_receipt = self._approve_token_spending(wei_in)
+        approval_receipt = self._approve_token_spending(amount_in)
 
         # Convert expected output to raw integer and apply slippage
         slippage = Slippage(slippage_bps)
@@ -59,7 +59,7 @@ class UniswapClientV2(UniswapClientBase):
         deadline = int(self._evm_client.get_block_latest()["timestamp"] + 300)  # 5 minutes
 
         swap = router_contract.functions.swapExactTokensForTokens(
-            wei_in,  # amount in
+            amount_in.base_units,  # amount in
             min_output_raw,  # minimum amount out
             path,  # swap path
             self.wallet_address,  # recipient

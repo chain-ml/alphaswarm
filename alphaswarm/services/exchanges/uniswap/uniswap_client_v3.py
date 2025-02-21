@@ -148,8 +148,8 @@ class UniswapClientV3(UniswapClientBase):
 
         token_in = quote.token_in
         token_out = quote.token_out
-        wei_in = token_in.to_amount(quote.amount_in)
-        approval_receipt = self._approve_token_spending(wei_in)
+        amount_in = token_in.to_amount(quote.amount_in)
+        approval_receipt = self._approve_token_spending(amount_in)
 
         # Build a swap transaction
         pool = self._get_pool_by_address(quote.quote.pool_address)
@@ -164,7 +164,7 @@ class UniswapClientV3(UniswapClientBase):
         logger.info(f"Pool liquidity: {pool_liquidity}")
 
         # Estimate price impact (simplified)
-        price_impact = (wei_in.base_units * Slippage.base_point) / pool_liquidity  # in bps
+        price_impact = (amount_in.base_units * Slippage.base_point) / pool_liquidity  # in bps
         logger.info(f"Estimated price impact: {price_impact:.2f} bps")
 
         # Check if price impact is too high relative to slippage
@@ -189,7 +189,7 @@ class UniswapClientV3(UniswapClientBase):
             fee=pool.raw_fee,
             recipient=self.wallet_address,
             deadline=int(self._evm_client.get_block_latest()["timestamp"] + 300),
-            amount_in=wei_in.base_units,
+            amount_in=amount_in.base_units,
             amount_out_minimum=min_output_raw,
             sqrt_price_limit_x96=0,
         )
