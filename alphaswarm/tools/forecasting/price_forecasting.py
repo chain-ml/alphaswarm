@@ -4,7 +4,7 @@ from decimal import Decimal
 from typing import Any, List, Optional
 
 from alphaswarm.config import BASE_PATH
-from alphaswarm.core.llm.llm_function import LLMFunctionFromPromptFiles
+from alphaswarm.core.llm import LLMFunctionTemplated
 from alphaswarm.core.tool import AlphaSwarmToolBase
 from alphaswarm.services.alchemy import HistoricalPriceBySymbol
 from pydantic import BaseModel, Field
@@ -31,7 +31,7 @@ class ForecastTokenPrice(AlphaSwarmToolBase):
         super().__init__(*args, **kwargs)
 
         # Init the LLMFunction
-        self._llm_function = LLMFunctionFromPromptFiles(
+        self._llm_function = LLMFunctionTemplated.from_files(
             model_id="anthropic/claude-3-5-sonnet-20241022",
             response_model=PriceForecastResponse,
             system_prompt_path=os.path.join(
