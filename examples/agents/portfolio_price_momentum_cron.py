@@ -9,10 +9,10 @@ from alphaswarm.agent.agent import AlphaSwarmAgent
 from alphaswarm.agent.clients import CronJobClient
 from alphaswarm.config import Config
 from alphaswarm.services.alchemy import AlchemyClient
+from alphaswarm.services.portfolio import Portfolio
 from alphaswarm.tools.alchemy import GetAlchemyPriceHistoryByAddress
 from alphaswarm.tools.core import GetTokenAddress
 from alphaswarm.tools.exchanges import ExecuteTokenSwap, GetTokenPrice
-from alphaswarm.tools.portfolio import GetPortfolioBalance
 
 
 class PriceMomentumCronAgent(AlphaSwarmAgent):
@@ -58,16 +58,14 @@ class PriceMomentumCronAgent(AlphaSwarmAgent):
                 f"Long-term window {long_term_minutes} minutes must be larger than short-term window {short_term_minutes} minutes"
             )
         if max_possible_percentage <= 0 or max_possible_percentage > 100:
-            raise ValueError(
-                f"max_possible_percentage must be between 0 and 100, got {max_possible_percentage}"
-            )
+            raise ValueError(f"max_possible_percentage must be between 0 and 100, got {max_possible_percentage}")
         if absolute_min_amount <= 0:
             raise ValueError(f"absolute_min_amount must be positive, got {absolute_min_amount}")
 
         self.alchemy_client = AlchemyClient.from_env()
         self.config = Config()
+        self.portfolio_client = Portfolio.from_config(self.config)
         self.price_history_tool = GetAlchemyPriceHistoryByAddress(self.alchemy_client)
-        self.portfolio_tool = GetPortfolioBalance(config=self.config)
         self.token_addresses = token_addresses
         self.chain = chain
 
@@ -128,8 +126,9 @@ class PriceMomentumCronAgent(AlphaSwarmAgent):
         Returns a string containing a CSV-formatted summary of current token balances
         with timestamp for trade analysis.
         """
-        tokens = self.portfolio_tool.forward(chain=self.chain)
-        timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        portfolio_balance = self.portfolio_client.get_token_balances(chain=self.chain)
+        timestamp = portfolio_balance.timestamp.strftime("%Y-%m-%d %H:%M:%S")
+        tokens = portfolio_balance.get_non_zero_balances()
         balance_info = [
             f"=== Portfolio Balance Summary at {timestamp} ===",
             "```csv",
