@@ -35,7 +35,7 @@ chains = ["ethereum", "ethereum_sepolia", "base"]
 
 @pytest.mark.parametrize("chain", chains)
 @pytest.mark.skip("Need wallet")
-def test_portfolio_get_positions(chain: str, evm_portfolio: PortfolioEvm) -> None:
-    result = evm_portfolio.get_positions()
+def test_portfolio_get_swaps(chain: str, evm_portfolio: PortfolioEvm) -> None:
+    result = evm_portfolio.get_swaps()
     for item in result:
         print(item.to_short_string())

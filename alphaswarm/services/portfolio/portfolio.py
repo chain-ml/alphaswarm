@@ -279,7 +279,7 @@ class PortfolioEvm(PortfolioBase):
             result.append(token_info.to_amount_from_base_units(Wei(balance.value)))
         return result
 
-    def get_positions(self) -> List[PortfolioSwap]:
+    def get_swaps(self) -> List[PortfolioSwap]:
         transfer_in = self._alchemy_client.get_transfers(
             wallet=self._wallet.address, chain=self._wallet.chain, incoming=True
         )
