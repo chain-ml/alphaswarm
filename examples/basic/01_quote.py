@@ -1,24 +1,23 @@
-from typing import Dict, List
+from typing import List
 
 import dotenv
-import yaml
-from alphaswarm.agent.agent import AlphaSwarmAgent
+from alphaswarm.agent import AlphaSwarmAgent
 from alphaswarm.config import Config
 from alphaswarm.core.tool import AlphaSwarmToolBase
-from alphaswarm.tools.exchanges.get_token_price import GetTokenPrice
+from alphaswarm.tools.core import GetTokenAddress
+from alphaswarm.tools.exchanges import GetTokenPrice
 
 dotenv.load_dotenv()
 config = Config()
 
 # Initialize tools
 tools: List[AlphaSwarmToolBase] = [
-    GetTokenPrice(config),  # Get the price of a token pair from available DEXes
+    GetTokenAddress(config),  # Get token address from a symbol
+    GetTokenPrice(config),  # Get the price of a token pair from available DEXes given addresses
 ]
 
 # Create the agent
-token_addresses: Dict[str, str] = config.get_chain_config("base").get_token_address_mapping()
-hints = "Here are token addresses: \n" + yaml.dump(token_addresses)  # So agent knows addresses to query
-agent = AlphaSwarmAgent(tools=tools, model_id="anthropic/claude-3-5-sonnet-20241022", hints=hints)
+agent = AlphaSwarmAgent(tools=tools, model_id="anthropic/claude-3-5-sonnet-20241022")
 
 
 # Interact with the agent
