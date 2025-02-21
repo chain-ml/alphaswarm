@@ -241,8 +241,9 @@ class AlchemyClient:
 
     def network_url(self, chain: str) -> str:
         return self.DEFAULT_NETWORK_URL.format(network=self.chain_to_network(chain), api_key=self.api_key)
-        
-    def chain_to_network(self, chain: str) -> str:
+    
+    @staticmethod
+    def chain_to_network(chain: str) -> str:
         if chain == "ethereum":
             return "eth-mainnet"
         elif chain == "ethereum_sepolia":

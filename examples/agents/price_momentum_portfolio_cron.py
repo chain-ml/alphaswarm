@@ -19,7 +19,7 @@ class PriceMomentumCronAgent(AlphaSwarmAgent):
     def __init__(
         self,
         token_addresses: List[str],
-        chain: str = "base-mainnet",
+        chain: str = "base",
         short_term_minutes: int = 5,
         short_term_threshold: float = 2.0,
         long_term_minutes: int = 60,
