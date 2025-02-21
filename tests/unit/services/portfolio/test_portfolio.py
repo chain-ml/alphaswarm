@@ -84,3 +84,24 @@ def test_portfolio_compute_pnl_fifo_one_asset__sell_from_multiple_swaps(weth: To
     assert_pnl_detail(usdc_pnl[2], sold_amount=2, buying_price="0.2", selling_price="1", pnl="1.6")
     assert_pnl_detail(usdc_pnl[3], sold_amount=3, buying_price="0.2", selling_price="0.01", pnl="-0.57")
     assert pnl.pnl() == Decimal("5.78")
+
+def test_portfolio_compute_pnl__wrong_ordering_raise_exception(weth: TokenInfo, usdc: TokenInfo) -> None:
+    positions = create_swaps([
+        (10, usdc, 1, weth),
+        (1, weth, 10, usdc),
+        (10, usdc, 1, weth),
+    ]
+    )
+
+    with pytest.raises(ValueError):
+        PortfolioBase.compute_pnl_fifo(positions, weth)
+
+def test_portoflio_compute_pnl__bought_exhausted_raise_exception(weth: TokenInfo, usdc: TokenInfo) -> None:
+    positions = create_swaps([
+        (1, weth, 10, usdc),
+        (9, usdc, 1, weth),
+        (2, usdc, 1, weth),
+    ])
+
+    with pytest.raises(RuntimeError):
+        PortfolioBase.compute_pnl_fifo(positions, weth)

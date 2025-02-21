@@ -37,6 +37,9 @@ class PortfolioPNL:
 
 class PortfolioPNLDetail:
     def __init__(self, bought: PortfolioSwap, sold: PortfolioSwap, asset_sold: Decimal) -> None:
+        if bought.block_number > sold.block_number:
+            raise ValueError("bought block number is greater than sold block number")
+
         self._bought = bought
         self._sold = sold
         self._asset_sold = asset_sold
@@ -115,7 +118,7 @@ class PortfolioBase:
                 if bought_position is None or buy_remaining <= 0:
                     bought_position = next(purchases_it, None)
                     if bought_position is None:
-                        return result
+                        raise RuntimeError("Missing bought position to compute PNL")
                     buy_remaining = bought_position.bought.value
                 sold_quantity = min(sell_remaining, buy_remaining)
                 result.append(PortfolioPNLDetail(bought_position, sell, sold_quantity))
