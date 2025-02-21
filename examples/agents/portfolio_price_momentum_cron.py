@@ -109,7 +109,7 @@ class PriceMomentumCronAgent(AlphaSwarmAgent):
             "```csv",
             "symbol,address,amount",
             *[f"{token.token_info.symbol},{token.token_info.address},{token.value}" for token in tokens],
-            "```"
+            "```",
         ]
         logging.info("Portfolio Balance retrieved")
         return "\n".join(balance_info)
@@ -204,8 +204,6 @@ async def main() -> None:
         interval_seconds=300,  # 5 minutes
         response_handler=lambda _: None,
         message_generator=agent.get_trade_alerts,
-        should_process=lambda alerts: len(alerts) > 0,
-        skip_message=lambda _: None,
         max_history=2,  # Last message pair only
     )
     await asyncio.gather(cron_client.start())
