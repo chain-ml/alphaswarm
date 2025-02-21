@@ -4,7 +4,11 @@ from typing import List, Tuple, Union
 import pytest
 
 from alphaswarm.core.token import TokenAmount, TokenInfo
-from alphaswarm.services.portfolio.portfolio import PortfolioBase, PortfolioPNLDetail, PortfolioSwap
+from alphaswarm.services.portfolio.portfolio import (
+    PortfolioBase,
+    PortfolioPNLDetail,
+    PortfolioSwap,
+)
 
 
 def create_swaps(
@@ -35,18 +39,20 @@ def weth() -> TokenInfo:
     return TokenInfo(symbol="WETH", address="0xWETH", decimals=18, chain="chain")
 
 
-def assert_pnl_detail(
+def assert_detail(
     item: PortfolioPNLDetail,
     *,
     sold_amount: Union[int, str],
     buying_price: Union[int, str],
     selling_price: Union[int, str],
     pnl: Union[int, str],
+    realized: bool,
 ) -> None:
     assert item.sold_amount == Decimal(sold_amount)
     assert item.buying_price == Decimal(buying_price)
     assert item.selling_price == Decimal(selling_price)
     assert item.pnl == Decimal(pnl)
+    assert item.is_realized == realized
 
 
 def test_portfolio_compute_pnl_fifo_one_asset__sell_from_first_swap(weth: TokenInfo, usdc: TokenInfo) -> None:
@@ -59,11 +65,17 @@ def test_portfolio_compute_pnl_fifo_one_asset__sell_from_first_swap(weth: TokenI
         ]
     )
 
-    pnl = PortfolioBase.compute_pnl_fifo(positions, weth)
-    usdc_pnl = pnl._details_per_asset[usdc.address]
-    assert_pnl_detail(usdc_pnl[0], sold_amount=5, buying_price="0.1", selling_price="0.4", pnl="1.5")
-    assert_pnl_detail(usdc_pnl[1], sold_amount=2, buying_price="0.1", selling_price="1", pnl="1.8")
-    assert pnl.pnl() == Decimal("3.3")
+    pnl = PortfolioBase.compute_pnl_fifo(positions, weth, lambda asset, base: Decimal(1))
+
+    usdc_pnl = iter(pnl._details_per_asset[usdc.address])
+    assert_detail(next(usdc_pnl), sold_amount=5, buying_price="0.1", selling_price="0.4", pnl="1.5", realized=True)
+    assert_detail(next(usdc_pnl), sold_amount=2, buying_price="0.1", selling_price="1", pnl="1.8", realized=True)
+    assert_detail(next(usdc_pnl), sold_amount=3, buying_price="0.1", selling_price="1", pnl="2.7", realized=False)
+    assert_detail(next(usdc_pnl), sold_amount=8, buying_price="0.125", selling_price="1", pnl="7", realized=False)
+    assert next(usdc_pnl, None) is None
+    assert pnl.pnl(unrealised=False) == Decimal("3.3")
+    assert pnl.pnl(realized=False) == Decimal("9.7")
+    assert pnl.pnl() == Decimal("13")
 
 
 def test_portfolio_compute_pnl_fifo_one_asset__sell_from_multiple_swaps(weth: TokenInfo, usdc: TokenInfo) -> None:
@@ -77,31 +89,39 @@ def test_portfolio_compute_pnl_fifo_one_asset__sell_from_multiple_swaps(weth: To
         ]
     )
 
-    pnl = PortfolioBase.compute_pnl_fifo(positions, weth)
-    usdc_pnl = pnl._details_per_asset[usdc.address]
-    assert_pnl_detail(usdc_pnl[0], sold_amount=5, buying_price="0.1", selling_price=".15", pnl=".25")
-    assert_pnl_detail(usdc_pnl[1], sold_amount=5, buying_price="0.1", selling_price="1", pnl="4.5")
-    assert_pnl_detail(usdc_pnl[2], sold_amount=2, buying_price="0.2", selling_price="1", pnl="1.6")
-    assert_pnl_detail(usdc_pnl[3], sold_amount=3, buying_price="0.2", selling_price="0.01", pnl="-0.57")
+    pnl = PortfolioBase.compute_pnl_fifo(positions, weth, lambda asset, base: Decimal(1))
+    usdc_pnl = iter(pnl._details_per_asset[usdc.address])
+    assert_detail(next(usdc_pnl), sold_amount=5, buying_price="0.1", selling_price=".15", pnl=".25", realized=True)
+    assert_detail(next(usdc_pnl), sold_amount=5, buying_price="0.1", selling_price="1", pnl="4.5", realized=True)
+    assert_detail(next(usdc_pnl), sold_amount=2, buying_price="0.2", selling_price="1", pnl="1.6", realized=True)
+    assert_detail(next(usdc_pnl), sold_amount=3, buying_price="0.2", selling_price="0.01", pnl="-0.57", realized=True)
+    assert next(usdc_pnl, None) is None
+    assert pnl.pnl(unrealised=False) == Decimal("5.78")
+    assert pnl.pnl(realized=False) == Decimal(0)
     assert pnl.pnl() == Decimal("5.78")
 
+
 def test_portfolio_compute_pnl__wrong_ordering_raise_exception(weth: TokenInfo, usdc: TokenInfo) -> None:
-    positions = create_swaps([
-        (10, usdc, 1, weth),
-        (1, weth, 10, usdc),
-        (10, usdc, 1, weth),
-    ]
+    positions = create_swaps(
+        [
+            (10, usdc, 1, weth),
+            (1, weth, 10, usdc),
+            (10, usdc, 1, weth),
+        ]
     )
 
     with pytest.raises(ValueError):
-        PortfolioBase.compute_pnl_fifo(positions, weth)
+        PortfolioBase.compute_pnl_fifo(positions, weth, lambda asset, base: Decimal(1))
+
 
 def test_portoflio_compute_pnl__bought_exhausted_raise_exception(weth: TokenInfo, usdc: TokenInfo) -> None:
-    positions = create_swaps([
-        (1, weth, 10, usdc),
-        (9, usdc, 1, weth),
-        (2, usdc, 1, weth),
-    ])
+    positions = create_swaps(
+        [
+            (1, weth, 10, usdc),
+            (9, usdc, 1, weth),
+            (2, usdc, 1, weth),
+        ]
+    )
 
     with pytest.raises(RuntimeError):
-        PortfolioBase.compute_pnl_fifo(positions, weth)
+        PortfolioBase.compute_pnl_fifo(positions, weth, lambda asset, base: Decimal(1))

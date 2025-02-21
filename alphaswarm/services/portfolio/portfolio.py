@@ -5,7 +5,7 @@ from abc import abstractmethod
 from collections import defaultdict, deque
 from dataclasses import dataclass
 from decimal import Decimal
-from typing import Dict, Iterable, List, Optional, Self, Sequence
+from typing import Callable, Dict, Iterable, List, Optional, Self, Sequence
 
 from solders.pubkey import Pubkey
 
@@ -25,33 +25,28 @@ class PortfolioPNL:
     def add_details(self, asset: str, details: Iterable[PortfolioPNLDetail]) -> None:
         self._details_per_asset[asset] = list(details)
 
-    def pnl_per_asset(self) -> Dict[str, Decimal]:
+    def pnl_per_asset(self, *, realized: bool = True, unrealised: bool = True) -> Dict[str, Decimal]:
+        def include_predicate(item: PortfolioPNLDetail) -> bool:
+            return (item.is_realized and realized) or (not item.is_realized and unrealised)
+
         result = {}
         for asset, details in self._details_per_asset.items():
-            result[asset] = sum([item.pnl for item in details], Decimal(0))
+            result[asset] = sum([item.pnl for item in details if include_predicate(item)], Decimal(0))
         return result
 
-    def pnl(self) -> Decimal:
-        return sum([pnl for asset, pnl in self.pnl_per_asset().items()], Decimal(0))
+    def pnl(self, *, realized: bool = True, unrealised: bool = True) -> Decimal:
+        return sum(
+            [pnl for asset, pnl in self.pnl_per_asset(realized=realized, unrealised=unrealised).items()], Decimal(0)
+        )
 
 
 class PortfolioPNLDetail:
-    def __init__(self, bought: PortfolioSwap, sold: PortfolioSwap, asset_sold: Decimal) -> None:
-        if bought.block_number > sold.block_number:
-            raise ValueError("bought block number is greater than sold block number")
-
+    def __init__(self, bought: PortfolioSwap, selling_price: Decimal, asset_sold: Decimal, is_realized: bool) -> None:
         self._bought = bought
-        self._sold = sold
-        self._asset_sold = asset_sold
-        self._pnl = asset_sold * (self.selling_price - self.buying_price)
-
-    @property
-    def pnl(self) -> Decimal:
-        return self._pnl
-
-    @property
-    def sold_amount(self) -> Decimal:
-        return self._asset_sold
+        self._selling_price = selling_price
+        self._assert_sold = asset_sold
+        self._is_realized = is_realized
+        self._pnl = asset_sold * (self._selling_price - self.buying_price)
 
     @property
     def buying_price(self) -> Decimal:
@@ -59,9 +54,34 @@ class PortfolioPNLDetail:
         return self._bought.sold.value / self._bought.bought.value
 
     @property
+    def sold_amount(self) -> Decimal:
+        return self._assert_sold
+
+    @property
     def selling_price(self) -> Decimal:
-        """Selling price per assert"""
-        return self._sold.bought.value / self._sold.sold.value
+        return self._selling_price
+
+    @property
+    def pnl(self) -> Decimal:
+        return self._pnl
+
+    @property
+    def is_realized(self) -> bool:
+        return self._is_realized
+
+
+class PortfolioRealizedPNLDetail(PortfolioPNLDetail):
+    def __init__(self, bought: PortfolioSwap, sold: PortfolioSwap, asset_sold: Decimal) -> None:
+        if bought.block_number > sold.block_number:
+            raise ValueError("bought block number is greater than sold block number")
+
+        super().__init__(bought, sold.bought.value / sold.sold.value, asset_sold, is_realized=True)
+        self._sold = sold
+
+
+class PortfolioUnrealizedPNLDetail(PortfolioPNLDetail):
+    def __init__(self, bought: PortfolioSwap, selling_price: Decimal, asset_sold: Decimal) -> None:
+        super().__init__(bought, selling_price, asset_sold, is_realized=False)
 
 
 @dataclass
@@ -73,6 +93,10 @@ class PortfolioSwap:
 
     def to_short_string(self) -> str:
         return f"{self.sold.value} {self.sold.token_info.symbol} -> {self.bought.value} {self.bought.token_info.symbol} ({self.sold.token_info.chain} {self.block_number} {self.hash})"
+
+
+# A pricing function that returns the price in second token address for each first token address
+PricingFunction = Callable[[str, str], Decimal]
 
 
 class PortfolioBase:
@@ -88,7 +112,9 @@ class PortfolioBase:
         return self._wallet.chain
 
     @classmethod
-    def compute_pnl_fifo(cls, positions: Sequence[PortfolioSwap], base_token: TokenInfo) -> PortfolioPNL:
+    def compute_pnl_fifo(
+        cls, positions: Sequence[PortfolioSwap], base_token: TokenInfo, pricing_function: PricingFunction
+    ) -> PortfolioPNL:
         items = sorted(positions, key=lambda x: x.block_number)
         purchases: Dict[str, deque[PortfolioSwap]] = defaultdict(deque)
         sells: Dict[str, deque[PortfolioSwap]] = defaultdict(deque)
@@ -100,13 +126,16 @@ class PortfolioBase:
 
         result = PortfolioPNL()
         for asset, swaps in sells.items():
-            result.add_details(asset, cls.compute_pnl_fifo_for_pair(purchases[asset], swaps))
+            result.add_details(
+                asset,
+                cls.compute_pnl_fifo_for_pair(purchases[asset], swaps, pricing_function(asset, base_token.address)),
+            )
 
         return result
 
     @classmethod
     def compute_pnl_fifo_for_pair(
-        cls, purchases: deque[PortfolioSwap], sells: deque[PortfolioSwap]
+        cls, purchases: deque[PortfolioSwap], sells: deque[PortfolioSwap], asset_price: Decimal
     ) -> List[PortfolioPNLDetail]:
         purchases_it = iter(purchases)
         bought_position: Optional[PortfolioSwap] = None
@@ -121,9 +150,15 @@ class PortfolioBase:
                         raise RuntimeError("Missing bought position to compute PNL")
                     buy_remaining = bought_position.bought.value
                 sold_quantity = min(sell_remaining, buy_remaining)
-                result.append(PortfolioPNLDetail(bought_position, sell, sold_quantity))
+                result.append(PortfolioRealizedPNLDetail(bought_position, sell, sold_quantity))
                 sell_remaining -= sold_quantity
                 buy_remaining -= sold_quantity
+
+        if buy_remaining > 0 and bought_position is not None:
+            result.append(PortfolioUnrealizedPNLDetail(bought_position, asset_price, buy_remaining))
+
+        for bought_position in purchases_it:
+            result.append(PortfolioUnrealizedPNLDetail(bought_position, asset_price, bought_position.bought.value))
 
         return result
 
