@@ -6,17 +6,16 @@ import dotenv
 from alphaswarm.agent.agent import AlphaSwarmAgent
 from alphaswarm.agent.clients.telegram_bot import TelegramBot
 from alphaswarm.config import Config
-from alphaswarm.tools import GetTokenAddress
-from alphaswarm.tools.alchemy import AlchemyPriceHistoryByAddress, AlchemyPriceHistoryBySymbol
-from alphaswarm.tools.cookie.cookie_metrics import (
-    CookieMetricsByContract,
-    CookieMetricsBySymbol,
-    CookieMetricsByTwitter,
-    CookieMetricsPaged,
+from alphaswarm.core.tool import AlphaSwarmToolBase
+from alphaswarm.tools.alchemy import GetAlchemyPriceHistoryByAddress, GetAlchemyPriceHistoryBySymbol
+from alphaswarm.tools.cookie import (
+    GetCookieMetricsByContract,
+    GetCookieMetricsBySymbol,
+    GetCookieMetricsByTwitter,
+    GetCookieMetricsPaged,
 )
-from alphaswarm.tools.exchanges import ExecuteTokenSwapTool, GetTokenPriceTool
-from alphaswarm.tools.price_tool import PriceTool
-from smolagents import Tool
+from alphaswarm.tools.core import GetTokenAddress, GetUsdPrice
+from alphaswarm.tools.exchanges import ExecuteTokenSwap, GetTokenPrice
 
 logging.getLogger("smolagents").setLevel(logging.ERROR)
 
@@ -25,17 +24,17 @@ async def main() -> None:
     dotenv.load_dotenv()
     config = Config()
 
-    tools: List[Tool] = [
-        PriceTool(),
+    tools: List[AlphaSwarmToolBase] = [
+        GetUsdPrice(),
         GetTokenAddress(config),
-        GetTokenPriceTool(config),
-        AlchemyPriceHistoryByAddress(),
-        AlchemyPriceHistoryBySymbol(),
-        CookieMetricsByContract(),
-        CookieMetricsBySymbol(),
-        CookieMetricsByTwitter(),
-        CookieMetricsPaged(),
-        ExecuteTokenSwapTool(config),
+        GetTokenPrice(config),
+        GetAlchemyPriceHistoryByAddress(),
+        GetAlchemyPriceHistoryBySymbol(),
+        GetCookieMetricsByContract(),
+        GetCookieMetricsBySymbol(),
+        GetCookieMetricsByTwitter(),
+        GetCookieMetricsPaged(),
+        ExecuteTokenSwap(config),
     ]  # Add your tools here
 
     agent = AlphaSwarmAgent(tools=tools, model_id="anthropic/claude-3-5-sonnet-20241022")

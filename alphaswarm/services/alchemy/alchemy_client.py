@@ -9,33 +9,28 @@ from typing import Annotated, Dict, Final, List, Optional
 
 import requests
 from alphaswarm.services.api_exception import ApiException
-from pydantic import Field, field_validator
-from pydantic.dataclasses import dataclass
+from pydantic import BaseModel, Field, field_validator
 
 logger = logging.getLogger(__name__)
 
 
-@dataclass
-class HistoricalPrice:
+class HistoricalPrice(BaseModel):
     value: Decimal
     timestamp: datetime
 
 
-@dataclass
-class HistoricalPriceBySymbol:
+class HistoricalPriceBySymbol(BaseModel):
     symbol: str
     data: List[HistoricalPrice]
 
 
-@dataclass
-class HistoricalPriceByAddress:
+class HistoricalPriceByAddress(BaseModel):
     address: str
     network: str
     data: List[HistoricalPrice]
 
 
-@dataclass
-class Metadata:
+class Metadata(BaseModel):
     block_timestamp: Annotated[str, Field(alias="blockTimestamp")]
 
 
@@ -50,8 +45,7 @@ class RawContract:
         return int(value, 16)
 
 
-@dataclass
-class Transfer:
+class Transfer(BaseModel):
     """Represents a token transfer transaction.
 
     A Transfer object captures details about a single token transfer on the blockchain,
@@ -94,8 +88,7 @@ class Transfer:
         return Decimal(str(value))
 
 
-@dataclass
-class Balance:
+class Balance(BaseModel):
     contract_address: Annotated[str, Field(validation_alias="contractAddress")]
     value: Annotated[Decimal, Field(validation_alias="tokenBalance", default=Decimal(0))]
     error: Annotated[Optional[str], Field(default=None)]
