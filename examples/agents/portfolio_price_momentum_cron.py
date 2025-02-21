@@ -24,8 +24,8 @@ class PriceMomentumCronAgent(AlphaSwarmAgent):
         short_term_threshold: float = 2.0,
         long_term_minutes: int = 60,
         long_term_threshold: float = 5.0,
-        max_possible_percentage: Decimal = Decimal("5"),  # Max 5% per trade
-        absolute_min_amount: Decimal = Decimal("0.0001"),  # 0.0001 WETH minimum
+        max_possible_percentage: Decimal = Decimal("50"),
+        absolute_min_amount: Decimal = Decimal("0.0001"),
         base_token: str = "WETH",
     ) -> None:
         """
@@ -39,7 +39,7 @@ class PriceMomentumCronAgent(AlphaSwarmAgent):
             short_term_threshold: Percentage threshold for short-term price change
             long_term_minutes: Number of minutes for long-term window (must be multiple of 5)
             long_term_threshold: Percentage threshold for long-term price change
-            max_possible_percentage: Maximum percentage of portfolio to allocate to any single trade
+            max_possible_percentage: Maximum percentage of base_token to allocate to any single trade
             absolute_min_amount: Minimum amount of portfolio to maintain in base_token
             base_token: Base token to maintain in portfolio
         """
@@ -91,9 +91,9 @@ class PriceMomentumCronAgent(AlphaSwarmAgent):
     def get_portfolio_balance_info(self) -> str:
         """Generate formatted portfolio balance information."""
         tokens = self.portfolio_tool.forward(chain=self.chain)
-        balance_info = ["```csv", "address,amount"]
+        balance_info = ["```csv", "symbol,address,amount"]
         for token in tokens:
-            balance_info.append(f"{token.token_info.address},{token.value}")
+            balance_info.append(f"{token.token_info.symbol},{token.token_info.address},{token.value}")
         balance_info.append("```")
         timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         logging.info("Portfolio Balance retrieved")
@@ -107,9 +107,7 @@ class PriceMomentumCronAgent(AlphaSwarmAgent):
             logging.info(f"Getting price history for {address}")
             
             price_history = self.price_history_tool.forward(
-                address=address, 
-                # TODO: this is a hack to get the correct network from chain, probably should 
-                # modify get_historical_prices_by_address to take in chain as a parameter instead of network
+                address=address,
                 network=self.price_history_tool.client.chain_to_network(self.chain),
                 interval="5m",
                 history=1  # 1 day of history
@@ -158,17 +156,17 @@ class PriceMomentumCronAgent(AlphaSwarmAgent):
         # Get portfolio balance
         portfolio_info = self.get_portfolio_balance_info()
 
-        # Construct AI prompt with context
+        # Construct user message
         response = (
             f"{portfolio_info}\n\n"
             f"{momentum_signals}\n\n"
-            "=== Trading Strategy Requirements (must be followed) ===\n"
-            # TODO: how would the agent know this percentage of portfolio if things are not being translated to USD?
-            f"1. Allocate maximum {self.max_possible_percentage}% of portfolio to any single trade\n"
+            "=== Trading Strategy Requirements ===\n"
+            f"1. Allocate maximum {self.max_possible_percentage}% of existing {self.base_token} to any single trade\n"
             f"2. Prefer tokens with strongest combined momentum\n"
             f"3. Maintain minimum {self.absolute_min_amount} portfolio in {self.base_token}\n"
             "4. Consider price impact and liquidity\n"
-            "Please decide if you want to trade based on the above information and requirements and how much you want to trade for which token.\n"
+            "Please decide if you should trade strictly based on the above information and requirements\n"
+            "If so how much you want to trade for which token.\n"
             "Provide your reasonings before making the final decision."
         )
 

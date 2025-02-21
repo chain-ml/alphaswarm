@@ -18,7 +18,7 @@ class PriceMomentumCronAgent(AlphaSwarmAgent):
     def __init__(
         self,
         token_addresses: List[str],
-        chain: str = "base-mainnet",
+        chain: str = "base",
         short_term_minutes: int = 5,
         short_term_threshold: float = 2.0,
         long_term_minutes: int = 60,
@@ -82,7 +82,10 @@ class PriceMomentumCronAgent(AlphaSwarmAgent):
         for address in self.token_addresses:
             logging.info(f"Getting price history for {address}")
             price_history = self.price_history_tool.forward(
-                address=address, network=self.chain, interval="5m", history=1  # 1 day of history
+                address=address,
+                network=self.price_history_tool.client.chain_to_network(self.chain),
+                interval="5m",
+                history=1  # 1 day of history
             )
 
             prices = [
@@ -134,7 +137,7 @@ async def main() -> None:
 
     agent = PriceMomentumCronAgent(
         token_addresses=token_addresses,
-        chain="base-mainnet",
+        chain="base",
         short_term_minutes=5,
         short_term_threshold=0.1,
         long_term_minutes=60,
