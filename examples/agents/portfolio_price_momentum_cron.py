@@ -148,6 +148,7 @@ class PriceMomentumCronAgent(AlphaSwarmAgent):
                     logging.info(momentum_str)
                 # sell signal
                 elif short_term_change < 0:
+                    momentum_str = f"Strong downward momentum detected for {address}:\n"
                     logging.info(momentum_str)
                 timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                 signals.append(
