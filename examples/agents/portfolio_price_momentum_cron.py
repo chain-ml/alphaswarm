@@ -10,8 +10,8 @@ from alphaswarm.agent.clients import CronJobClient
 from alphaswarm.config import Config
 from alphaswarm.services.alchemy import AlchemyClient
 from alphaswarm.tools.alchemy import GetAlchemyPriceHistoryByAddress
-from alphaswarm.tools.exchanges import ExecuteTokenSwap, GetTokenPrice
 from alphaswarm.tools.core import GetTokenAddress
+from alphaswarm.tools.exchanges import ExecuteTokenSwap, GetTokenPrice
 from alphaswarm.tools.portfolio import GetPortfolioBalance
 
 
@@ -59,7 +59,7 @@ class PriceMomentumCronAgent(AlphaSwarmAgent):
         self.long_term_periods = long_term_minutes // 5
         self.short_term_threshold = Decimal(str(short_term_threshold))
         self.long_term_threshold = Decimal(str(long_term_threshold))
-        
+
         self.max_possible_percentage = max_possible_percentage
         self.absolute_min_amount = absolute_min_amount
         self.base_token = base_token
@@ -97,25 +97,22 @@ class PriceMomentumCronAgent(AlphaSwarmAgent):
         balance_info.append("```")
         timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         logging.info("Portfolio Balance retrieved")
-        return f"=== Portfolio Balance Summary at {timestamp} ===\n{'\n'.join(balance_info)}"    
-
+        return f"=== Portfolio Balance Summary at {timestamp} ===\n{'\n'.join(balance_info)}"
 
     def get_price_history_info(self) -> str:
         """Generate price history information for tokens."""
         signals = []
         for address in self.token_addresses:
             logging.info(f"Getting price history for {address}")
-            
+
             price_history = self.price_history_tool.forward(
                 address=address,
                 network=self.price_history_tool.client.chain_to_network(self.chain),
                 interval="5m",
-                history=1  # 1 day of history
+                history=1,  # 1 day of history
             )
-            
-            prices = [
-                price.value for price in price_history.data
-            ]
+
+            prices = [price.value for price in price_history.data]
             short_term_change, long_term_change = self.calculate_price_changes(prices)
 
             # Check if changes meet thresholds and are in same direction
@@ -137,14 +134,14 @@ class PriceMomentumCronAgent(AlphaSwarmAgent):
                 elif short_term_change < 0:
                     momentum_str = f"Strong downward momentum detected for {address}:\n"
                     logging.info(momentum_str)
-                signals.append(momentum_str +
-                               f"  - {self.short_term_periods * 5}min change: +{short_term_change:.2f}%\n"
-                               f"  - {self.long_term_periods * 5}min change: +{long_term_change:.2f}%")
+                signals.append(
+                    momentum_str + f"  - {self.short_term_periods * 5}min change: +{short_term_change:.2f}%\n"
+                    f"  - {self.long_term_periods * 5}min change: +{long_term_change:.2f}%"
+                )
         if not signals:
             return ""
         timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         return f"=== Momentum Trade Signal Found at {timestamp} ===\n{'\n'.join(signals)}"
-    
 
     def get_trade_alerts(self) -> str:
         """Get trade instructions with portfolio-aware sizing."""
@@ -152,7 +149,7 @@ class PriceMomentumCronAgent(AlphaSwarmAgent):
         momentum_signals = self.get_price_history_info()
         if not momentum_signals:
             return ""
-        
+
         # Get portfolio balance
         portfolio_info = self.get_portfolio_balance_info()
 

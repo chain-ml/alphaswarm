@@ -10,8 +10,8 @@ from alphaswarm.agent.clients import CronJobClient
 from alphaswarm.config import Config
 from alphaswarm.services.alchemy import AlchemyClient
 from alphaswarm.tools.alchemy import GetAlchemyPriceHistoryByAddress
-from alphaswarm.tools.exchanges import ExecuteTokenSwap, GetTokenPrice
 from alphaswarm.tools.core import GetTokenAddress
+from alphaswarm.tools.exchanges import ExecuteTokenSwap, GetTokenPrice
 
 
 class PriceMomentumCronAgent(AlphaSwarmAgent):
@@ -85,12 +85,10 @@ class PriceMomentumCronAgent(AlphaSwarmAgent):
                 address=address,
                 network=self.price_history_tool.client.chain_to_network(self.chain),
                 interval="5m",
-                history=1  # 1 day of history
+                history=1,  # 1 day of history
             )
 
-            prices = [
-                price.value for price in price_history.data
-            ]
+            prices = [price.value for price in price_history.data]
             short_term_change, long_term_change = self.calculate_price_changes(prices)
 
             # Check if changes meet thresholds and are in same direction
