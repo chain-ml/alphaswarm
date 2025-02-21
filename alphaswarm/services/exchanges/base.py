@@ -6,6 +6,7 @@ from decimal import Decimal
 from typing import Annotated, Any, Generic, List, Tuple, Type, TypeGuard, TypeVar, Union
 
 from alphaswarm.config import ChainConfig, Config, TokenInfo
+from alphaswarm.core.token import TokenAmount
 from pydantic import BaseModel, Field
 
 T = TypeVar("T", bound="DEXClient")
@@ -89,14 +90,13 @@ class DEXClient(Generic[TQuote], ABC):
         return self._chain_config
 
     @abstractmethod
-    def get_token_price(self, token_out: TokenInfo, token_in: TokenInfo, amount_in: Decimal) -> QuoteResult[TQuote]:
+    def get_token_price(self, token_out: TokenInfo, amount_in: TokenAmount) -> QuoteResult[TQuote]:
         """Get price/conversion rate for the pair of tokens.
 
         The price is returned in terms of token_out/token_in (how much token out per token in).
 
         Args:
             token_out (TokenInfo): The token to be bought (going out from the pool)
-            token_in (TokenInfo): The token to be sold (going into the pool)
             amount_in (Decimal): The amount of the token to be sold
 
         Example:

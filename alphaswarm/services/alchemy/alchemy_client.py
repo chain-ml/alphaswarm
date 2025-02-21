@@ -78,13 +78,13 @@ class Transfer(BaseModel):
 
 class Balance(BaseModel):
     contract_address: Annotated[str, Field(validation_alias="contractAddress")]
-    value: Annotated[Decimal, Field(validation_alias="tokenBalance", default=Decimal(0))]
+    value: Annotated[int, Field(validation_alias="tokenBalance", default=int(0))]
     error: Annotated[Optional[str], Field(default=None)]
 
     @field_validator("value", mode="before")
-    def convert_to_decimal(cls, value: str) -> Decimal:
+    def convert_to_base_unit(cls, value: str) -> int:
         balance = int(value, 16)
-        return Decimal(balance)
+        return balance
 
 
 NETWORKS = ["eth-mainnet", "base-mainnet", "solana-mainnet", "eth-sepolia", "base-sepolia", "solana-devnet"]
