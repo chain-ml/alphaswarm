@@ -40,11 +40,11 @@ class LLMFunctionBase(Generic[T_Response], abc.ABC):
             response_model: Pydantic model class for structuring responses
             max_retries: Maximum number of retry attempts
         """
-        self.model_id = model_id
-        self.response_model = response_model
-        self.max_retries = max_retries
+        self._model_id = model_id
+        self._response_model = response_model
+        self._max_retries = max_retries
 
-        self.client = instructor.from_litellm(litellm.completion)
+        self._client = instructor.from_litellm(litellm.completion)
 
     def execute(self, *args: Any, **kwargs: Any) -> T_Response:
         """
@@ -70,11 +70,11 @@ class LLMFunctionBase(Generic[T_Response], abc.ABC):
     def _execute_with_completion(self, messages: Sequence[Message], **kwargs: Any) -> LLMFunctionResponse[T_Response]:
         """Internal core execution method used by all derived classes."""
         messages_dicts = [message.to_dict() for message in messages]
-        response, completion = self.client.create_with_completion(
-            model=self.model_id,
-            response_model=self.response_model,
+        response, completion = self._client.create_with_completion(
+            model=self._model_id,
+            response_model=self._response_model,
             messages=messages_dicts,
-            max_retries=self.max_retries,
+            max_retries=self._max_retries,
             **kwargs,
         )
         return LLMFunctionResponse(response=response, completion=completion)
@@ -190,7 +190,7 @@ class LLMFunctionTemplated(LLMFunctionBase[T_Response]):
         user_prompt_params: Optional[Dict[str, Any]] = None,
         **kwargs: Any,
     ) -> LLMFunctionResponse[T_Response]:
-        """Execute the LLM function using the loaded prompt templates.
+        """Execute the LLM function using the prompt templates.
 
         Args:
             user_prompt_params: Optional parameters to format the user prompt template
@@ -275,7 +275,7 @@ class PythonLLMFunction(LLMFunctionBase[T_Response]):
         """Execute the Python LLM function with the given input object.
 
         Args:
-            input_obj: Input object, implemented to_prompt() and to_messages() methods
+            input_obj: Input object, implementing to_prompt() and to_messages() methods
             **kwargs: Additional keyword arguments to pass to the LLM client
 
         Returns:
