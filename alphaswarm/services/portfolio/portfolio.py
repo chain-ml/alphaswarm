@@ -9,7 +9,7 @@ from solders.pubkey import Pubkey
 from web3.types import Wei
 
 from ...config import Config, WalletInfo
-from ...core.token import TokenAmount
+from ...core.token import TokenAmount, TokenInfo
 from ..alchemy import AlchemyClient
 from ..chains import EVMClient, SolanaClient
 
@@ -126,6 +126,20 @@ class PortfolioEvm(PortfolioBase):
             token_info = self._evm_client.get_token_info(EVMClient.to_checksum_address(balance.contract_address))
             result.append(token_info.to_amount_from_base_units(Wei(balance.value)))
         return result
+
+    def get_net_asset_value(self, token_base: TokenInfo) -> TokenAmount:
+        value = Decimal(0)
+        balances = self.get_token_balances()
+        for balance in balances:
+            if balance.token_info.address == token_base.address:
+                value += balance.value
+            else:
+                exchange_rate = self._alchemy_client.get_token_quote(
+                    token_in=balance.token_info.address, token_out=token_base.address, chain=self._wallet.chain
+                )
+                value += balance.value * exchange_rate
+
+        return token_base.to_amount(value)
 
 
 class PortfolioSolana(PortfolioBase):

@@ -106,3 +106,36 @@ def test_get_token_balances_invalid_chain(alchemy_client: AlchemyClient) -> None
             wallet="0x123",
             chain="invalid_chain",
         )
+
+
+def test_get_token_prices_eth(alchemy_client: AlchemyClient) -> None:
+    q = alchemy_client.get_token_quote(
+        token_in="0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
+        token_out="0xB8c77482e45F1F44dE1745F52C74426C631bDD52",
+        chain="ethereum",
+    )
+    assert q > 0
+
+def test_get_token_prices_sol(alchemy_client: AlchemyClient) -> None:
+    q = alchemy_client.get_token_quote(
+        token_in="So11111111111111111111111111111111111111112",
+        token_out="EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+        chain="solana",
+    )
+    assert q > 100
+
+
+def test_get_token_prices_bad_token(alchemy_client: AlchemyClient) -> None:
+    with pytest.raises(RuntimeError, match="No prices found for token"):
+        alchemy_client.get_token_quote(
+            token_in="0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
+            token_out="0xcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd",
+            chain="ethereum",
+        )
+
+    with pytest.raises(RuntimeError, match="No prices found for token"):
+        alchemy_client.get_token_quote(
+            token_in="0xabababababababbababababababababababababa",
+            token_out="0xB8c77482e45F1F44dE1745F52C74426C631bDD52",
+            chain="ethereum",
+        )

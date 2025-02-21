@@ -87,15 +87,28 @@ class Balance(BaseModel):
         return balance
 
 
+class TokenPrice(BaseModel):
+    value: Decimal
+    timestamp: datetime
+
+
 NETWORKS = ["eth-mainnet", "base-mainnet", "solana-mainnet", "eth-sepolia", "base-sepolia", "solana-devnet"]
 
 
 class AlchemyClient:
     """Alchemy API data source for historical token prices"""
 
+    NETWORK_NAMES = {
+        "ethereum": "eth-mainnet",
+        "ethereum_sepolia": "eth-sepolia",
+        "base": "base-mainnet",
+        "base_sepolia": "base-sepolia",
+        "solana": "solana-mainnet",
+    }
     DEFAULT_BASE_URL: Final[str] = "https://api.g.alchemy.com"
     DEFAULT_NETWORK_URL: Final[str] = "https://{network}.g.alchemy.com/v2/{api_key}"
     ENDPOINT_TOKENS_HISTORICAL: Final[str] = "/prices/v1/{api_key}/tokens/historical"
+    ENDPOINT_TOKENS_BY_ADDRESS: Final[str] = "/prices/v1/{api_key}/tokens/by-address"
 
     def __init__(self, *, api_key: str, base_url: str = DEFAULT_BASE_URL) -> None:
         """Initialize Alchemy data source"""
@@ -128,6 +141,25 @@ class AlchemyClient:
                     continue
 
         raise RuntimeError("Max retries exceeded for Alchemy API request")
+
+    def get_token_quote(self, *, token_in: str, token_out: str, chain: str) -> Decimal:
+        data = {
+            "addresses": [
+                {"address": token_in, "network": self.NETWORK_NAMES[chain]},
+                {"address": token_out, "network": self.NETWORK_NAMES[chain]},
+            ]
+        }
+        url = f"{self.base_url}{self.ENDPOINT_TOKENS_BY_ADDRESS.format(api_key=self.api_key)}"
+        response = self._make_request(url, data)
+        token_prices = response["data"][0]["prices"]
+        if len(token_prices) == 0:
+            error: Dict[str, str] = response["data"][0]["error"]
+            raise RuntimeError(f"No prices found for token {token_in}, error: {error.get('message', "unknown")}")
+        token_base_prices = response["data"][1]["prices"]
+        if len(token_base_prices) == 0:
+            error: Dict[str, str] = response["data"][1]["error"]
+            raise RuntimeError(f"No prices found for token {token_out}, error: {error.get('message', "unknown")}")
+        return Decimal(token_prices[0]["value"]) / Decimal(token_base_prices[0]["value"])
 
     def get_historical_prices_by_symbol(
         self, symbol: str, start_time: datetime, end_time: datetime, interval: str
@@ -240,14 +272,9 @@ class AlchemyClient:
         return parsed_balances
 
     def network_url(self, chain: str) -> str:
-        if chain == "ethereum":
-            return self.DEFAULT_NETWORK_URL.format(network="eth-mainnet", api_key=self.api_key)
-        elif chain == "ethereum_sepolia":
-            return self.DEFAULT_NETWORK_URL.format(network="eth-sepolia", api_key=self.api_key)
-        elif chain == "base":
-            return self.DEFAULT_NETWORK_URL.format(network="base-mainnet", api_key=self.api_key)
-        elif chain == "base_sepolia":
-            return self.DEFAULT_NETWORK_URL.format(network="base-sepolia", api_key=self.api_key)
+
+        if chain in self.NETWORK_NAMES:
+            return self.DEFAULT_NETWORK_URL.format(network=self.NETWORK_NAMES[chain], api_key=self.api_key)
         else:
             raise ValueError(f"Unsupported chain {chain}")
 
