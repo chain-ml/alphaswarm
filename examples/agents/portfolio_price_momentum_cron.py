@@ -25,13 +25,6 @@ class PriceChanges:
     def null(cls) -> "PriceChanges":
         return cls(Decimal("0"), Decimal("0"))
 
-    def is_above_threshold(self, short: Decimal, long: Decimal) -> bool:
-        return (
-            abs(self.short_term) >= short
-            and abs(self.long_term) >= long
-            and self.short_term * self.long_term > Decimal("0")
-        )
-
     @classmethod
     def from_prices(cls, prices: Sequence[Decimal], *, short_period: int, long_period: int) -> "PriceChanges":
         if len(prices) < long_period:
@@ -45,6 +38,13 @@ class PriceChanges:
         long_term = ((current_price - long_term_start) / long_term_start) * Decimal("100")
 
         return cls(short_term, long_term)
+
+    def is_above_threshold(self, short_threshold: Decimal, long_threshold: Decimal) -> bool:
+        return (
+            abs(self.short_term) >= short_threshold
+            and abs(self.long_term) >= long_threshold
+            and self.short_term * self.long_term > Decimal("0")
+        )
 
 
 class PriceMomentumCronAgent(AlphaSwarmAgent):
