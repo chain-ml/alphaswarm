@@ -2,29 +2,63 @@ from __future__ import annotations
 
 import logging
 from abc import abstractmethod
+from collections import defaultdict, deque
 from dataclasses import dataclass
-from typing import Iterable, List, Optional, Self
+from decimal import Decimal
+from typing import Dict, Iterable, List, Optional, Self, Sequence
 
 from solders.pubkey import Pubkey
 
-from ..alchemy.alchemy_client import Transfer
 from ...config import Config, WalletInfo
 from ...core.token import TokenAmount, TokenInfo
 from ..alchemy import AlchemyClient
+from ..alchemy.alchemy_client import Transfer
 from ..chains import EVMClient, SolanaClient
-
 
 logger = logging.getLogger(__name__)
 
+
+class PortfolioPNL:
+    def __init__(self) -> None:
+        self._details_per_asset: Dict[str, List[PortfolioPNLDetail]] = {}
+
+    def add_details(self, asset: str, details: Iterable[PortfolioPNLDetail]) -> None:
+        self._details_per_asset[asset] = list(details)
+
+    def pnl_per_asset(self) -> Dict[str, Decimal]:
+        result = {}
+        for asset, details in self._details_per_asset.items():
+            result[asset] = sum([item.pnl for item in details], Decimal(0))
+        return result
+
+    def pnl(self) -> Decimal:
+        return sum([pnl for asset, pnl in self.pnl_per_asset().items()], Decimal(0))
+
+
+class PortfolioPNLDetail:
+    def __init__(self, bought: PortfolioSwap, sold: PortfolioSwap, asset_sold: Decimal) -> None:
+        self._bought = bought
+        self._sold = sold
+        self._asset_sold = asset_sold
+        self._pnl = (
+            sold.bought.value * asset_sold / sold.sold.value - bought.sold.value * asset_sold / bought.bought.value
+        )
+
+    @property
+    def pnl(self) -> Decimal:
+        return self._pnl
+
+
 @dataclass
-class PortfolioPosition:
-    base: TokenAmount
-    asset: TokenAmount
+class PortfolioSwap:
+    sold: TokenAmount
+    bought: TokenAmount
     hash: str
     block_number: int
 
     def to_short_string(self) -> str:
-        return f"{self.base.value} {self.base.token_info.symbol} -> {self.asset.value} {self.asset.token_info.symbol} ({self.base.token_info.chain} {self.block_number} {self.hash})"
+        return f"{self.sold.value} {self.sold.token_info.symbol} -> {self.bought.value} {self.bought.token_info.symbol} ({self.sold.token_info.chain} {self.block_number} {self.hash})"
+
 
 class PortfolioBase:
     def __init__(self, wallet: WalletInfo) -> None:
@@ -37,6 +71,47 @@ class PortfolioBase:
     @property
     def chain(self) -> str:
         return self._wallet.chain
+
+    @classmethod
+    def compute_pnl_fifo(cls, positions: Sequence[PortfolioSwap], base_token: TokenInfo) -> PortfolioPNL:
+        items = sorted(positions, key=lambda x: x.block_number)
+        purchases: Dict[str, deque[PortfolioSwap]] = defaultdict(deque)
+        sells: Dict[str, deque[PortfolioSwap]] = defaultdict(deque)
+        for position in items:
+            if position.sold.token_info.address == base_token.address:
+                purchases[position.bought.token_info.address].append(position)
+            if position.bought.token_info.address == base_token.address:
+                sells[position.sold.token_info.address].append(position)
+
+        result = PortfolioPNL()
+        for asset, swaps in sells.items():
+            result.add_details(asset, cls.compute_pnl_fifo_for_pair(purchases[asset], swaps))
+
+        return result
+
+    @classmethod
+    def compute_pnl_fifo_for_pair(
+        cls, purchases: deque[PortfolioSwap], sells: deque[PortfolioSwap]
+    ) -> List[PortfolioPNLDetail]:
+        purchases_it = iter(purchases)
+        bought_position: Optional[PortfolioSwap] = None
+        buy_remaining = Decimal(0)
+        result: List[PortfolioPNLDetail] = []
+        for sell in sells:
+            sell_remaining = sell.sold.value
+            while sell_remaining > 0:
+                if bought_position is None or buy_remaining <= 0:
+                    bought_position = next(purchases_it, None)
+                    if bought_position is None:
+                        return result
+                    buy_remaining = bought_position.bought.value
+                sold_quantity = min(sell_remaining, buy_remaining)
+                result.append(PortfolioPNLDetail(bought_position, sell, sold_quantity))
+                sell_remaining -= sold_quantity
+                buy_remaining -= sold_quantity
+
+        return result
+
 
 class Portfolio:
     def __init__(self, portfolios: Iterable[PortfolioBase]) -> None:
@@ -77,9 +152,13 @@ class PortfolioEvm(PortfolioBase):
             result.append(TokenAmount(value=token_info.convert_from_wei(balance.value), token_info=token_info))
         return result
 
-    def get_positions(self) -> List[PortfolioPosition]:
-        transfer_in = self._alchemy_client.get_transfers(wallet=self._wallet.address, chain=self._wallet.chain, incoming=True)
-        transfer_out = self._alchemy_client.get_transfers(wallet=self._wallet.address, chain=self._wallet.chain, incoming=False)
+    def get_positions(self) -> List[PortfolioSwap]:
+        transfer_in = self._alchemy_client.get_transfers(
+            wallet=self._wallet.address, chain=self._wallet.chain, incoming=True
+        )
+        transfer_out = self._alchemy_client.get_transfers(
+            wallet=self._wallet.address, chain=self._wallet.chain, incoming=False
+        )
         map_out = {item.tx_hash: item for item in transfer_out}
 
         result = []
@@ -88,12 +167,14 @@ class PortfolioEvm(PortfolioBase):
             if matched_out is None:
                 logger.debug(f"Transfer {transfer.tx_hash} has no matching output")
                 continue
-            result.append(PortfolioPosition(
-                asset=self.transfer_to_token_amount(transfer),
-                base=self.transfer_to_token_amount(matched_out),
-                hash=transfer.tx_hash,
-                block_number=transfer.block_number,
-            ))
+            result.append(
+                PortfolioSwap(
+                    bought=self.transfer_to_token_amount(transfer),
+                    sold=self.transfer_to_token_amount(matched_out),
+                    hash=transfer.tx_hash,
+                    block_number=transfer.block_number,
+                )
+            )
 
         return result
 
@@ -107,7 +188,6 @@ class PortfolioEvm(PortfolioBase):
 
         value = transfer.value
         return TokenAmount(value=value, token_info=token_info)
-
 
 
 class PortfolioSolana(PortfolioBase):
