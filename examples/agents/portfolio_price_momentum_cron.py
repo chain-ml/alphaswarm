@@ -51,12 +51,18 @@ class PriceMomentumCronAgent(AlphaSwarmAgent):
         if short_term_minutes % 5 != 0 or long_term_minutes % 5 != 0:
             raise ValueError(
                 "Time windows must be multiples of 5 minutes, "
-                f"got short_term_minutes={short_term_minutes} and long_term_minutes={long_term_minutes}"
+                f"got short_term_minutes {short_term_minutes} and long_term_minutes {long_term_minutes}"
             )
         if short_term_minutes >= long_term_minutes:
             raise ValueError(
                 f"Long-term window {long_term_minutes} minutes must be larger than short-term window {short_term_minutes} minutes"
             )
+        if max_possible_percentage <= 0 or max_possible_percentage > 100:
+            raise ValueError(
+                f"max_possible_percentage must be between 0 and 100, got {max_possible_percentage}"
+            )
+        if absolute_min_amount <= 0:
+            raise ValueError(f"absolute_min_amount must be positive, got {absolute_min_amount}")
 
         self.alchemy_client = AlchemyClient.from_env()
         self.config = Config()
