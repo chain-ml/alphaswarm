@@ -19,11 +19,8 @@ class PriceMomentumCronAgent(AlphaSwarmAgent):
     """
     A portfolio-aware momentum trading agent that combines deterministic analysis 
     with AlphaSwarm reasoning and tools for position sizing and trade execution.
-    
-    The agent will:
-    1. Monitor price changes and determine whether momentum criteria are met
-    2. If momentum criteria are met, the agent will generate trade instructions
-    3. The agent will use AlphaSwarm tools and reasoning to evaluate and execute optimal trades
+    A `cron` task will continually monitor price changes and determine whether momentum criteria are met.
+    If momentum criteria are met, a trading task will be generated for the agent to execute.
     """
 
     def __init__(
@@ -82,9 +79,9 @@ class PriceMomentumCronAgent(AlphaSwarmAgent):
 
         super().__init__(model_id="anthropic/claude-3-5-sonnet-20241022", tools=tools, hints=hints)
 
-    def get_trade_alerts(self) -> str:
+    def get_trading_task(self) -> str:
         """
-        Generate trade instructions based on momentum signals and portfolio state.
+        Generate a trading task based on momentum signals and portfolio state.
         
         Combines momentum analysis, portfolio balance, and trading requirements into
         a structured prompt for intelligent trade evaluation.
@@ -98,26 +95,28 @@ class PriceMomentumCronAgent(AlphaSwarmAgent):
         portfolio_info = self.get_portfolio_balance_info()
 
         # Construct user message
-        response = (
+        task_prompt = (
             f"{portfolio_info}\n\n"
             f"{momentum_signals}\n\n"
             "=== Trading Strategy Requirements ===\n"
-            f"1. Allocate maximum {self.max_possible_percentage}% of existing {self.base_token} to any single trade\n"
+            f"1. Allocate a maximum of {self.max_possible_percentage}% of existing {self.base_token} to any single trade\n"
             f"2. Prefer tokens with strongest combined momentum\n"
-            f"3. Maintain minimum {self.absolute_min_amount} portfolio in {self.base_token}\n"
-            "4. Consider price impact and liquidity\n"
-            "Please decide if you should trade strictly based on the above information and requirements\n"
-            "If so how much you want to trade for which token.\n"
+            f"3. Maintain a minimum of {self.absolute_min_amount} portfolio in {self.base_token}\n"
+            "4. Consider price impact and liquidity\n\n"
+            "Please decide whether to trade strictly based on the above information and requirements.\n"
+            "You are able to buy or sell based on the momentum signals you receive,\n"
+            "where selling means swapping an alerted token for the base token.\n"
+            "If you decide to trade, determine how much you want to trade for which token.\n"
             "Provide your reasonings before making the final decision."
         )
 
-        return response
+        return task_prompt
 
     def get_portfolio_balance_info(self) -> str:
         """
         Generate formatted portfolio balance information.
         
-        Returns a CSV-formatted string containing current token balances
+        Returns a string containing a CSV-formatted summary of current token balances
         with timestamp for trade analysis.
         """
         tokens = self.portfolio_tool.forward(chain=self.chain)
@@ -239,9 +238,9 @@ async def main() -> None:
     cron_client = CronJobClient(
         agent=agent,
         client_id="Price Momentum Cron Agent With Portfolio Balance",
-        interval_seconds=300,  # 5 minutes
+        interval_seconds=5,  # 5 minutes
         response_handler=lambda _: None,
-        message_generator=agent.get_trade_alerts,
+        message_generator=agent.get_trading_task,
         max_history=2,  # Last message pair only
     )
 
