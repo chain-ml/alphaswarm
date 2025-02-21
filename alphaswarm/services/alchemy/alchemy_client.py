@@ -240,20 +240,16 @@ class AlchemyClient:
         return parsed_balances
 
     def network_url(self, chain: str) -> str:
-        return self.DEFAULT_NETWORK_URL.format(network=self.chain_to_network(chain), api_key=self.api_key)
-
-    @staticmethod
-    def chain_to_network(chain: str) -> str:
-        """Convert chain name to Alchemy network name"""
-        CHAIN_TO_NETWORK: Mapping[str, str] = {
-            "ethereum": "eth-mainnet",
-            "ethereum_sepolia": "eth-sepolia",
-            "base": "base-mainnet",
-            "base_sepolia": "base-sepolia",
-        }
-        if chain not in CHAIN_TO_NETWORK:
-            raise ValueError(f"Unsupported chain {chain}. Expected one of: {', '.join(CHAIN_TO_NETWORK.keys())}")
-        return CHAIN_TO_NETWORK[chain]
+        if chain == "ethereum":
+            return self.DEFAULT_NETWORK_URL.format(network="eth-mainnet", api_key=self.api_key)
+        elif chain == "ethereum_sepolia":
+            return self.DEFAULT_NETWORK_URL.format(network="eth-sepolia", api_key=self.api_key)
+        elif chain == "base":
+            return self.DEFAULT_NETWORK_URL.format(network="base-mainnet", api_key=self.api_key)
+        elif chain == "base_sepolia":
+            return self.DEFAULT_NETWORK_URL.format(network="base-sepolia", api_key=self.api_key)
+        else:
+            raise ValueError(f"Unsupported chain {chain}")
 
     @staticmethod
     def from_env() -> AlchemyClient:

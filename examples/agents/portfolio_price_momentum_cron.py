@@ -142,7 +142,7 @@ class PriceMomentumCronAgent(AlphaSwarmAgent):
 
             price_history = self.price_history_tool.forward(
                 address=address,
-                network=self.price_history_tool.client.chain_to_network(self.chain),
+                chain=self.chain,
                 interval="5m",
                 history=1,  # 1 day of history
             )
