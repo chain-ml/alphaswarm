@@ -55,8 +55,8 @@ python basic/03_strategy.py
 [Portfolio Price Momentum Agent Example](agents/portfolio_price_momentum_cron.py) demonstrates a more sophisticated trading agent that:
 - Implements a portfolio-aware momentum trading strategy using AlphaSwarm's agent framework
 - Monitors multiple token prices on a schedule using Alchemy's price feed from a CronJobClient
-- Analyzes both short-term (e.g. 5min) and long-term (e.g. 60min) price momentum signals to assess directional alignment (upward for buying or downward for selling)
-- Makes a dynamic trade decisions based on the above signals and the current token balances in the portfolio:
+- Evaluates both short-term (e.g. 5min) and long-term (e.g. 60min) price momentum signals to assess directional alignment (upward for buying or downward for selling)
+- Makes a dynamic trading decision based on the above signals and the current token balances in the portfolio
 - Additionally, the agent can be configured to limit individual trade sizes and maintain a minimum balance in your base token
 
 Run the example:
