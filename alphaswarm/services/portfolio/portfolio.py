@@ -40,13 +40,25 @@ class PortfolioPNLDetail:
         self._bought = bought
         self._sold = sold
         self._asset_sold = asset_sold
-        self._pnl = (
-            sold.bought.value * asset_sold / sold.sold.value - bought.sold.value * asset_sold / bought.bought.value
-        )
+        self._pnl = asset_sold * (self.selling_price - self.buying_price)
 
     @property
     def pnl(self) -> Decimal:
         return self._pnl
+
+    @property
+    def sold_amount(self) -> Decimal:
+        return self._asset_sold
+
+    @property
+    def buying_price(self) -> Decimal:
+        """Buying price per assert"""
+        return self._bought.sold.value / self._bought.bought.value
+
+    @property
+    def selling_price(self) -> Decimal:
+        """Selling price per assert"""
+        return self._sold.bought.value / self._sold.sold.value
 
 
 @dataclass
