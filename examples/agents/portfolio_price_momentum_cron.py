@@ -17,7 +17,7 @@ from alphaswarm.tools.portfolio import GetPortfolioBalance
 
 class PriceMomentumCronAgent(AlphaSwarmAgent):
     """
-    A portfolio-aware momentum trading agent that combines deterministic analysis 
+    A portfolio-aware momentum trading agent that combines deterministic analysis
     with AlphaSwarm reasoning and tools for position sizing and trade execution.
     A `cron` task will continually monitor price changes and determine whether momentum criteria are met.
     If momentum criteria are met, a trading task will be generated for the agent to execute.
@@ -75,14 +75,12 @@ class PriceMomentumCronAgent(AlphaSwarmAgent):
             ExecuteTokenSwap(config=self.config),
         ]
 
-        hints = "Please try to perform the requested swaps."
-
-        super().__init__(model_id="anthropic/claude-3-5-sonnet-20241022", tools=tools, hints=hints)
+        super().__init__(model_id="anthropic/claude-3-5-sonnet-20241022", tools=tools)
 
     def get_trading_task(self) -> str:
         """
         Generate a trading task based on momentum signals and portfolio state.
-        
+
         Combines momentum analysis, portfolio balance, and trading requirements into
         a structured prompt for intelligent trade evaluation.
         """
@@ -115,7 +113,7 @@ class PriceMomentumCronAgent(AlphaSwarmAgent):
     def get_portfolio_balance_info(self) -> str:
         """
         Generate formatted portfolio balance information.
-        
+
         Returns a string containing a CSV-formatted summary of current token balances
         with timestamp for trade analysis.
         """
@@ -134,7 +132,7 @@ class PriceMomentumCronAgent(AlphaSwarmAgent):
     def analyze_momentum_signals(self) -> str:
         """
         Generate momentum signals for monitored tokens.
-        
+
         Analyzes short and long-term price changes for each token,
         returning formatted signals when momentum thresholds are met.
         """
