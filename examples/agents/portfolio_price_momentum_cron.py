@@ -74,30 +74,46 @@ class PriceMomentumCronAgent(AlphaSwarmAgent):
 
         super().__init__(model_id="anthropic/claude-3-5-sonnet-20241022", tools=tools, hints=hints)
 
-    def calculate_price_changes(self, prices: List[Decimal]) -> Tuple[Decimal, Decimal]:
-        """Calculate short and long term price changes."""
-        if len(prices) < self.long_term_periods:
-            return Decimal("0"), Decimal("0")
+    def get_trade_alerts(self) -> str:
+        """Get trade instructions with portfolio-aware sizing."""
+        # Get momentum signals
+        momentum_signals = self.get_price_history_info()
+        if not momentum_signals:
+            return ""
 
-        current_price = prices[-1]
-        short_term_start = prices[-self.short_term_periods - 1]
-        long_term_start = prices[-self.long_term_periods - 1]
+        # Get portfolio balance
+        portfolio_info = self.get_portfolio_balance_info()
 
-        short_term_change = ((current_price - short_term_start) / short_term_start) * Decimal("100")
-        long_term_change = ((current_price - long_term_start) / long_term_start) * Decimal("100")
+        # Construct user message
+        response = (
+            f"{portfolio_info}\n\n"
+            f"{momentum_signals}\n\n"
+            "=== Trading Strategy Requirements ===\n"
+            f"1. Allocate maximum {self.max_possible_percentage}% of existing {self.base_token} to any single trade\n"
+            f"2. Prefer tokens with strongest combined momentum\n"
+            f"3. Maintain minimum {self.absolute_min_amount} portfolio in {self.base_token}\n"
+            "4. Consider price impact and liquidity\n"
+            "Please decide if you should trade strictly based on the above information and requirements\n"
+            "If so how much you want to trade for which token.\n"
+            "Provide your reasonings before making the final decision."
+        )
 
-        return short_term_change, long_term_change
+        return response
 
     def get_portfolio_balance_info(self) -> str:
         """Generate formatted portfolio balance information."""
         tokens = self.portfolio_tool.forward(chain=self.chain)
-        balance_info = ["```csv", "symbol,address,amount"]
+        timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        balance_info = [
+            f"=== Portfolio Balance Summary at {timestamp} ===",
+            "```csv",
+            "symbol,address,amount",
+        ]
         for token in tokens:
             balance_info.append(f"{token.token_info.symbol},{token.token_info.address},{token.value}")
         balance_info.append("```")
-        timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        logging.info("Portfolio Balance retrieved")
-        return f"=== Portfolio Balance Summary at {timestamp} ===\n{'\n'.join(balance_info)}"
+        logging.info(f"Portfolio Balance retrieved")
+        return "\n".join(balance_info)
 
     def get_price_history_info(self) -> str:
         """Generate price history information for tokens."""
@@ -143,31 +159,19 @@ class PriceMomentumCronAgent(AlphaSwarmAgent):
         timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         return f"=== Momentum Trade Signal Found at {timestamp} ===\n{'\n'.join(signals)}"
 
-    def get_trade_alerts(self) -> str:
-        """Get trade instructions with portfolio-aware sizing."""
-        # Get momentum signals
-        momentum_signals = self.get_price_history_info()
-        if not momentum_signals:
-            return ""
+    def calculate_price_changes(self, prices: List[Decimal]) -> Tuple[Decimal, Decimal]:
+        """Calculate short and long term price changes."""
+        if len(prices) < self.long_term_periods:
+            return Decimal("0"), Decimal("0")
 
-        # Get portfolio balance
-        portfolio_info = self.get_portfolio_balance_info()
+        current_price = prices[-1]
+        short_term_start = prices[-self.short_term_periods - 1]
+        long_term_start = prices[-self.long_term_periods - 1]
 
-        # Construct user message
-        response = (
-            f"{portfolio_info}\n\n"
-            f"{momentum_signals}\n\n"
-            "=== Trading Strategy Requirements ===\n"
-            f"1. Allocate maximum {self.max_possible_percentage}% of existing {self.base_token} to any single trade\n"
-            f"2. Prefer tokens with strongest combined momentum\n"
-            f"3. Maintain minimum {self.absolute_min_amount} portfolio in {self.base_token}\n"
-            "4. Consider price impact and liquidity\n"
-            "Please decide if you should trade strictly based on the above information and requirements\n"
-            "If so how much you want to trade for which token.\n"
-            "Provide your reasonings before making the final decision."
-        )
+        short_term_change = ((current_price - short_term_start) / short_term_start) * Decimal("100")
+        long_term_change = ((current_price - long_term_start) / long_term_start) * Decimal("100")
 
-        return response
+        return short_term_change, long_term_change
 
 
 async def main() -> None:
