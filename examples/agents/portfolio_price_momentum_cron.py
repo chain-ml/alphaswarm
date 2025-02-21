@@ -49,9 +49,14 @@ class PriceMomentumCronAgent(AlphaSwarmAgent):
             base_token: Base token to maintain in portfolio
         """
         if short_term_minutes % 5 != 0 or long_term_minutes % 5 != 0:
-            raise ValueError("Time windows must be multiples of 5 minutes")
+            raise ValueError(
+                "Time windows must be multiples of 5 minutes, "
+                f"got short_term_minutes={short_term_minutes} and long_term_minutes={long_term_minutes}"
+            )
         if short_term_minutes >= long_term_minutes:
-            raise ValueError("Long-term window must be larger than short-term window")
+            raise ValueError(
+                f"Long-term window {long_term_minutes} minutes must be larger than short-term window {short_term_minutes} minutes"
+            )
 
         self.alchemy_client = AlchemyClient.from_env()
         self.config = Config()
@@ -126,7 +131,7 @@ class PriceMomentumCronAgent(AlphaSwarmAgent):
             *[f"{token.token_info.symbol},{token.token_info.address},{token.value}" for token in tokens],
             "```",
         ]
-        logging.info("Portfolio Balance retrieved")
+        logging.debug("Portfolio Balance retrieved")
         return "\n".join(balance_info)
 
     def analyze_momentum_signals(self) -> str:
