@@ -127,7 +127,7 @@ class PriceMomentumCronAgent(AlphaSwarmAgent):
             "```csv",
             "symbol,address,amount",
             *[f"{token.token_info.symbol},{token.token_info.address},{token.value}" for token in tokens],
-            "```"
+            "```",
         ]
         logging.info("Portfolio Balance retrieved")
         return "\n".join(balance_info)
@@ -164,23 +164,25 @@ class PriceMomentumCronAgent(AlphaSwarmAgent):
 
             # Only generate trade instructions for positive momentum
             if short_term_signal and long_term_signal and same_direction:
-                # buy signal
-                if short_term_change > 0:
-                    momentum_str = f"Strong upward momentum detected for {address}:\n"
-                    logging.info(momentum_str)
-                # sell signal
-                elif short_term_change < 0:
-                    momentum_str = f"Strong downward momentum detected for {address}:\n"
-                    logging.info(momentum_str)
-                timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-                signals.append(
-                    momentum_str + f"  - {self.short_term_periods * 5}min change: +{short_term_change:.2f}%\n"
-                    f"  - {self.long_term_periods * 5}min change: +{long_term_change:.2f}%"
-                )
+                signals.append(self.format_signal_message(address, short_term_change, long_term_change))
         if not signals:
             return ""
         signals_str = "\n".join(signals)
-        return f"=== Momentum Trade Signal Found at {timestamp} ===\n{signals_str}"
+        return f"=== Momentum Trade Signals ===\n{signals_str}"
+
+    def format_signal_message(self, address: str, short_term_change: Decimal, long_term_change: Decimal) -> str:
+        """Helper to format momentum signal message with timestamp."""
+        direction = "upward" if short_term_change > 0 else "downward"
+        timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+        momentum_str = f"Strong {direction} momentum at {timestamp} detected for {address}:\n"
+        logging.info(momentum_str)
+
+        return (
+            f"{momentum_str}"
+            f"  - {self.short_term_periods * 5}min change: {short_term_change:.2f}%\n"
+            f"  - {self.long_term_periods * 5}min change: {long_term_change:.2f}%\n"
+        )
 
     def calculate_price_changes(self, prices: List[Decimal]) -> Tuple[Decimal, Decimal]:
         """
@@ -240,8 +242,6 @@ async def main() -> None:
         interval_seconds=300,  # 5 minutes
         response_handler=lambda _: None,
         message_generator=agent.get_trade_alerts,
-        should_process=lambda alerts: len(alerts) > 0,
-        skip_message=lambda _: None,
         max_history=2,  # Last message pair only
     )
 

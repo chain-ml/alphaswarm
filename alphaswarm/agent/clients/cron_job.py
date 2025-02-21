@@ -14,7 +14,7 @@ class CronJobClient(AlphaSwarmAgentClient[Any]):
         interval_seconds: int,
         message_generator: Callable[[], str],  # TODO: consider returning Optional[str] and not call agent with None
         response_handler: Callable[[str], None] = print,
-        should_process: Callable[[str], bool] = lambda _: True,
+        should_process: Callable[[str], bool] = lambda input_str: len(input_str) > 0,
         skip_message: Callable[[str], None] = lambda _: None,
         max_history: int = 1,
     ) -> None:
