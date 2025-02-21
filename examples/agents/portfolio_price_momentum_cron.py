@@ -141,26 +141,28 @@ class PriceMomentumCronAgent(AlphaSwarmAgent):
 
             # Only generate trade instructions for positive momentum
             if short_term_signal and long_term_signal and same_direction:
-                # buy signal
-                if short_term_change > 0:
-                    momentum_str = f"Strong upward momentum detected for {address}:\n"
-                    logging.info(momentum_str)
-                # sell signal
-                elif short_term_change < 0:
-                    momentum_str = f"Strong downward momentum detected for {address}:\n"
-                    logging.info(momentum_str)
-                timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-                signals.append(
-                    momentum_str + f"  - {self.short_term_periods * 5}min change: +{short_term_change:.2f}%\n"
-                    f"  - {self.long_term_periods * 5}min change: +{long_term_change:.2f}%"
-                )
+                signals.append(self.format_signal_message(address, short_term_change, long_term_change))
         if not signals:
             return ""
         signals_str = "\n".join(signals)
-        return f"=== Momentum Trade Signal Found at {timestamp} ===\n{signals_str}"
+        return f"=== Momentum Trade Signals ===\n{signals_str}"
+
+    def format_signal_message(self, address: str, short_term_change: Decimal, long_term_change: Decimal) -> str:
+        """Helper to format momentum signal message with timestamp."""
+        direction = "upward" if short_term_change > 0 else "downward"
+        timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+        momentum_str = f"Strong {direction} momentum at {timestamp} detected for {address}:\n"
+        logging.info(momentum_str)
+
+        return (
+            f"{momentum_str}"
+            f"  - {self.short_term_periods * 5}min change: {short_term_change:.2f}%\n"
+            f"  - {self.long_term_periods * 5}min change: {long_term_change:.2f}%\n"
+        )
 
     def calculate_price_changes(self, prices: List[Decimal]) -> Tuple[Decimal, Decimal]:
-        """Calculate short and long term price changes."""
+        """Helper to calculate short and long term price changes."""
         if len(prices) < self.long_term_periods:
             return Decimal("0"), Decimal("0")
 
