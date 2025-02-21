@@ -17,7 +17,7 @@ def test_get_token_price(jupiter_client: JupiterClient) -> None:
     giga = tokens_config["GIGA"]
     sol = tokens_config["SOL"]
 
-    quote = jupiter_client.get_token_price(token_out=giga, token_in=sol, amount_in=Decimal(1))
+    quote = jupiter_client.get_token_price(token_out=giga, amount_in=sol.to_amount(Decimal(1)))
     assert 10000 > quote.amount_out > 1000, "A Sol is worth many thousands of GIGA."
 
 
@@ -27,7 +27,7 @@ def test_swap(jupiter_client: JupiterClient) -> None:
     usdc = tokens_config["usdc"]
     sol = tokens_config["SOL"]
 
-    quote = jupiter_client.get_token_price(token_out=usdc, token_in=sol, amount_in=Decimal("0.0001"))
+    quote = jupiter_client.get_token_price(token_out=usdc, amount_in=sol.to_amount(Decimal("0.0001")))
     result = jupiter_client.swap(quote)
 
     assert result.amount_out == pytest.approx(Decimal(quote.amount_out), Decimal("0.05"))

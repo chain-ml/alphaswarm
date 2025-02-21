@@ -71,7 +71,7 @@ class GetTokenPrice(AlphaSwarmToolBase):
             try:
                 dex = DEXFactory.create(dex_name=venue, config=self.config, chain=chain)
 
-                price = dex.get_token_price(token_out_info, token_in_info, amount_in=Decimal(amount_in))
+                price = dex.get_token_price(token_out_info, amount_in=token_in_info.to_amount(Decimal(amount_in)))
                 timestamp = datetime.now(UTC).strftime("%Y-%m-%d %H:%M UTC")
 
                 prices.append(TokenQuote(dex=venue, chain=chain, quote=price, datetime=timestamp))
