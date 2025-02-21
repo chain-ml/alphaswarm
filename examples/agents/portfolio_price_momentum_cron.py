@@ -1,8 +1,9 @@
 import asyncio
 import datetime
 import logging
+from dataclasses import dataclass
 from decimal import Decimal
-from typing import List, Tuple
+from typing import List, Sequence
 
 import dotenv
 from alphaswarm.agent.agent import AlphaSwarmAgent
@@ -13,6 +14,37 @@ from alphaswarm.services.portfolio import Portfolio
 from alphaswarm.tools.alchemy import GetAlchemyPriceHistoryByAddress
 from alphaswarm.tools.core import GetTokenAddress
 from alphaswarm.tools.exchanges import ExecuteTokenSwap, GetTokenPrice
+
+
+@dataclass
+class PriceChanges:
+    short_term: Decimal
+    long_term: Decimal
+
+    @classmethod
+    def null(cls) -> "PriceChanges":
+        return cls(Decimal("0"), Decimal("0"))
+
+    def is_above_threshold(self, short: Decimal, long: Decimal) -> bool:
+        return (
+            abs(self.short_term) >= short
+            and abs(self.long_term) >= long
+            and self.short_term * self.long_term > Decimal("0")
+        )
+
+    @classmethod
+    def from_prices(cls, prices: Sequence[Decimal], *, short_period: int, long_period: int) -> "PriceChanges":
+        if len(prices) < long_period:
+            return cls.null()
+
+        current_price = prices[-1]
+        short_term_start = prices[-short_period - 1]
+        long_term_start = prices[-long_period - 1]
+
+        short_term = ((current_price - short_term_start) / short_term_start) * Decimal("100")
+        long_term = ((current_price - long_term_start) / long_term_start) * Decimal("100")
+
+        return cls(short_term, long_term)
 
 
 class PriceMomentumCronAgent(AlphaSwarmAgent):
@@ -158,20 +190,20 @@ class PriceMomentumCronAgent(AlphaSwarmAgent):
             )
 
             prices = [price.value for price in price_history.data]
-            short_term_change, long_term_change = self.calculate_price_changes(prices)
+            price_changes = PriceChanges.from_prices(
+                prices, short_period=self.short_term_periods, long_period=self.long_term_periods
+            )
 
-            # Check if changes meet thresholds and are in same direction
-            short_term_signal = abs(short_term_change) >= self.short_term_threshold
-            long_term_signal = abs(long_term_change) >= self.long_term_threshold
-            same_direction = short_term_change * long_term_change > Decimal("0")
+            # Check if price changes meet thresholds
+            momentum_signal = price_changes.is_above_threshold(self.short_term_threshold, self.long_term_threshold)
 
             # Log all signals for monitoring
-            logging.info(f"{self.short_term_periods * 5} minute change: {short_term_change:.2f}%")
-            logging.info(f"{self.long_term_periods * 5} minute change: {long_term_change:.2f}%")
+            logging.info(f"{self.short_term_periods * 5} minute change: {price_changes.short_term:.2f}%")
+            logging.info(f"{self.long_term_periods * 5} minute change: {price_changes.long_term:.2f}%")
 
             # Only generate trade instructions for positive momentum
-            if short_term_signal and long_term_signal and same_direction:
-                signals.append(self.format_signal_message(address, short_term_change, long_term_change))
+            if momentum_signal:
+                signals.append(self.format_signal_message(address, price_changes.short_term, price_changes.long_term))
         if not signals:
             return ""
         signals_str = "\n".join(signals)
@@ -190,28 +222,6 @@ class PriceMomentumCronAgent(AlphaSwarmAgent):
             f"  - {self.short_term_periods * 5}min change: {short_term_change:.2f}%\n"
             f"  - {self.long_term_periods * 5}min change: {long_term_change:.2f}%\n"
         )
-
-    def calculate_price_changes(self, prices: List[Decimal]) -> Tuple[Decimal, Decimal]:
-        """
-        Calculate short and long term price changes from a list of prices.
-
-        Args:
-            prices: List of historical prices in chronological order
-
-        Returns:
-            Tuple of (short_term_change, long_term_change) as percentages
-        """
-        if len(prices) < self.long_term_periods:
-            return Decimal("0"), Decimal("0")
-
-        current_price = prices[-1]
-        short_term_start = prices[-self.short_term_periods - 1]
-        long_term_start = prices[-self.long_term_periods - 1]
-
-        short_term_change = ((current_price - short_term_start) / short_term_start) * Decimal("100")
-        long_term_change = ((current_price - long_term_start) / long_term_start) * Decimal("100")
-
-        return short_term_change, long_term_change
 
 
 async def main() -> None:
