@@ -171,10 +171,10 @@ class PriceMomentumCronAgent(AlphaSwarmAgent):
 
     def format_signal_message(self, address: str, short_term_change: Decimal, long_term_change: Decimal) -> str:
         """Helper to format momentum signal message with timestamp."""
-        direction = "upward" if short_term_change > 0 else "downward"
+        direction = "Upward" if short_term_change > 0 else "Downward"
         timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-        momentum_str = f"Strong {direction} momentum at {timestamp} detected for {address}:\n"
+        momentum_str = f"{direction} momentum at {timestamp} detected for {address}:\n"
         logging.info(momentum_str)
 
         return (
@@ -238,7 +238,7 @@ async def main() -> None:
     cron_client = CronJobClient(
         agent=agent,
         client_id="Price Momentum Cron Agent With Portfolio Balance",
-        interval_seconds=5,  # 5 minutes
+        interval_seconds=300,  # 5 minutes
         response_handler=lambda _: None,
         message_generator=agent.get_trading_task,
         max_history=2,  # Last message pair only
