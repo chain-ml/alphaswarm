@@ -112,7 +112,7 @@ class PriceMomentumCronAgent(AlphaSwarmAgent):
         for token in tokens:
             balance_info.append(f"{token.token_info.symbol},{token.token_info.address},{token.value}")
         balance_info.append("```")
-        logging.info(f"Portfolio Balance retrieved")
+        logging.info("Portfolio Balance retrieved")
         return "\n".join(balance_info)
 
     def get_price_history_info(self) -> str:
