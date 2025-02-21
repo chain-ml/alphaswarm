@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import asyncio
 import datetime
 import logging
@@ -22,11 +24,11 @@ class PriceChanges:
     long_term: Decimal
 
     @classmethod
-    def null(cls) -> "PriceChanges":
+    def null(cls) -> PriceChanges:
         return cls(Decimal("0"), Decimal("0"))
 
     @classmethod
-    def from_prices(cls, prices: Sequence[Decimal], *, short_period: int, long_period: int) -> "PriceChanges":
+    def from_prices(cls, prices: Sequence[Decimal], *, short_period: int, long_period: int) -> PriceChanges:
         if len(prices) < long_period:
             return cls.null()
 
