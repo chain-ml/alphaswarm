@@ -5,6 +5,7 @@ from abc import abstractmethod
 from collections import defaultdict, deque
 from dataclasses import dataclass
 from decimal import Decimal
+from enum import Enum, auto
 from typing import Callable, Dict, Iterable, List, Optional, Self, Sequence
 
 from solders.pubkey import Pubkey
@@ -18,6 +19,12 @@ from ..chains import EVMClient, SolanaClient
 logger = logging.getLogger(__name__)
 
 
+class PnlMode(Enum):
+    TOTAL = auto()
+    REALIZED = auto()
+    UNREALIZED = auto()
+
+
 class PortfolioPNL:
     def __init__(self) -> None:
         self._details_per_asset: Dict[str, List[PortfolioPNLDetail]] = {}
@@ -25,19 +32,14 @@ class PortfolioPNL:
     def add_details(self, asset: str, details: Iterable[PortfolioPNLDetail]) -> None:
         self._details_per_asset[asset] = list(details)
 
-    def pnl_per_asset(self, *, realized: bool = True, unrealised: bool = True) -> Dict[str, Decimal]:
-        def include_predicate(item: PortfolioPNLDetail) -> bool:
-            return (item.is_realized and realized) or (not item.is_realized and unrealised)
-
+    def pnl_per_asset(self, mode: PnlMode = PnlMode.TOTAL) -> Dict[str, Decimal]:
         result = {}
         for asset, details in self._details_per_asset.items():
-            result[asset] = sum([item.pnl for item in details if include_predicate(item)], Decimal(0))
+            result[asset] = sum([item.pnl for item in details if item.is_in_scope(mode)], Decimal(0))
         return result
 
-    def pnl(self, *, realized: bool = True, unrealised: bool = True) -> Decimal:
-        return sum(
-            [pnl for asset, pnl in self.pnl_per_asset(realized=realized, unrealised=unrealised).items()], Decimal(0)
-        )
+    def pnl(self, mode: PnlMode = PnlMode.TOTAL) -> Decimal:
+        return sum([pnl for asset, pnl in self.pnl_per_asset(mode).items()], Decimal(0))
 
 
 class PortfolioPNLDetail:
@@ -68,6 +70,13 @@ class PortfolioPNLDetail:
     @property
     def is_realized(self) -> bool:
         return self._is_realized
+
+    def is_in_scope(self, mode: PnlMode) -> bool:
+        return (
+            mode == PnlMode.TOTAL
+            or (mode == PnlMode.REALIZED and self._is_realized)
+            or (mode == PnlMode.UNREALIZED and not self._is_realized)
+        )
 
 
 class PortfolioRealizedPNLDetail(PortfolioPNLDetail):

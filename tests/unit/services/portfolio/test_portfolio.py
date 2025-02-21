@@ -5,6 +5,7 @@ import pytest
 
 from alphaswarm.core.token import TokenAmount, TokenInfo
 from alphaswarm.services.portfolio.portfolio import (
+    PnlMode,
     PortfolioBase,
     PortfolioPNLDetail,
     PortfolioSwap,
@@ -73,8 +74,8 @@ def test_portfolio_compute_pnl_fifo_one_asset__sell_from_first_swap(weth: TokenI
     assert_detail(next(usdc_pnl), sold_amount=3, buying_price="0.1", selling_price="1", pnl="2.7", realized=False)
     assert_detail(next(usdc_pnl), sold_amount=8, buying_price="0.125", selling_price="1", pnl="7", realized=False)
     assert next(usdc_pnl, None) is None
-    assert pnl.pnl(unrealised=False) == Decimal("3.3")
-    assert pnl.pnl(realized=False) == Decimal("9.7")
+    assert pnl.pnl(PnlMode.REALIZED) == Decimal("3.3")
+    assert pnl.pnl(PnlMode.UNREALIZED) == Decimal("9.7")
     assert pnl.pnl() == Decimal("13")
 
 
@@ -96,8 +97,8 @@ def test_portfolio_compute_pnl_fifo_one_asset__sell_from_multiple_swaps(weth: To
     assert_detail(next(usdc_pnl), sold_amount=2, buying_price="0.2", selling_price="1", pnl="1.6", realized=True)
     assert_detail(next(usdc_pnl), sold_amount=3, buying_price="0.2", selling_price="0.01", pnl="-0.57", realized=True)
     assert next(usdc_pnl, None) is None
-    assert pnl.pnl(unrealised=False) == Decimal("5.78")
-    assert pnl.pnl(realized=False) == Decimal(0)
+    assert pnl.pnl(PnlMode.REALIZED) == Decimal("5.78")
+    assert pnl.pnl(PnlMode.UNREALIZED) == Decimal(0)
     assert pnl.pnl() == Decimal("5.78")
 
 
