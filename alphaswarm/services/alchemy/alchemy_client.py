@@ -5,7 +5,7 @@ import os
 import time
 from datetime import datetime, timezone
 from decimal import Decimal
-from typing import Annotated, Dict, Final, List, Optional
+from typing import Annotated, Dict, Final, List, Mapping, Optional
 
 import requests
 from alphaswarm.services.api_exception import ApiException
@@ -244,16 +244,16 @@ class AlchemyClient:
 
     @staticmethod
     def chain_to_network(chain: str) -> str:
-        if chain == "ethereum":
-            return "eth-mainnet"
-        elif chain == "ethereum_sepolia":
-            return "eth-sepolia"
-        elif chain == "base":
-            return "base-mainnet"
-        elif chain == "base_sepolia":
-            return "base-sepolia"
-        else:
-            raise ValueError(f"Unsupported chain {chain}")
+        """Convert chain name to Alchemy network name"""
+        CHAIN_TO_NETWORK: Mapping[str, str] = {
+            "ethereum": "eth-mainnet",
+            "ethereum_sepolia": "eth-sepolia",
+            "base": "base-mainnet",
+            "base_sepolia": "base-sepolia",
+        }
+        if chain not in CHAIN_TO_NETWORK:
+            raise ValueError(f"Unsupported chain {chain}. Expected one of: {', '.join(CHAIN_TO_NETWORK.keys())}")
+        return CHAIN_TO_NETWORK[chain]
 
     @staticmethod
     def from_env() -> AlchemyClient:
