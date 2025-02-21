@@ -4,7 +4,7 @@ from decimal import Decimal
 from typing import Annotated, List, Optional, Self
 
 from alphaswarm.config import ChainConfig, TokenInfo
-from alphaswarm.core.token import TokenAmount
+from alphaswarm.core.token import BaseUnit, TokenAmount
 from alphaswarm.services.chains.solana.jupiter_client import JupiterClient
 from pydantic import BaseModel, Field
 from solana.rpc import api
@@ -126,9 +126,7 @@ class SolanaClient:
             if value.token_amount.amount == 0:
                 continue
             token_info = self.get_token_info(value.mint)
-            token_amount = TokenAmount(
-                token_info=token_info, value=token_info.convert_from_wei(value.token_amount.amount)
-            )
+            token_amount = token_info.to_amount_from_base_units(BaseUnit(value.token_amount.amount))
             result.append(token_amount)
         return result
 

@@ -3,8 +3,10 @@ from decimal import Decimal
 from typing import List, Optional
 
 import pytest
+from web3.types import Wei
 
-from alphaswarm.config import Config, TokenInfo
+from alphaswarm.config import Config
+from alphaswarm.core.token import TokenInfo
 
 
 @pytest.fixture
@@ -101,14 +103,14 @@ def test_config_jupiter(default_config: Config) -> None:
 def test_token_info_convert_to_wei(token_info: TokenInfo) -> None:
     initial = Decimal("1.000000000000000001")
     expected = "1000000000000000001"
-    wei = token_info.convert_to_wei(initial)
-    assert str(wei) == expected
+    wei = token_info.convert_to_base_units(initial)
+    assert Decimal(wei) == Decimal(expected)
 
 
 def test_token_info_convert_from_wei(token_info: TokenInfo) -> None:
-    wei = 1000000000000000001
+    wei: Wei = Wei(1000000000000000001)
     expected = "1.000000000000000001"
-    actual = token_info.convert_from_wei(wei)
+    actual = token_info.convert_from_base_units(wei)
     assert str(actual) == expected
 
 

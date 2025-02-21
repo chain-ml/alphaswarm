@@ -90,7 +90,7 @@ class EVMClient:
         """Get balance for token symbol (resolved via Config) for a wallet address"""
         token_info = self.get_token_info_by_name(token)
         if token_info.is_native:
-            return token_info.convert_from_wei(self.get_native_balance(wallet_address))
+            return token_info.convert_from_base_units(self.get_native_balance(wallet_address))
 
         token_details = self.get_token_details(token_info.checksum_address)
         # TODO this should be using ERC20Contract which would introduce a circular dependency

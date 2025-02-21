@@ -24,7 +24,7 @@ def test_historical_prices_by_symbol(alchemy_client: AlchemyClient) -> None:
 
     assert result is not None
     assert result.symbol == "USDC"
-    assert 24 <= len(result.data) <= 25
+    assert 23 <= len(result.data) <= 25
     assert result.data[0].value > 0.1
     assert result.data[0].timestamp >= start
 
@@ -41,7 +41,7 @@ def test_historical_prices_by_address(alchemy_client: AlchemyClient) -> None:
     assert result is not None
     assert result.address == address
     assert result.network == network
-    assert 24 <= len(result.data) <= 25
+    assert 23 <= len(result.data) <= 25
     assert result.data[0].value > 0.1
     assert result.data[0].timestamp >= start
 

@@ -2,12 +2,12 @@ from __future__ import annotations
 
 import base64
 import logging
-from decimal import Decimal
 from typing import Annotated, Any, Dict, List, Optional, Tuple
 from urllib.parse import urlencode
 
 import requests
 from alphaswarm.config import ChainConfig, Config, JupiterSettings, JupiterVenue, TokenInfo
+from alphaswarm.core.token import BaseUnit, TokenAmount
 from alphaswarm.services import ApiException
 from alphaswarm.services.chains.solana import SolanaClient, SolSigner
 from alphaswarm.services.exchanges.base import DEXClient, QuoteResult, SwapResult
@@ -40,8 +40,8 @@ class JupiterQuote(BaseModel):
     quote: Dict[str, Any]
 
     @property
-    def out_amount(self) -> Decimal:
-        return Decimal(self.quote["outAmount"])
+    def out_amount(self) -> BaseUnit:
+        return BaseUnit(self.quote["outAmount"])
 
 
 class JupiterSwapTransaction:
@@ -89,41 +89,41 @@ class JupiterClient(DEXClient[JupiterQuote]):
         tx_signature = self._client.process(tx.decode_transaction(), self.signer)
         return SwapResult.build_success(quote.amount_out, quote.amount_in, str(tx_signature))
 
-    def get_token_price(
-        self, token_out: TokenInfo, token_in: TokenInfo, amount_in: Decimal
-    ) -> QuoteResult[JupiterQuote]:
+    def get_token_price(self, token_out: TokenInfo, amount_in: TokenAmount) -> QuoteResult[JupiterQuote]:
         # Verify tokens are on Solana
+        token_in = amount_in.token_info
         if not token_out.chain == self.chain or not token_in.chain == self.chain:
             raise ValueError(f"Jupiter only supports Solana tokens. Got {token_out.chain} and {token_in.chain}")
 
         logger.debug(f"Getting amount_out for {token_out.symbol}/{token_in.symbol} on {token_out.chain} using Jupiter")
 
         # Prepare query parameters
-        quote = self._get_quote(token_out, token_in, amount_in)
+        quote = self._get_quote(token_out, amount_in)
 
         # Calculate amount_out (token_out per token_in)
         raw_out = quote.out_amount
-        amount_out = token_out.convert_from_wei(raw_out)
+        amount_out = token_out.to_amount_from_base_units(raw_out)
+
         # Log quote details
         logger.debug("Quote successful:")
-        logger.debug(f"- Input: {amount_in} {token_in.symbol}")
-        logger.debug(f"- Output: {amount_out} {token_out.symbol}")
-        logger.debug(f"- Ratio: {amount_out/amount_in} {token_out.symbol}/{token_in.symbol}")
+        logger.debug(f"- Input: {amount_in}")
+        logger.debug(f"- Output: {amount_out}")
+        logger.debug(f"- Ratio: {amount_out.value/amount_in.value} {token_out.symbol}/{token_in.symbol}")
 
         return QuoteResult(
             quote=quote,
             token_in=token_in,
             token_out=token_out,
-            amount_in=amount_in,
-            amount_out=amount_out,
+            amount_in=amount_in.value,
+            amount_out=amount_out.value,
         )
 
-    def _get_quote(self, token_out: TokenInfo, token_in: TokenInfo, amount_in: Decimal) -> JupiterQuote:
+    def _get_quote(self, token_out: TokenInfo, amount_in: TokenAmount) -> JupiterQuote:
         params = {
-            "inputMint": token_in.address,
+            "inputMint": amount_in.token_info.address,
             "outputMint": token_out.address,
             "swapMode": "ExactIn",
-            "amount": str(token_in.convert_to_wei(amount_in)),
+            "amount": str(amount_in.base_units),
             "slippageBps": self._settings.slippage_bps,
             "restrictIntermediateTokens": "true",
         }

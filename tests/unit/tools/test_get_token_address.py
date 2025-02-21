@@ -29,5 +29,7 @@ def test_get_token_address__raises_exception__if_symbol_not_found(tool: GetToken
 
 
 def test_get_token_address__raises_exception__if_invalid_chain(tool: GetTokenAddress) -> None:
-    with pytest.raises(KeyError):
+    with pytest.raises(ValueError) as e:
         tool.forward("WETH", "NotAChain")
+
+    assert str(e.value).startswith("Unknown chain! Configured chains: ")

@@ -4,6 +4,7 @@ from decimal import Decimal
 from typing import List, Tuple
 
 from alphaswarm.config import ChainConfig, TokenInfo
+from alphaswarm.core.token import TokenAmount
 from alphaswarm.services.chains.evm import ERC20Contract, EVMClient, EVMSigner
 from alphaswarm.services.exchanges.base import DEXClient, QuoteResult, SwapResult
 from eth_typing import ChecksumAddress, HexAddress
@@ -53,9 +54,7 @@ class UniswapClientBase(DEXClient[UniswapQuote]):
         pass
 
     @abstractmethod
-    def _get_token_price(
-        self, token_out: TokenInfo, token_in: TokenInfo, amount_in: Decimal
-    ) -> QuoteResult[UniswapQuote]:
+    def _get_token_price(self, token_out: TokenInfo, amount_in: TokenAmount) -> QuoteResult[UniswapQuote]:
         pass
 
     @abstractmethod
@@ -112,7 +111,7 @@ class UniswapClientBase(DEXClient[UniswapQuote]):
         token_out_contract = ERC20Contract(self._evm_client, token_out.checksum_address)
         token_in = quote.token_in
         token_in_contract = ERC20Contract(self._evm_client, token_in.checksum_address)
-        amount_in = quote.amount_in
+        amount_in = token_in.to_amount(quote.amount_in)
 
         logger.info(f"Initiating token swap for {token_in.symbol} to {token_out.symbol}")
         logger.info(f"Wallet address: {self.wallet_address}")
@@ -121,18 +120,16 @@ class UniswapClientBase(DEXClient[UniswapQuote]):
         gas_balance = self._evm_client.get_native_balance(self.wallet_address)
 
         # Log balances
-        out_balance = token_out.convert_from_wei(token_out_contract.get_balance(self.wallet_address))
-        in_balance = token_in.convert_from_wei(token_in_contract.get_balance(self.wallet_address))
-        eth_balance = Decimal(gas_balance) / (10**18)
+        out_balance = token_out.to_amount_from_base_units(token_out_contract.get_balance(self.wallet_address))
+        in_balance = token_in.to_amount_from_base_units(token_in_contract.get_balance(self.wallet_address))
+        eth_balance = TokenInfo.Ethereum().to_amount_from_base_units(gas_balance)
 
-        logger.info(f"Balance of {token_out.symbol}: {out_balance:,.8f}")
-        logger.info(f"Balance of {token_in.symbol}: {in_balance:,.8f}")
-        logger.info(f"ETH balance for gas: {eth_balance:,.6f}")
+        logger.info(f"Out Balance: {out_balance}")
+        logger.info(f"In Balance: {in_balance}")
+        logger.info(f"Gas balance: {eth_balance}")
 
         if in_balance < amount_in:
-            raise ValueError(
-                f"Cannot perform swap, as you have {in_balance} {token_in.symbol}. Need at least {amount_in}"
-            )
+            raise ValueError(f"Cannot perform swap, as you have {in_balance}. Need at least {amount_in}")
 
         # Each DEX trade is two transactions
         # 1) ERC-20.approve()
@@ -151,16 +148,15 @@ class UniswapClientBase(DEXClient[UniswapQuote]):
 
         return SwapResult.build_success(
             amount_out=amount_out,
-            amount_in=amount_in,
+            amount_in=amount_in.value,
             tx_hash=swap_receipt["transactionHash"].hex(),  # Return the swap tx hash, not the approved tx
         )
 
-    def _approve_token_spending(self, token: TokenInfo, raw_amount: int) -> TxReceipt:
+    def _approve_token_spending(self, amount: TokenAmount) -> TxReceipt:
         """Handle token approval and return fresh nonce and approval receipt.
 
         Args:
-            token: token info
-            raw_amount: Raw amount to approve
+            amount (TokenAmount): Amount to approve for spending
 
         Returns:
             TxReceipt: approval_receipt
@@ -168,18 +164,16 @@ class UniswapClientBase(DEXClient[UniswapQuote]):
         Raises:
             ValueError: If approval transaction fails
         """
-        token_contract = ERC20Contract(self._evm_client, token.checksum_address)
-        tx_receipt = token_contract.approve(self.get_signer(), self._router, raw_amount)
+        token_contract = ERC20Contract(self._evm_client, amount.token_info.checksum_address)
+        tx_receipt = token_contract.approve(self.get_signer(), self._router, amount.base_units)
         return tx_receipt
 
-    def get_token_price(
-        self, token_out: TokenInfo, token_in: TokenInfo, amount_in: Decimal
-    ) -> QuoteResult[UniswapQuote]:
+    def get_token_price(self, token_out: TokenInfo, amount_in: TokenAmount) -> QuoteResult[UniswapQuote]:
         logger.debug(
-            f"Getting price for {token_out.symbol}/{token_in.symbol} on {self.chain} using Uniswap {self.version}"
+            f"Getting price for {token_out.symbol}/{amount_in.token_info.symbol} on {self.chain} using Uniswap {self.version}"
         )
 
-        return self._get_token_price(token_out=token_out, token_in=token_in, amount_in=amount_in)
+        return self._get_token_price(token_out=token_out, amount_in=amount_in)
 
     def get_markets_for_tokens(self, tokens: List[TokenInfo]) -> List[Tuple[TokenInfo, TokenInfo]]:
         """Get list of valid trading pairs between the provided tokens.
