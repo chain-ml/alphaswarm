@@ -7,7 +7,7 @@ from alphaswarm.core.token import TokenAmount, TokenInfo
 from alphaswarm.services.portfolio.portfolio import PortfolioBase, PortfolioSwap
 
 
-def make_swaps(
+def create_swaps(
     swaps: List[Tuple[Union[int, str, Decimal], TokenInfo, Union[int, str, Decimal], TokenInfo]]
 ) -> List[PortfolioSwap]:
     result = []
@@ -36,7 +36,7 @@ def weth() -> TokenInfo:
 
 
 def test_portfolio_compute_pnl_fifo_one_asset(weth: TokenInfo, usdc: TokenInfo) -> None:
-    positions = make_swaps(
+    positions = create_swaps(
         [
             (1, weth, 10, usdc),
             (5, usdc, "0.6", weth),

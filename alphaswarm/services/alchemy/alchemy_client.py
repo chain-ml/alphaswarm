@@ -38,6 +38,7 @@ class HistoricalPriceByAddress:
 class Metadata:
     block_timestamp: Annotated[str, Field(alias="blockTimestamp")]
 
+
 @dataclass
 class RawContract:
     address: str
