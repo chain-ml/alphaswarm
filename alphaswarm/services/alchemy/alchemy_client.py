@@ -5,7 +5,7 @@ import os
 import time
 from datetime import datetime, timezone
 from decimal import Decimal
-from typing import Annotated, Dict, Final, List, Mapping, Optional
+from typing import Annotated, Dict, Final, List, Optional
 
 import requests
 from alphaswarm.services.api_exception import ApiException

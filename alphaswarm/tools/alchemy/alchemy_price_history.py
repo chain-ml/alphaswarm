@@ -1,5 +1,5 @@
 from datetime import datetime, timedelta, timezone
-from typing import Optional, Mapping
+from typing import Mapping, Optional
 
 from alphaswarm.core.tool import AlphaSwarmToolBase
 from alphaswarm.services.alchemy import AlchemyClient, HistoricalPriceByAddress, HistoricalPriceBySymbol
