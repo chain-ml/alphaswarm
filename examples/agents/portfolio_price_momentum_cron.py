@@ -16,6 +16,16 @@ from alphaswarm.tools.portfolio import GetPortfolioBalance
 
 
 class PriceMomentumCronAgent(AlphaSwarmAgent):
+    """
+    A portfolio-aware momentum trading agent that combines deterministic analysis 
+    with AlphaSwarm reasoning and tools for position sizing and trade execution.
+    
+    The agent will:
+    1. Monitor price changes and determine whether momentum criteria are met
+    2. If momentum criteria are met, the agent will generate trade instructions
+    3. The agent will use AlphaSwarm tools and reasoning to evaluate and execute optimal trades
+    """
+
     def __init__(
         self,
         token_addresses: List[str],
@@ -29,9 +39,7 @@ class PriceMomentumCronAgent(AlphaSwarmAgent):
         base_token: str = "WETH",
     ) -> None:
         """
-        A price momentum agent that alerts on significant price movements.
-        Price movements must exceed both thresholds and be in the same direction.
-
+        Initialize the PriceMomentumCronAgent.
         Args:
             token_addresses: List of token addresses to observe
             chain: Chain to observe
@@ -75,9 +83,14 @@ class PriceMomentumCronAgent(AlphaSwarmAgent):
         super().__init__(model_id="anthropic/claude-3-5-sonnet-20241022", tools=tools, hints=hints)
 
     def get_trade_alerts(self) -> str:
-        """Get trade instructions with portfolio-aware sizing."""
+        """
+        Generate trade instructions based on momentum signals and portfolio state.
+        
+        Combines momentum analysis, portfolio balance, and trading requirements into
+        a structured prompt for intelligent trade evaluation.
+        """
         # Get momentum signals
-        momentum_signals = self.get_price_history_info()
+        momentum_signals = self.analyze_momentum_signals()
         if not momentum_signals:
             return ""
 
@@ -101,7 +114,12 @@ class PriceMomentumCronAgent(AlphaSwarmAgent):
         return response
 
     def get_portfolio_balance_info(self) -> str:
-        """Generate formatted portfolio balance information."""
+        """
+        Generate formatted portfolio balance information.
+        
+        Returns a CSV-formatted string containing current token balances
+        with timestamp for trade analysis.
+        """
         tokens = self.portfolio_tool.forward(chain=self.chain)
         timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         balance_info = [
@@ -114,8 +132,13 @@ class PriceMomentumCronAgent(AlphaSwarmAgent):
         logging.info("Portfolio Balance retrieved")
         return "\n".join(balance_info)
 
-    def get_price_history_info(self) -> str:
-        """Generate price history information for tokens."""
+    def analyze_momentum_signals(self) -> str:
+        """
+        Generate momentum signals for monitored tokens.
+        
+        Analyzes short and long-term price changes for each token,
+        returning formatted signals when momentum thresholds are met.
+        """
         signals = []
         for address in self.token_addresses:
             logging.info(f"Getting price history for {address}")
@@ -160,7 +183,15 @@ class PriceMomentumCronAgent(AlphaSwarmAgent):
         return f"=== Momentum Trade Signal Found at {timestamp} ===\n{signals_str}"
 
     def calculate_price_changes(self, prices: List[Decimal]) -> Tuple[Decimal, Decimal]:
-        """Calculate short and long term price changes."""
+        """
+        Calculate short and long term price changes from a list of prices.
+
+        Args:
+            prices: List of historical prices in chronological order
+
+        Returns:
+            Tuple of (short_term_change, long_term_change) as percentages
+        """
         if len(prices) < self.long_term_periods:
             return Decimal("0"), Decimal("0")
 
@@ -175,20 +206,24 @@ class PriceMomentumCronAgent(AlphaSwarmAgent):
 
 
 async def main() -> None:
+    # Load environment variables
     dotenv.load_dotenv()
 
+    # Configure logging
     logging.basicConfig(
         format="%(asctime)s - %(levelname)s - %(name)s - %(filename)s:%(lineno)d - %(message)s",
         datefmt="%Y-%m-%d %H:%M:%S",
         level=logging.INFO,
     )
 
+    # Define the tokens (in addition to the base token) to monitor
     token_addresses = [
         "0x4F9Fd6Be4a90f2620860d680c0d4d5Fb53d1A825",  # AIXBT
         "0x0b3e328455c4059EEb9e3f84b5543F74E24e7E1b",  # VIRTUAL
         "0x731814e491571A2e9eE3c5b1F7f3b962eE8f4870",  # VADER
     ]
 
+    # Initialize the agent
     agent = PriceMomentumCronAgent(
         token_addresses=token_addresses,
         chain="base",
@@ -198,6 +233,7 @@ async def main() -> None:
         long_term_threshold=0.5,
     )
 
+    # Initialize the cron client
     cron_client = CronJobClient(
         agent=agent,
         client_id="Price Momentum Cron Agent With Portfolio Balance",
@@ -208,6 +244,8 @@ async def main() -> None:
         skip_message=lambda _: None,
         max_history=2,  # Last message pair only
     )
+
+    # Start the cron client
     await asyncio.gather(cron_client.start())
 
 
