@@ -4,15 +4,15 @@ from decimal import Decimal
 import pytest
 
 from alphaswarm.services.alchemy import AlchemyClient
-from alphaswarm.tools.forecasting.price_forecasting_tool import PriceForecastingTool
+from alphaswarm.tools.forecasting import ForecastTokenPrice
 
 
 @pytest.fixture
-def price_forecasting_tool() -> PriceForecastingTool:
-    return PriceForecastingTool()
+def price_forecasting_tool() -> ForecastTokenPrice:
+    return ForecastTokenPrice()
 
 
-def test_price_forecasting_tool(price_forecasting_tool: PriceForecastingTool, alchemy_client: AlchemyClient) -> None:
+def test_price_forecasting_tool(price_forecasting_tool: ForecastTokenPrice, alchemy_client: AlchemyClient) -> None:
     # Get historical price data for USDC
     end = datetime.now(timezone.utc)
     start = end - timedelta(days=7)  # Get a week of historical data

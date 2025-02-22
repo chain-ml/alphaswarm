@@ -7,10 +7,10 @@ import dotenv
 from alphaswarm.agent.agent import AlphaSwarmAgent
 from alphaswarm.agent.clients import CronJobClient
 from alphaswarm.config import Config
-from alphaswarm.tools.alchemy import AlchemyPriceHistoryBySymbol
-from alphaswarm.tools.exchanges import GetTokenPriceTool
-from alphaswarm.tools.price_tool import PriceTool
-from smolagents import Tool
+from alphaswarm.core.tool import AlphaSwarmToolBase
+from alphaswarm.tools.alchemy import GetAlchemyPriceHistoryBySymbol
+from alphaswarm.tools.core import GetUsdPrice
+from alphaswarm.tools.exchanges import GetTokenPrice
 
 logging.getLogger("smolagents").setLevel(logging.ERROR)
 
@@ -20,13 +20,13 @@ async def main() -> None:
     config = Config()
 
     # Initialize tools for price-related operations
-    # PriceTool: General price queries
-    # GetTokenPriceTool: Real-time token prices
-    # AlchemyPriceHistoryBySymbol: Historical price data from Alchemy
-    tools: List[Tool] = [PriceTool(), GetTokenPriceTool(config), AlchemyPriceHistoryBySymbol()]
+    # GetUsdPrice: General price queries
+    # GetTokenPrice: Real-time token prices
+    # GetAlchemyPriceHistoryBySymbol: Historical price data from Alchemy
+    tools: List[AlphaSwarmToolBase] = [GetUsdPrice(), GetTokenPrice(config), GetAlchemyPriceHistoryBySymbol()]
 
     # Initialize the AlphaSwarm agent with the price tools
-    llm_config = config.get_llm_config()
+    llm_config = config.get_default_llm_config("anthropic")
     agent = AlphaSwarmAgent(tools=tools, model_id=llm_config.model_id)
     def generate_message_cron_job1() -> str:
         # Randomly generate price queries for major cryptocurrencies

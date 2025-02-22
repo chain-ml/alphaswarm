@@ -12,7 +12,7 @@ T = TypeVar("T", bound="DEXClient")
 TQuote = TypeVar("TQuote")
 
 
-class QuoteResult(BaseModel, Generic[TQuote]):
+class QuoteResult(Generic[TQuote], BaseModel):
     quote: Annotated[TQuote, Field(repr=False)]
 
     token_in: TokenInfo
@@ -21,8 +21,7 @@ class QuoteResult(BaseModel, Generic[TQuote]):
     amount_out: Decimal
 
 
-@dataclass
-class SwapResult:
+class SwapResult(BaseModel):
     amount_out: Decimal
     amount_in: Decimal
     tx_hash: str

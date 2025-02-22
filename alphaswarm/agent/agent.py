@@ -2,14 +2,16 @@ import asyncio
 from datetime import datetime
 from typing import Optional, Sequence
 
-from smolagents import CODE_SYSTEM_PROMPT, CodeAgent, LiteLLMModel, Tool
+from alphaswarm.core.tool import AlphaSwarmToolBase
+from alphaswarm.core.tool.tool import AlphaSwarmToSmolAgentsToolAdapter
+from smolagents import CODE_SYSTEM_PROMPT, CodeAgent, LiteLLMModel
 
 
 class AlphaSwarmAgent:
 
     def __init__(
         self,
-        tools: Sequence[Tool],
+        tools: Sequence[AlphaSwarmToolBase],
         model_id: str = "anthropic/claude-3-5-sonnet-20241022",
         system_prompt: Optional[str] = None,
         hints: Optional[str] = None,
@@ -28,7 +30,7 @@ class AlphaSwarmAgent:
         system_prompt = system_prompt + "\n" + hints if hints else system_prompt
 
         self._agent = CodeAgent(
-            tools=list(tools),
+            tools=[AlphaSwarmToSmolAgentsToolAdapter.adapt(tool) for tool in tools],
             model=LiteLLMModel(model_id=model_id),
             system_prompt=system_prompt,
             additional_authorized_imports=["json", "decimal"],
