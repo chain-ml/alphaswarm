@@ -4,7 +4,6 @@ from alphaswarm.utils import load_strategy_config
 
 
 class Strategy:
-
     def __init__(self, *, rules: str, model_id: str) -> None:
         self.rules = rules
         self.model_id = model_id

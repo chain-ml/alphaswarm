@@ -4,7 +4,9 @@ from alphaswarm.core.llm import LLMFunction, Message
 
 
 def test_validate_messages_str_only() -> None:
-    messages = LLMFunction._validate_messages(str_message="test message", messages=None, role="system")
+    messages = LLMFunction._validate_messages(
+        str_message="test message", messages=None, role="system", allow_empty=False
+    )
 
     assert isinstance(messages, list)
     assert len(messages) == 1
@@ -18,14 +20,18 @@ def test_validate_messages_list_only() -> None:
         Message.create(role="system", content="message 1"),
         Message.create(role="user", content="message 2"),
     ]
-    messages = LLMFunction._validate_messages(str_message=None, messages=test_messages, role="system")
+    messages = LLMFunction._validate_messages(
+        str_message=None, messages=test_messages, role="system", allow_empty=False
+    )
 
     assert messages == test_messages
 
 
 def test_validate_messages_both() -> None:
     test_messages = [Message.create(role="system", content="message 1")]
-    messages = LLMFunction._validate_messages(str_message="test message", messages=test_messages, role="system")
+    messages = LLMFunction._validate_messages(
+        str_message="test message", messages=test_messages, role="system", allow_empty=False
+    )
 
     assert len(messages) == 2
     assert messages[0].role == "system"
@@ -46,5 +52,5 @@ def test_validate_messages_none_allowed() -> None:
 
 
 def test_validate_messages_user_role() -> None:
-    messages = LLMFunction._validate_messages(str_message="test message", messages=None, role="user")
+    messages = LLMFunction._validate_messages(str_message="test message", messages=None, role="user", allow_empty=False)
     assert messages[0].role == "user"

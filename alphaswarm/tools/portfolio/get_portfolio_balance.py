@@ -20,4 +20,4 @@ class GetPortfolioBalance(AlphaSwarmToolBase):
         Args:
             chain: Filter result for that chain if provided. Otherwise, execute for all chains
         """
-        return self._portfolio.get_token_balances(chain)
+        return self._portfolio.get_token_balances(chain).get_all_balances()

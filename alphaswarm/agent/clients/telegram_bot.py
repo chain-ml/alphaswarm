@@ -1,8 +1,9 @@
 import asyncio
 import logging
-from typing import Any
+from typing import Any, Optional
 
 from telegram import Update
+from telegram._utils.types import FileInput
 from telegram.constants import ParseMode
 from telegram.ext import Application, CommandHandler, ContextTypes, MessageHandler, filters
 
@@ -39,6 +40,14 @@ class TelegramApp:
             await self._app.bot.send_message(chat_id=chat_id, text=message, **kwargs)
         except Exception as e:
             logger.error(f"Failed to send Telegram message: {e}")
+            raise e
+
+    async def send_photo(self, chat_id: int, photo: FileInput, caption: Optional[str] = None, **kwargs: Any) -> None:
+        """Send an image to a specific chat"""
+        try:
+            await self._app.bot.send_photo(chat_id=chat_id, photo=photo, caption=caption, **kwargs)
+        except Exception as e:
+            logger.error(f"Failed to send Telegram image: {e}")
             raise e
 
 

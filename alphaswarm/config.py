@@ -76,10 +76,6 @@ class ChainConfig:
         """Get token info from its address, returning None if not found"""
         return next((token for token in self.tokens.values() if token.address == address), None)
 
-    def get_token_address_mapping(self) -> Dict[str, str]:
-        """Get a mapping of token symbols to their addresses"""
-        return {token_symbol: token_info.address for token_symbol, token_info in self.tokens.items()}
-
 
 @dataclass
 class UniswapV2Venue:
@@ -256,7 +252,11 @@ class Config:
             return default
 
     def get_chain_config(self, chain: str) -> ChainConfig:
-        values = self._config["chain_config"][chain].copy()
+        chain_config_dict: Dict[str, Any] = self._config["chain_config"]
+        if chain not in chain_config_dict:
+            raise ValueError(f"Unknown chain! Configured chains: [{', '.join(chain_config_dict.keys())}]")
+
+        values = chain_config_dict[chain].copy()
         values["chain"] = chain
         # Convert each token config into a TokenInfo instance
         if "tokens" in values:
@@ -270,7 +270,7 @@ class Config:
         """Get chain config or None if chain doesn't exist"""
         try:
             return self.get_chain_config(chain)
-        except KeyError:
+        except (KeyError, ValueError):
             return None
 
     def get_trading_venues(self) -> Dict[str, Any]:

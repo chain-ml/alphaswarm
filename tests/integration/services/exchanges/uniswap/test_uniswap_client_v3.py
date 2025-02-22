@@ -93,7 +93,7 @@ chains = [
 def test_quote_weth_to_usdc(client: UniswapClientV3, chain: str) -> None:
     usdc = client.chain_config.get_token_info("USDC")
     weth = client.chain_config.get_token_info("WETH")
-    quote = client.get_token_price(token_out=usdc, token_in=weth, amount_in=Decimal("0.01"))
+    quote = client.get_token_price(token_out=usdc, amount_in=weth.to_amount(Decimal("0.01")))
     print(quote)
     assert 10_000 > quote.amount_out > 10
 
@@ -105,7 +105,7 @@ def test_swap_weth_to_usdc(client: UniswapClientV3, chain: str) -> None:
     weth = client.chain_config.get_token_info("WETH")
     amount_in = Decimal("0.0001")
 
-    quote = client.get_token_price(token_out=usdc, token_in=weth, amount_in=amount_in)
+    quote = client.get_token_price(token_out=usdc, amount_in=weth.to_amount(amount_in))
     assert quote.amount_out > amount_in, "1 USDC is worth a fraction of WETH"
 
     result = client.swap(quote)

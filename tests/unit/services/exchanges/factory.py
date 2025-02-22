@@ -1,10 +1,10 @@
 from __future__ import annotations
-from decimal import Decimal
 from typing import List, Tuple
 
 import pytest
 
 from alphaswarm.config import Config, TokenInfo, ChainConfig
+from alphaswarm.core.token import TokenAmount
 from alphaswarm.services.exchanges import DEXClient, DEXFactory, QuoteResult, SwapResult
 
 
@@ -23,7 +23,7 @@ class MockDex(DEXClient[str]):
     def get_markets_for_tokens(self, tokens: List[TokenInfo]) -> List[Tuple[TokenInfo, TokenInfo]]:
         raise NotImplementedError("For test only")
 
-    def get_token_price(self, token_out: TokenInfo, token_in: TokenInfo, amount_in: Decimal) -> QuoteResult[str]:
+    def get_token_price(self, token_out: TokenInfo, amount_in: TokenAmount) -> QuoteResult[str]:
         raise NotImplementedError("For test only")
 
     def __init__(self, chain_config: ChainConfig) -> None:
