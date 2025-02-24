@@ -4,6 +4,7 @@ from decimal import Decimal
 from typing import NewType, Union
 
 from eth_typing import ChecksumAddress
+from pydantic import BaseModel
 from pydantic.dataclasses import dataclass
 from web3 import Web3
 from web3.types import Wei
@@ -55,8 +56,7 @@ class TokenAmount:
         return self.token_info.convert_to_base_units(self.value)
 
 
-@dataclass
-class TokenInfo:
+class TokenInfo(BaseModel):
     symbol: str
     address: str
     decimals: int
@@ -64,7 +64,7 @@ class TokenInfo:
     is_native: bool = False
 
     def convert_to_base_units(self, amount: Decimal) -> BaseUnit:
-        return BaseUnit(amount * (10**self.decimals))
+        return BaseUnit(int(amount * (10**self.decimals)))
 
     def convert_from_base_units(self, amount: Union[BaseUnit, Wei]) -> Decimal:
         return Decimal(amount) / (10**self.decimals)
