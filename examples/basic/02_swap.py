@@ -19,10 +19,9 @@ tools: List[AlphaSwarmToolBase] = [
 ]
 
 # Create the agent
-token_addresses: Dict[str, str] = config.get_chain_config("ethereum_sepolia").get_token_address_mapping()
-hints = "Here are token addresses: \n" + yaml.dump(token_addresses)  # So agent knows addresses to query
 llm_config = config.get_default_llm_config("anthropic")
-agent = AlphaSwarmAgent(tools=tools, model_id=llm_config.model_id, hints=hints)
+agent = AlphaSwarmAgent(tools=tools, model_id=llm_config.model_id)
+
 
 # Interact with the agent
 async def main() -> None:

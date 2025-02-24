@@ -308,50 +308,47 @@ class Config:
 
     def get_default_llm_config(self, provider: str) -> LLMConfig:
         """Get LLM configuration for a specific provider.
-        
+
         Args:
             provider: The LLM provider to use ("openai" or "anthropic")
-            
+
         Raises:
             ValueError: If the API key for the requested provider is not configured
         """
         if provider == "openai":
             if not os.getenv("OPENAI_API_KEY"):
                 raise ValueError("OpenAI API key not found in environment variables")
-            return LLMConfig(
-                provider="openai",
-                model_id=os.getenv("DEFAULT_OPENAI_MODEL", "gpt-4")
-            )
+            return LLMConfig(provider=provider, model_id=os.getenv("DEFAULT_OPENAI_MODEL", "gpt-4"))
         elif provider == "anthropic":
             if not os.getenv("ANTHROPIC_API_KEY"):
                 raise ValueError("Anthropic API key not found in environment variables")
             return LLMConfig(
-                provider="anthropic",
-                model_id=os.getenv("DEFAULT_ANTHROPIC_MODEL", "claude-3-5-sonnet-20241022")
+                provider=provider, model_id=os.getenv("DEFAULT_ANTHROPIC_MODEL", "claude-3-5-sonnet-20241022")
             )
         else:
             raise ValueError(f"Unsupported LLM provider: {provider}")
 
-    def get_wallets_info() -> Sequence[WalletInfo]:
-        """Get wallet information from environment variables for all supported chains.
 
-        Returns:
-            Sequence[WalletInfo]: List of wallet information objects.
-        """
-        wallet_env_mapping = {
-            "ethereum": "ETH_WALLET_ADDRESS",
-            "ethereum_sepolia": "ETH_SEPOLIA_WALLET_ADDRESS",
-            "base": "BASE_WALLET_ADDRESS",
-            "base_sepolia": "BASE_SEPOLIA_WALLET_ADDRESS",
-            "solana": "SOL_WALLET_ADDRESS",
-            "solana_devnet": "SOL_DEVNET_WALLET_ADDRESS",
-            "solana_testnet": "SOL_TESTNET_WALLET_ADDRESS",
-        }
+def get_wallets_info() -> Sequence[WalletInfo]:
+    """Get wallet information from environment variables for all supported chains.
 
-        wallets = []
-        for chain, env_var in wallet_env_mapping.items():
-            address = os.getenv(env_var)
-            if address:
-                wallets.append(WalletInfo(address=address, chain=chain))
+    Returns:
+        Sequence[WalletInfo]: List of wallet information objects.
+    """
+    wallet_env_mapping = {
+        "ethereum": "ETH_WALLET_ADDRESS",
+        "ethereum_sepolia": "ETH_SEPOLIA_WALLET_ADDRESS",
+        "base": "BASE_WALLET_ADDRESS",
+        "base_sepolia": "BASE_SEPOLIA_WALLET_ADDRESS",
+        "solana": "SOL_WALLET_ADDRESS",
+        "solana_devnet": "SOL_DEVNET_WALLET_ADDRESS",
+        "solana_testnet": "SOL_TESTNET_WALLET_ADDRESS",
+    }
 
-        return wallets
+    wallets = []
+    for chain, env_var in wallet_env_mapping.items():
+        address = os.getenv(env_var)
+        if address:
+            wallets.append(WalletInfo(address=address, chain=chain))
+
+    return wallets

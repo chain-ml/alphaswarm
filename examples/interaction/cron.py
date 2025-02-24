@@ -28,6 +28,7 @@ async def main() -> None:
     # Initialize the AlphaSwarm agent with the price tools
     llm_config = config.get_default_llm_config("anthropic")
     agent = AlphaSwarmAgent(tools=tools, model_id=llm_config.model_id)
+
     def generate_message_cron_job1() -> str:
         # Randomly generate price queries for major cryptocurrencies
         # Returns "quit" occasionally to potentially terminate the job
