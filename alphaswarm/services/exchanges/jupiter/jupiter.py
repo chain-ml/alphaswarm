@@ -41,7 +41,7 @@ class JupiterQuote(BaseModel):
 
     @property
     def out_amount(self) -> BaseUnit:
-        return BaseUnit(self.quote["outAmount"])
+        return BaseUnit(int(self.quote["outAmount"]))
 
 
 class JupiterSwapTransaction:
