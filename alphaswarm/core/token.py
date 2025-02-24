@@ -5,7 +5,6 @@ from typing import NewType, Union
 
 from eth_typing import ChecksumAddress
 from pydantic import BaseModel
-from pydantic.dataclasses import dataclass
 from web3 import Web3
 from web3.types import Wei
 
