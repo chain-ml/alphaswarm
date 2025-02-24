@@ -30,6 +30,7 @@ class JupiterTokenInfo:
 class JupiterClient:
     BASE_URL: Final[str] = "https://api.jup.ag"
     TOKEN_URL: Final[str] = f"{BASE_URL}/tokens/v1/token/{{address}}"
+    PRICE_URL: Final[str] = f"{BASE_URL}/price/v2"
 
     def get_token_info(self, token_address: str) -> JupiterTokenInfo:
         response = requests.get(self.TOKEN_URL.format(address=token_address))
@@ -37,3 +38,13 @@ class JupiterClient:
             raise ApiException(response)
 
         return JupiterTokenInfo(**response.json())
+
+    def get_token_price(self, id: str) -> JupiterTokenInfo:
+        data = { "ids": id }
+        response = requests.get(self.PRICE_URL, params=data)
+        if response.status_code != 200:
+            raise ApiException(response)
+
+        return response.json()
+
+
