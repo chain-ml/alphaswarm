@@ -28,6 +28,7 @@ tools: List[AlphaSwarmToolBase] = [
 # Create the agent
 agent = AlphaSwarmAgent(tools=tools, model_id=llm_config.model_id)
 
+
 # Interact with the agent
 async def main() -> None:
     response = await agent.process_message("Check strategy and initiate a trade if applicable")

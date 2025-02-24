@@ -60,6 +60,7 @@ class PriceMomentumCronAgent(AlphaSwarmAgent):
     def __init__(
         self,
         token_addresses: List[str],
+        model_id: str,
         chain: str = "base",
         short_term_minutes: int = 5,
         short_term_threshold: float = 2.0,
@@ -118,7 +119,7 @@ class PriceMomentumCronAgent(AlphaSwarmAgent):
             ExecuteTokenSwap(config=self.config),
         ]
 
-        super().__init__(model_id="anthropic/claude-3-5-sonnet-20241022", tools=tools)
+        super().__init__(model_id=model_id, tools=tools)
 
     def get_trading_task(self) -> str:
         """
@@ -148,7 +149,7 @@ class PriceMomentumCronAgent(AlphaSwarmAgent):
             "You are able to buy or sell based on the momentum signals you receive,\n"
             "where selling means swapping an alerted token for the base token.\n"
             "If you decide to trade, determine how much you want to trade for which token.\n"
-            "Provide your reasonings before making the final decision."
+            "Provide your reasoning before making the final decision."
         )
 
         return task_prompt
@@ -229,6 +230,7 @@ class PriceMomentumCronAgent(AlphaSwarmAgent):
 async def main() -> None:
     # Load environment variables
     dotenv.load_dotenv()
+    config = Config()
 
     # Configure logging
     logging.basicConfig(
@@ -243,10 +245,12 @@ async def main() -> None:
         "0x0b3e328455c4059EEb9e3f84b5543F74E24e7E1b",  # VIRTUAL
         "0x731814e491571A2e9eE3c5b1F7f3b962eE8f4870",  # VADER
     ]
+    llm_config = config.get_default_llm_config("anthropic")
 
     # Initialize the agent
     agent = PriceMomentumCronAgent(
         token_addresses=token_addresses,
+        model_id=llm_config.model_id,
         chain="base",
         short_term_minutes=5,
         short_term_threshold=0.1,
