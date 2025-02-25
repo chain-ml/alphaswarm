@@ -10,13 +10,17 @@ from enum import Enum, auto
 from typing import Callable, Dict, Iterable, List, Optional, Self, Sequence
 
 from solders.pubkey import Pubkey
+from solders.signature import Signature
 from web3.types import Wei
 
-from ...config import Config, WalletInfo
+from ...config import ChainConfig, Config, WalletInfo
 from ...core.token import TokenAmount, TokenInfo
 from ..alchemy import AlchemyClient
 from ..alchemy.alchemy_client import Transfer
 from ..chains import EVMClient, SolanaClient
+from ..chains.solana.jupiter_client import JupiterClient
+from ..helius import HeliusClient
+from ..helius.helius_client import EnhancedTransaction, TokenTransfer
 
 logger = logging.getLogger(__name__)
 
@@ -116,6 +120,10 @@ class PortfolioBase:
 
     @abstractmethod
     def get_token_balances(self) -> List[TokenAmount]:
+        pass
+
+    @abstractmethod
+    def get_swaps(self) -> List[PortfolioSwap]:
         pass
 
     @property
@@ -256,13 +264,17 @@ class Portfolio:
     def from_config(cls, config: Config) -> Self:
         portfolios: List[PortfolioBase] = []
         for chain in config.get_supported_networks():
-            chain_config = config.get_chain_config(chain)
-            wallet_info = WalletInfo.from_chain_config(chain_config)
-            if chain == "solana":
-                portfolios.append(PortfolioSolana(wallet_info, SolanaClient(chain_config)))
-            if chain in ["ethereum", "ethereum_sepolia", "base"]:
-                portfolios.append(PortfolioEvm(wallet_info, EVMClient(chain_config), AlchemyClient.from_env()))
+            portfolios.append(cls.from_chain(chain))
         return cls(portfolios)
+
+    @staticmethod
+    def from_chain(chain_config: ChainConfig) -> PortfolioBase:
+        wallet_info = WalletInfo.from_chain_config(chain_config)
+        if chain_config.chain == "solana":
+            return PortfolioSolana(wallet_info, SolanaClient(chain_config), HeliusClient.from_env(), JupiterClient())
+        if chain_config.chain in ["ethereum", "ethereum_sepolia", "base"]:
+            return PortfolioEvm(wallet_info, EVMClient(chain_config), AlchemyClient.from_env())
+        raise ValueError(f"unsupported chain {chain_config.chain}")
 
 
 class PortfolioEvm(PortfolioBase):
@@ -318,9 +330,67 @@ class PortfolioEvm(PortfolioBase):
 
 
 class PortfolioSolana(PortfolioBase):
-    def __init__(self, wallet: WalletInfo, solana_client: SolanaClient) -> None:
+    def __init__(
+        self,
+        wallet: WalletInfo,
+        solana_client: SolanaClient,
+        helius_client: HeliusClient,
+        jupiter_client: JupiterClient,
+    ) -> None:
         super().__init__(wallet)
         self._solana_client = solana_client
+        self._helius_client = helius_client
+        self._jupiter_client = jupiter_client
 
     def get_token_balances(self) -> List[TokenAmount]:
         return self._solana_client.get_all_token_balances(Pubkey.from_string(self._wallet.address))
+
+    def get_swaps(self) -> List[PortfolioSwap]:
+        result = []
+        before: Optional[Signature] = None
+        page_size = 100
+        last_page = page_size
+        wallet = Pubkey.from_string(self._wallet.address)
+
+        while last_page >= page_size:
+            signatures = self._solana_client.get_signatures_for_address(wallet, page_size, before)
+            if len(signatures) == 0:
+                break
+
+            last_page = len(signatures)
+            before = signatures[-1].signature
+            result.extend(self._signatures_to_swaps([str(item.signature) for item in signatures]))
+        return result
+
+    def _signatures_to_swaps(self, signatures: List[str]) -> List[PortfolioSwap]:
+        result = []
+        chunk_size = 100
+        for chunk in [signatures[i : i + chunk_size] for i in range(0, len(signatures), chunk_size)]:
+            transactions = self._helius_client.get_transactions(chunk)
+            for item in transactions:
+                swap = self._transaction_to_swap(item)
+                if swap is not None:
+                    result.append(swap)
+        return result
+
+    def _transaction_to_swap(self, transaction: EnhancedTransaction) -> Optional[PortfolioSwap]:
+        transfer_out: Optional[TokenTransfer] = next(
+            (item for item in transaction.token_transfers if item.from_user_account == self._wallet.address), None
+        )
+        transfer_in: Optional[TokenTransfer] = next(
+            (item for item in transaction.token_transfers if item.to_user_account == self._wallet.address), None
+        )
+
+        if transfer_out is None or transfer_in is None:
+            return None
+
+        return PortfolioSwap(
+            bought=self.transfer_to_token_amount(transfer_in),
+            sold=self.transfer_to_token_amount(transfer_out),
+            hash=transaction.signature,
+            block_number=transaction.slot,
+        )
+
+    def transfer_to_token_amount(self, transaction: TokenTransfer) -> TokenAmount:
+        token_info = self._solana_client.get_token_info(transaction.mint)
+        return TokenAmount(token_info, transaction.token_amount)

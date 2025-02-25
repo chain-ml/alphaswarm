@@ -1,10 +1,11 @@
+
 import pytest
 
 from alphaswarm.config import ChainConfig, Config, WalletInfo
 from alphaswarm.services.alchemy import AlchemyClient
 from alphaswarm.services.chains import EVMClient
 from alphaswarm.services.portfolio import Portfolio
-from alphaswarm.services.portfolio.portfolio import PortfolioEvm
+from alphaswarm.services.portfolio.portfolio import PortfolioBase, PortfolioEvm
 
 
 @pytest.fixture
@@ -18,9 +19,9 @@ def eth_sepolia_portfolio(eth_sepolia_config: ChainConfig, alchemy_client: Alche
 
 
 @pytest.fixture
-def evm_portfolio(chain: str, default_config: Config, alchemy_client: AlchemyClient) -> PortfolioEvm:
+def portfolio(chain: str, default_config: Config, alchemy_client: AlchemyClient) -> PortfolioBase:
     chain_config = default_config.get_chain_config(chain)
-    return PortfolioEvm(WalletInfo.from_chain_config(chain_config), EVMClient(chain_config), alchemy_client)
+    return Portfolio.from_chain(chain_config)
 
 
 @pytest.mark.skip("Need wallet")
@@ -30,12 +31,12 @@ def test_portfolio_get_balances(default_config: Config, alchemy_client: AlchemyC
     assert len(result.get_non_zero_balances()) > 3
 
 
-chains = ["ethereum", "ethereum_sepolia", "base"]
+chains = ["ethereum", "ethereum_sepolia", "base", "solana"]
 
 
 @pytest.mark.parametrize("chain", chains)
 @pytest.mark.skip("Need wallet")
-def test_portfolio_get_swaps(chain: str, evm_portfolio: PortfolioEvm) -> None:
-    result = evm_portfolio.get_swaps()
+def test_portfolio_get_swaps(chain: str, portfolio: PortfolioBase, default_config: Config) -> None:
+    result = portfolio.get_swaps()
     for item in result:
         print(item.to_short_string())
