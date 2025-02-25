@@ -109,7 +109,6 @@ class PortfolioSwap:
         return f"{self.sold.value} {self.sold.token_info.symbol} -> {self.bought.value} {self.bought.token_info.symbol} ({self.sold.token_info.chain} {self.block_number} {self.hash})"
 
 
-# A pricing function that returns the price in second token address for each first token address
 PricingFunction = Callable[[str, str], Decimal]
 
 
@@ -133,6 +132,16 @@ class PortfolioBase:
     def compute_pnl(
         cls, positions: Sequence[PortfolioSwap], base_token: TokenInfo, pricing_function: PricingFunction
     ) -> PortfolioPNL:
+        """Compute profit and loss (PNL) for a sequence of portfolio swaps.
+
+        Args:
+            positions: Sequence of portfolio swaps to analyze
+            base_token: Token to use as the base currency for PNL calculations
+            pricing_function: Function that returns current price of an asset in terms of base token (asset_token/base_token)
+
+        Returns:
+            PortfolioPNL object containing realized and unrealized PNL details
+        """
         items = sorted(positions, key=lambda x: x.block_number)
         per_asset = defaultdict(list)
         for position in items:
