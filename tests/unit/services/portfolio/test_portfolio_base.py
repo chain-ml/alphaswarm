@@ -4,12 +4,7 @@ from typing import List, Tuple, Union
 import pytest
 
 from alphaswarm.core.token import TokenAmount, TokenInfo
-from alphaswarm.services.portfolio.portfolio import (
-    PnlMode,
-    PortfolioBase,
-    PortfolioPNLDetail,
-    PortfolioSwap,
-)
+from alphaswarm.services.portfolio.portfolio_base import PnlMode, PortfolioBase, PortfolioPNLDetail, PortfolioSwap
 
 
 def create_swaps(
