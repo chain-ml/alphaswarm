@@ -1,13 +1,12 @@
 import logging
 import time
 from decimal import Decimal
-from typing import Annotated, Any, Iterable, List, Optional, Self
+from typing import Annotated, List, Optional, Self
 
 from alphaswarm.config import ChainConfig, TokenInfo
 from alphaswarm.core.token import BaseUnit, TokenAmount
 from alphaswarm.services.chains.solana.jupiter_client import JupiterClient
 from pydantic import BaseModel, Field
-from solana.exceptions import SolanaRpcException
 from solana.rpc import api
 from solana.rpc.commitment import Finalized
 from solana.rpc.types import TokenAccountOpts
@@ -172,19 +171,3 @@ class SolanaClient:
             wallet_address, commitment=Finalized, limit=limit, before=before
         )
         return result.value
-
-    def get_transactions(self, wallet_address: Pubkey) -> Iterable[RpcConfirmedTransactionStatusWithSignature]:
-        # TODO handle more than the default 1000 first transactions
-        signatures = self._client.get_signatures_for_address(wallet_address, commitment=Finalized)
-        result = []
-        for item in signatures.value:
-            try:
-                time.sleep(1)
-                result.append(self.get_transaction(item.signature))
-            except SolanaRpcException:
-                raise
-        return result
-
-    def get_transaction(self, signature: Signature) -> Any:
-        tx = self._client.get_transaction(signature, max_supported_transaction_version=0)
-        return tx
