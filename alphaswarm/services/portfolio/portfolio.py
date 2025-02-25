@@ -49,21 +49,21 @@ class PortfolioPNL:
 
 
 class PortfolioPNLDetail:
-    def __init__(self, bought: PortfolioSwap, selling_price: Decimal, asset_sold: Decimal, is_realized: bool) -> None:
+    def __init__(self, bought: PortfolioSwap, selling_price: Decimal, sold_amount: Decimal, is_realized: bool) -> None:
         self._bought = bought
         self._selling_price = selling_price
-        self._assert_sold = asset_sold
+        self._sold_amount = sold_amount
         self._is_realized = is_realized
-        self._pnl = asset_sold * (self._selling_price - self.buying_price)
+        self._pnl = sold_amount * (self._selling_price - self.buying_price)
 
     @property
     def buying_price(self) -> Decimal:
-        """Buying price per assert"""
+        """Buying price per asset"""
         return self._bought.sold.value / self._bought.bought.value
 
     @property
     def sold_amount(self) -> Decimal:
-        return self._assert_sold
+        return self._sold_amount
 
     @property
     def selling_price(self) -> Decimal:
@@ -86,17 +86,17 @@ class PortfolioPNLDetail:
 
 
 class PortfolioRealizedPNLDetail(PortfolioPNLDetail):
-    def __init__(self, bought: PortfolioSwap, sold: PortfolioSwap, asset_sold: Decimal) -> None:
+    def __init__(self, bought: PortfolioSwap, sold: PortfolioSwap, sold_amount: Decimal) -> None:
         if bought.block_number > sold.block_number:
             raise ValueError("bought block number is greater than sold block number")
 
-        super().__init__(bought, sold.bought.value / sold.sold.value, asset_sold, is_realized=True)
+        super().__init__(bought, sold.bought.value / sold.sold.value, sold_amount, is_realized=True)
         self._sold = sold
 
 
 class PortfolioUnrealizedPNLDetail(PortfolioPNLDetail):
-    def __init__(self, bought: PortfolioSwap, selling_price: Decimal, asset_sold: Decimal) -> None:
-        super().__init__(bought, selling_price, asset_sold, is_realized=False)
+    def __init__(self, bought: PortfolioSwap, selling_price: Decimal, sold_amount: Decimal) -> None:
+        super().__init__(bought, selling_price, sold_amount, is_realized=False)
 
 
 @dataclass
