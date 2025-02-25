@@ -118,3 +118,8 @@ def test_get_trading_venues_for_chain(default_config: Config) -> None:
     result = default_config.get_trading_venues_for_chain(chain="ethereum")
 
     assert set(result) == {"uniswap_v2", "uniswap_v3"}
+
+def test_get_supported_networks(default_config: Config) -> None:
+    result = default_config.get_supported_networks()
+
+    assert set(result) == {"ethereum", "ethereum_sepolia", "base", "solana"}
