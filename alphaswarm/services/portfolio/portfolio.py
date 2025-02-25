@@ -19,8 +19,7 @@ from ..alchemy import AlchemyClient
 from ..alchemy.alchemy_client import Transfer
 from ..chains import EVMClient, SolanaClient
 from ..chains.solana.jupiter_client import JupiterClient
-from ..helius import HeliusClient
-from ..helius.helius_client import EnhancedTransaction, TokenTransfer
+from ..helius import EnhancedTransaction, HeliusClient, TokenTransfer
 
 logger = logging.getLogger(__name__)
 
