@@ -46,3 +46,28 @@ def test_from_prompt_config() -> None:
         == llm_func_v2.user_prompt_template
         == "Answer the following questions: {question}"
     )
+
+
+def test_from_structured_prompt_config() -> None:
+    # TODO tests prompt
+    llm_func = LLMFunctionTemplated.from_prompt_config_file(
+        response_model=Response,
+        prompt_config_path=PromptPath.structured,
+    )
+
+    assert llm_func._model_id == "claude-3-5-haiku-20241022"
+    assert (
+        llm_func.system_prompt
+        == """<instructions>
+  You are a helpful assistant.
+  <hints>
+    Answer the question in a concise manner.
+  </hints>
+</instructions>"""
+    )
+    assert (
+        llm_func.user_prompt_template
+        == """<question>
+  What's the capital of France?
+</question>"""
+    )

@@ -267,8 +267,8 @@ class LLMFunctionTemplated(LLMFunctionBase[T_Response]):
             system_prompt_params: Parameters for formatting the system prompt
             max_retries: Maximum number of retry attempts
         """
-        system_prompt_template = prompt_config.prompt.system.template
-        user_prompt_template = prompt_config.prompt.user.template if prompt_config.prompt.user else None
+        system_prompt_template = prompt_config.prompt.system.get_template()
+        user_prompt_template = prompt_config.prompt.user.get_template() if prompt_config.prompt.user else None
 
         if prompt_config.llm is None:
             raise ValueError("LLMConfig not set in PromptConfig")
