@@ -8,12 +8,13 @@ from alphaswarm.core.token import BaseUnit, TokenAmount
 from alphaswarm.services.chains.solana.jupiter_client import JupiterClient
 from pydantic import BaseModel, Field
 from solana.rpc import api
+from solana.rpc.commitment import Finalized
 from solana.rpc.types import TokenAccountOpts
 from solders.account_decoder import ParsedAccount
 from solders.keypair import Keypair
 from solders.message import to_bytes_versioned
 from solders.pubkey import Pubkey
-from solders.rpc.responses import SendTransactionResp
+from solders.rpc.responses import RpcConfirmedTransactionStatusWithSignature, SendTransactionResp
 from solders.signature import Signature
 from solders.transaction import VersionedTransaction
 from solders.transaction_status import TransactionConfirmationStatus
@@ -161,3 +162,12 @@ class SolanaClient:
         raise RuntimeError(
             f"Failed to get confirmation for transaction '{str(signature)}' for {initial_timeout} seconds. Last status is {status}"
         )
+
+    def get_signatures_for_address(
+        self, wallet_address: Pubkey, limit: int = 1000, before: Optional[Signature] = None
+    ) -> List[RpcConfirmedTransactionStatusWithSignature]:
+
+        result = self._client.get_signatures_for_address(
+            wallet_address, commitment=Finalized, limit=limit, before=before
+        )
+        return result.value
