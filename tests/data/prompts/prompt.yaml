@@ -1,0 +1,15 @@
+kind: Prompt
+metadata:
+  description: |
+    This is a prompt doing abc
+llm:
+  model: gpt-4o-mini
+  params:
+    temperature: 0.3
+prompt:
+  system:
+    template: |
+      You are a helpful assistant.
+  user:
+    template: |
+      Answer the following questions: {question}

@@ -5,6 +5,7 @@ from alphaswarm.core.prompt.prompt import (
     PromptPair,
     LLMConfig,
 )
+from tests import PromptPath
 
 
 class TestPromptTemplate:
@@ -75,23 +76,18 @@ class TestPromptConfig:
         with pytest.raises(ValueError, match="Invalid kind: InvalidKind"):
             PromptConfig(kind="InvalidKind", prompt=prompt_pair)
 
-    def test_from_yaml(self) -> None:
-        yaml_str = """
-        kind: Prompt
-        prompt:
-          system:
-            template: You are a helpful assistant.
-          user:
-            template: Help me with this task.
-        metadata:
-          version: "0.0.1"
-        llm:
-          model: gpt-4o
-          params:
-            temperature: 0.7
-        """
+    def test_from_dict(self) -> None:
+        data = {
+            "kind": "Prompt",
+            "prompt": {
+                "system": {"template": "You are a helpful assistant."},
+                "user": {"template": "Help me with this task."},
+            },
+            "metadata": {"version": "0.0.1"},
+            "llm": {"model": "gpt-4o", "params": {"temperature": 0.7}},
+        }
 
-        config = PromptConfig.from_yaml(yaml_str)
+        config = PromptConfig(**data)  # type: ignore
 
         assert config.kind == "Prompt"
         assert isinstance(config.prompt, PromptPair)
@@ -103,3 +99,17 @@ class TestPromptConfig:
         assert config.llm is not None
         assert config.llm.model == "gpt-4o"
         assert config.llm.params == {"temperature": 0.7}
+
+    def test_from_file(self) -> None:
+        config = PromptConfig.from_yaml(PromptPath.basic)
+
+        assert config.kind == "Prompt"
+        assert isinstance(config.prompt, PromptPair)
+        assert isinstance(config.prompt.system, PromptTemplate)
+        assert config.prompt.system.template == "You are a helpful assistant."
+        assert isinstance(config.prompt.user, PromptTemplate)
+        assert config.prompt.user.template == "Answer the following questions: {question}"
+        assert config.metadata == {"description": "This is a prompt doing abc\n"}
+        assert config.llm is not None
+        assert config.llm.model == "gpt-4o-mini"
+        assert config.llm.params == {"temperature": 0.3}

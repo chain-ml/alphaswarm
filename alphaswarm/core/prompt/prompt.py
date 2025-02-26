@@ -16,6 +16,11 @@ class PromptTemplateBase(BaseModel, abc.ABC):
 class PromptTemplate(PromptTemplateBase):
     template: str
 
+    @field_validator("template")
+    @classmethod
+    def strip_template(cls, template: str) -> str:
+        return template.strip()
+
     def get_template(self) -> str:
         return self.template
 
@@ -44,6 +49,7 @@ class PromptConfig(BaseModel):
         return kind
 
     @classmethod
-    def from_yaml(cls, yaml_str: str) -> PromptConfig:
-        data = yaml.safe_load(yaml_str)
+    def from_yaml(cls, path: str) -> PromptConfig:
+        with open(path, "r", encoding="utf-8") as f:
+            data = yaml.safe_load(f)
         return cls(**data)

@@ -1,0 +1,24 @@
+kind: StructuredPrompt
+metadata:
+  description: |
+    This is a prompt doing xyz
+llm:
+  model: claude-3-5-haiku-20241022
+  params:
+    temperature: 0.2
+prompt:
+  system:
+    sections:
+      - name: Instructions
+        content: |
+          You are a helpful assistant.
+        sections:
+          - name: Hints
+            content: |
+              Answer the question in a concise manner.
+  user:
+    sections:
+      - name: Question
+        content: |
+          What's the capital of France?
+  formatter: XML
