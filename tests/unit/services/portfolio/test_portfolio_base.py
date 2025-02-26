@@ -4,7 +4,7 @@ from typing import List, Tuple, Union
 import pytest
 
 from alphaswarm.core.token import TokenAmount, TokenInfo
-from alphaswarm.services.portfolio.portfolio_base import PnlMode, PortfolioBase, PortfolioPNLDetail, PortfolioSwap
+from alphaswarm.services.portfolio import PnlMode, PortfolioPNL, PortfolioPNLDetail, PortfolioSwap
 
 
 def create_swaps(
@@ -61,7 +61,7 @@ def test_portfolio_compute_pnl_fifo_one_asset__sell_from_first_swap(weth: TokenI
         ]
     )
 
-    pnl = PortfolioBase.compute_pnl(positions, weth, lambda asset, base: Decimal(1))
+    pnl = PortfolioPNL.compute_pnl(positions, weth, lambda asset, base: Decimal(1))
 
     usdc_pnl = iter(pnl._details_per_asset[usdc.address])
     assert_detail(next(usdc_pnl), sold_amount=5, buying_price="0.1", selling_price="0.4", pnl="1.5", realized=True)
@@ -85,7 +85,7 @@ def test_portfolio_compute_pnl_fifo_one_asset__sell_from_multiple_swaps(weth: To
         ]
     )
 
-    pnl = PortfolioBase.compute_pnl(positions, weth, lambda asset, base: Decimal(1))
+    pnl = PortfolioPNL.compute_pnl(positions, weth, lambda asset, base: Decimal(1))
     usdc_pnl = iter(pnl._details_per_asset[usdc.address])
     assert_detail(next(usdc_pnl), sold_amount=5, buying_price="0.1", selling_price=".15", pnl=".25", realized=True)
     assert_detail(next(usdc_pnl), sold_amount=5, buying_price="0.1", selling_price="1", pnl="4.5", realized=True)
@@ -107,4 +107,4 @@ def test_portoflio_compute_pnl__bought_exhausted_raise_exception(weth: TokenInfo
     )
 
     with pytest.raises(RuntimeError):
-        PortfolioBase.compute_pnl(positions, weth, lambda asset, base: Decimal(1))
+        PortfolioPNL.compute_pnl(positions, weth, lambda asset, base: Decimal(1))
