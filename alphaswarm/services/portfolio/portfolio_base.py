@@ -93,7 +93,7 @@ class PortfolioSwap:
     block_number: int
 
     def to_short_string(self) -> str:
-        return f"{self.sold.value} {self.sold.token_info.symbol} -> {self.bought.value} {self.bought.token_info.symbol} ({self.sold.token_info.chain} {self.block_number} {self.hash})"
+        return f"{self.sold} -> {self.bought} ({self.sold.token_info.chain} {self.block_number} {self.hash})"
 
 
 PricingFunction = Callable[[str, str], Decimal]
