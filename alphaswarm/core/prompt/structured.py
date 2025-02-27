@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import abc
-from typing import Optional, List, Sequence, Mapping, Type, Union
+from typing import List, Mapping, Optional, Sequence, Type
 
 from pydantic import BaseModel, field_validator, model_validator
 
@@ -21,7 +21,7 @@ class PromptSection(BaseModel):
         return content
 
 
-class PromptFormatter(abc.ABC):
+class PromptFormatterBase(abc.ABC):
     def format(self, sections: Sequence[PromptSection]) -> str:
         return "\n".join(self._format_section(section) for section in sections)
 
@@ -30,7 +30,7 @@ class PromptFormatter(abc.ABC):
         pass
 
 
-class StringPromptFormatter(PromptFormatter):
+class StringPromptFormatter(PromptFormatterBase):
     def __init__(self, section_prefix: str = ""):
         self.section_prefix = section_prefix
 
@@ -42,7 +42,7 @@ class StringPromptFormatter(PromptFormatter):
         return "\n".join(parts)
 
 
-class MarkdownPromptFormatter(PromptFormatter):
+class MarkdownPromptFormatter(PromptFormatterBase):
     def _format_section(self, section: PromptSection, indent: int = 1) -> str:
         parts = [f"{'#' * indent} {section.name}", ""]
         if section.content:
@@ -51,7 +51,7 @@ class MarkdownPromptFormatter(PromptFormatter):
         return "\n".join(parts)
 
 
-class XMLPromptFormatter(PromptFormatter):
+class XMLPromptFormatter(PromptFormatterBase):
     INDENT_DIFF: str = "  "
 
     def _format_section(self, section: PromptSection, indent: str = "") -> str:
@@ -68,7 +68,7 @@ class XMLPromptFormatter(PromptFormatter):
         return "\n".join(parts)
 
 
-FORMATTER_REGISTRY: Mapping[str, Type[PromptFormatter]] = {
+FORMATTER_REGISTRY: Mapping[str, Type[PromptFormatterBase]] = {
     "string": StringPromptFormatter,
     "markdown": MarkdownPromptFormatter,
     "xml": XMLPromptFormatter,
@@ -77,6 +77,10 @@ FORMATTER_REGISTRY: Mapping[str, Type[PromptFormatter]] = {
 
 class StructuredPromptTemplate(PromptTemplateBase):
     sections: List[PromptSection]
+    _formatter: PromptFormatterBase
+
+    def set_formatter(self, formatter: PromptFormatterBase) -> None:
+        self._formatter = formatter
 
     def get_template(self) -> str:
         return self._formatter.format(self.sections)
@@ -86,23 +90,27 @@ class StructuredPromptPair(BaseModel):
     system: StructuredPromptTemplate
     user: Optional[StructuredPromptTemplate] = None
     formatter: str = "string"
-
-    @staticmethod
-    def resolve_formatter(formatter: Union[str, PromptFormatter]) -> PromptFormatter:
-        # TODO: save in _formatter
-        if isinstance(formatter, PromptFormatter):
-            return formatter
-        if formatter.lower() in FORMATTER_REGISTRY:
-            return FORMATTER_REGISTRY[formatter.lower()]()
-        raise ValueError(
-            f"Unknown formatter: `{formatter}`. Available formatters: {', '.join(FORMATTER_REGISTRY.keys())}"
-        )
+    _formatter: PromptFormatterBase
 
     @model_validator(mode="after")
-    def set_formatter(self):
-        self._formatter = self.resolve_formatter(self.formatter)
-        self.system._formatter = self._formatter
-        if self.user:
-            self.user._formatter = self._formatter
-
+    def formatter_validator(self) -> StructuredPromptPair:
+        formatter: PromptFormatterBase = self.formatter_string_to_obj(self.formatter)
+        self.set_formatter(formatter)
         return self
+
+    @staticmethod
+    def formatter_string_to_obj(formatter: str) -> PromptFormatterBase:
+        formatter = formatter.lower()
+        if formatter not in FORMATTER_REGISTRY:
+            raise ValueError(
+                f"Unknown formatter: `{formatter}`. Available formatters: {', '.join(FORMATTER_REGISTRY.keys())}"
+            )
+
+        formatter_cls = FORMATTER_REGISTRY[formatter]
+        return formatter_cls()
+
+    def set_formatter(self, formatter: PromptFormatterBase) -> None:
+        self._formatter = formatter
+        self.system.set_formatter(self._formatter)
+        if self.user:
+            self.user.set_formatter(self._formatter)

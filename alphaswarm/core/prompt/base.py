@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import abc
+from typing import Any, Optional
 
 from pydantic import BaseModel
 
@@ -10,4 +11,7 @@ class PromptTemplateBase(BaseModel, abc.ABC):
     def get_template(self) -> str:
         pass
 
-# TODO: base prompt pair
+
+class PromptPairBase(BaseModel):
+    system: Any
+    user: Optional[Any] = None

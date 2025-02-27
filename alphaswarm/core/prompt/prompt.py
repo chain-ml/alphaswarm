@@ -5,7 +5,7 @@ from typing import Any, Dict, Optional, Union
 import yaml
 from pydantic import BaseModel, field_validator
 
-from .base import PromptTemplateBase
+from .base import PromptPairBase, PromptTemplateBase
 from .structured import StructuredPromptPair
 
 
@@ -15,20 +15,21 @@ class PromptTemplate(PromptTemplateBase):
     @field_validator("template")
     @classmethod
     def strip_template(cls, template: str) -> str:
+        # TODO: use StringConstraints in these cases
         return template.strip()
 
     def get_template(self) -> str:
         return self.template
 
 
-class PromptPair(BaseModel):
+class PromptPair(PromptPairBase):
     system: PromptTemplate
     user: Optional[PromptTemplate] = None
 
 
 class LLMConfig(BaseModel):
     model: str
-    params: Optional[Dict[str, Any]] = None
+    params: Dict[str, Any] = {}
 
 
 class PromptConfig(BaseModel):
