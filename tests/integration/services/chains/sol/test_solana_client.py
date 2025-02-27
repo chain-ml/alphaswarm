@@ -43,3 +43,10 @@ def test_get_all_token_balances(client: SolanaClient, solana_config: ChainConfig
     assert len(result) > 0
     for item in result:
         assert item.value > 0, f"balance for token {item.token_info.symbol}"
+
+
+@pytest.mark.skip("Requires a valid Solana wallet")
+def test_get_signatures_for_address(client: SolanaClient, solana_config: ChainConfig) -> None:
+    wallet = Pubkey.from_string(solana_config.wallet_address)
+    result = client.get_signatures_for_address(wallet, limit=4)
+    assert len(result) == 4
