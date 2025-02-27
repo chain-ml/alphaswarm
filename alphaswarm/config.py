@@ -230,9 +230,14 @@ class Config:
 
     def get_supported_networks(self) -> list:
         """Get list of supported networks for current environment"""
-        if self._network_env == "all":
-            return self._config["chain_config"].keys()
-        return self._config["network_environments"].get(self._network_env, [])
+        network_env = self._config["network_environments"]
+        if self._network_env != "all":
+            return network_env.get(self._network_env, [])
+
+        result = set()
+        for networks in network_env.values():
+            result.update(set(networks))
+        return list(result)
 
     def get(self, key_path: str, default: Any = None) -> Any:
         """Get configuration value using dot notation"""

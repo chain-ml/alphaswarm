@@ -3,6 +3,7 @@ from __future__ import annotations
 import logging
 import os
 import time
+from dataclasses import dataclass
 from datetime import datetime, timezone
 from decimal import Decimal
 from typing import Annotated, Dict, Final, List, Optional
@@ -34,6 +35,17 @@ class Metadata(BaseModel):
     block_timestamp: Annotated[str, Field(alias="blockTimestamp")]
 
 
+@dataclass
+class RawContract:
+    address: str
+    value: int
+    decimal: int
+
+    @field_validator("value", "decimal", mode="before")
+    def convert_hex_to_int(cls, value: str) -> int:
+        return int(value, 16)
+
+
 class Transfer(BaseModel):
     """Represents a token transfer transaction.
 
@@ -57,6 +69,7 @@ class Transfer(BaseModel):
     from_address: Annotated[str, Field(validation_alias="from")]
     to_address: Annotated[str, Field(validation_alias="to")]
     value: Annotated[Decimal, Field(default=Decimal(0))]
+    raw_contract: Annotated[RawContract, Field(alias="rawContract")]
     metadata: Metadata
     asset: str = "UNKNOWN"
     category: str = "UNKNOWN"

@@ -41,7 +41,7 @@ AlphaSwarm is a starter kit for building LLM-powered AI agents that interpret na
 - Python 3.11 or higher
   - Download and install Python from [here](https://www.python.org/downloads/)
   - Verify installation with `python --version`
-- [Poetry](https://python-poetry.org/docs/) (package manager)
+- [Poetry](https://python-poetry.org/docs/) 2.1 or higher  (package manager)
   - Install Poetry with `pipx install poetry`
   - Verify installation with `poetry --version`
 - Basic understanding of crypto trading concepts

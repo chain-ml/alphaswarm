@@ -1,30 +1,18 @@
 from __future__ import annotations
 
-from abc import abstractmethod
 from datetime import UTC, datetime
 from decimal import Decimal
 from typing import Dict, Iterable, List, Optional, Self
 
-from solders.pubkey import Pubkey
-from web3.types import Wei
-
-from ...config import Config, WalletInfo
-from ...core.token import TokenAmount, TokenInfo
+from ...config import ChainConfig, Config, WalletInfo
+from ...core.token import TokenAmount
 from ..alchemy import AlchemyClient
 from ..chains import EVMClient, SolanaClient
-
-
-class PortfolioBase:
-    def __init__(self, wallet: WalletInfo) -> None:
-        self._wallet = wallet
-
-    @abstractmethod
-    def get_token_balances(self) -> List[TokenAmount]:
-        pass
-
-    @property
-    def chain(self) -> str:
-        return self._wallet.chain
+from ..chains.solana.jupiter_client import JupiterClient
+from ..helius import HeliusClient
+from .portfolio_base import PortfolioBase
+from .portfolio_evm import PortfolioEvm
+from .portfolio_solana import PortfolioSolana
 
 
 class PortfolioBalance:
@@ -104,48 +92,14 @@ class Portfolio:
     def from_config(cls, config: Config) -> Self:
         portfolios: List[PortfolioBase] = []
         for chain in config.get_supported_networks():
-            chain_config = config.get_chain_config(chain)
-            wallet_info = WalletInfo.from_chain_config(chain_config)
-            if chain == "solana":
-                portfolios.append(PortfolioSolana(wallet_info, SolanaClient(chain_config)))
-            if chain in ["ethereum", "ethereum_sepolia", "base"]:
-                portfolios.append(PortfolioEvm(wallet_info, EVMClient(chain_config), AlchemyClient.from_env()))
+            portfolios.append(cls.from_chain(config.get_chain_config(chain)))
         return cls(portfolios)
 
-
-class PortfolioEvm(PortfolioBase):
-    def __init__(self, wallet: WalletInfo, evm_client: EVMClient, alchemy_client: AlchemyClient) -> None:
-        super().__init__(wallet)
-        self._evm_client = evm_client
-        self._alchemy_client = alchemy_client
-
-    def get_token_balances(self) -> List[TokenAmount]:
-        balances = self._alchemy_client.get_token_balances(wallet=self._wallet.address, chain=self._wallet.chain)
-        result = []
-        for balance in balances:
-            token_info = self._evm_client.get_token_info(EVMClient.to_checksum_address(balance.contract_address))
-            result.append(token_info.to_amount_from_base_units(Wei(balance.value)))
-        return result
-
-    def get_net_asset_value(self, token_base: TokenInfo) -> TokenAmount:
-        value = Decimal(0)
-        balances = self.get_token_balances()
-        for balance in balances:
-            if balance.token_info.address == token_base.address:
-                value += balance.value
-            else:
-                exchange_rate = self._alchemy_client.get_token_quote(
-                    token_in=balance.token_info.address, token_out=token_base.address, chain=self._wallet.chain
-                )
-                value += balance.value * exchange_rate
-
-        return token_base.to_amount(value)
-
-
-class PortfolioSolana(PortfolioBase):
-    def __init__(self, wallet: WalletInfo, solana_client: SolanaClient) -> None:
-        super().__init__(wallet)
-        self._solana_client = solana_client
-
-    def get_token_balances(self) -> List[TokenAmount]:
-        return self._solana_client.get_all_token_balances(Pubkey.from_string(self._wallet.address))
+    @staticmethod
+    def from_chain(chain_config: ChainConfig) -> PortfolioBase:
+        wallet_info = WalletInfo.from_chain_config(chain_config)
+        if chain_config.chain == "solana":
+            return PortfolioSolana(wallet_info, SolanaClient(chain_config), HeliusClient.from_env(), JupiterClient())
+        if chain_config.chain in ["ethereum", "ethereum_sepolia", "base"]:
+            return PortfolioEvm(wallet_info, EVMClient(chain_config), AlchemyClient.from_env())
+        raise ValueError(f"unsupported chain {chain_config.chain}")
