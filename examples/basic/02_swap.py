@@ -19,7 +19,8 @@ tools: List[AlphaSwarmToolBase] = [
 ]
 
 # Create the agent
-agent = AlphaSwarmAgent(tools=tools, model_id="anthropic/claude-3-5-sonnet-20241022")
+llm_config = config.get_default_llm_config("anthropic")
+agent = AlphaSwarmAgent(tools=tools, model_id=llm_config.model_id)
 
 
 # Interact with the agent
