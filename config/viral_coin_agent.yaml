@@ -1,0 +1,102 @@
+# Viral Coin Agent Configuration
+viral_coin_agent:
+  # General settings
+  name: "ViralCoinAgent"
+  description: "Agent that finds the most viral coins based on social metrics and allows trading"
+  version: "1.0.0"
+  
+  # Search settings
+  search:
+    min_market_cap: 1000000  # $1M minimum market cap
+    max_age_days: 30  # Only consider coins created in the last 30 days
+    top_coins_limit: 100  # Search among top 100 coins
+    
+  # Virality metrics
+  virality_metrics:
+    platforms:
+      - name: "x.com"
+        weight: 0.35
+        search_terms:
+          - "{coin_symbol}"
+          - "#{coin_symbol}"
+          - "{coin_name}"
+      - name: "reddit.com"
+        weight: 0.25
+        search_terms:
+          - "r/cryptocurrency {coin_symbol}"
+          - "{coin_name} crypto"
+      - name: "coingecko.com"
+        weight: 0.15
+        search_terms:
+          - "{coin_symbol} forum"
+          - "{coin_name} discussion"
+      - name: "medium.com"
+        weight: 0.15
+        search_terms:
+          - "{coin_symbol} crypto"
+          - "{coin_name} token"
+      - name: "discord.com"
+        weight: 0.10
+        search_terms:
+          - "{coin_symbol} server"
+          - "{coin_name} community"
+    
+    # Additional metrics beyond mentions
+    additional_metrics:
+      - name: "24h_volume_growth"
+        weight: 0.3
+        description: "Percentage growth in 24h trading volume"
+      - name: "holder_growth"
+        weight: 0.3
+        description: "Percentage growth in number of holders"
+      - name: "price_volatility"
+        weight: 0.2
+        description: "Price volatility in the last 7 days"
+      - name: "developer_activity"
+        weight: 0.2
+        description: "GitHub commits and activity in the last 7 days"
+  
+  # Firecrawl settings
+  firecrawl:
+    search_depth: 50  # Number of results to analyze per search
+    formats: ["markdown"]  # Output format for crawled content
+    max_retries: 3  # Maximum number of retries for failed requests
+    timeout_seconds: 30  # Timeout for requests
+    
+  # Trading settings
+  trading:
+    networks:
+      - name: "ethereum"
+        enabled: true
+      - name: "ethereum_sepolia"
+        enabled: true
+        is_test: true
+      - name: "base"
+        enabled: true
+    
+    # DCA (Dollar Cost Averaging) settings
+    dca:
+      enabled: true
+      interval_hours: 24  # Default interval between purchases
+      max_intervals: 7  # Default number of intervals
+      min_amount_per_interval: 0.001  # Minimum amount per interval in ETH
+    
+    # Risk management
+    risk_management:
+      max_slippage_percent: 2.0  # Maximum allowed slippage
+      max_single_trade_percent: 10.0  # Maximum percentage of portfolio for a single trade
+      stop_loss_percent: 15.0  # Default stop loss percentage
+      take_profit_percent: 30.0  # Default take profit percentage
+  
+  # Reporting settings
+  reporting:
+    telegram:
+      enabled: true
+      report_frequency: "daily"  # Options: hourly, daily, on_trade
+      include_charts: true
+      detailed_metrics: true
+    
+    file_reports:
+      enabled: true
+      format: "markdown"  # Options: markdown, json, csv
+      save_directory: "reports/viral_coins" 
