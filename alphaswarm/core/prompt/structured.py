@@ -1,24 +1,17 @@
 from __future__ import annotations
 
 import abc
-from typing import List, Mapping, Optional, Sequence, Type
+from typing import Annotated, List, Mapping, Optional, Sequence, Type
 
-from pydantic import BaseModel, field_validator, model_validator
+from pydantic import BaseModel, StringConstraints, model_validator
 
-from .base import PromptTemplateBase
+from .base import PromptPairBase, PromptTemplateBase
 
 
 class PromptSection(BaseModel):
     name: str
-    content: Optional[str] = None
+    content: Optional[Annotated[str, StringConstraints(strip_whitespace=True)]] = None
     sections: List[PromptSection] = []
-
-    @field_validator("content")
-    @classmethod
-    def strip_content(cls, content: Optional[str]) -> Optional[str]:
-        if isinstance(content, str):
-            return content.strip()
-        return content
 
 
 class PromptFormatterBase(abc.ABC):
@@ -86,7 +79,7 @@ class StructuredPromptTemplate(PromptTemplateBase):
         return self._formatter.format(self.sections)
 
 
-class StructuredPromptPair(BaseModel):
+class StructuredPromptPair(PromptPairBase):
     system: StructuredPromptTemplate
     user: Optional[StructuredPromptTemplate] = None
     formatter: str = "string"

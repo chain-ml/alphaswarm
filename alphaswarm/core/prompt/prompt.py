@@ -1,22 +1,16 @@
 from __future__ import annotations
 
-from typing import Any, Dict, Optional, Union
+from typing import Annotated, Any, Dict, Optional, Union
 
 import yaml
-from pydantic import BaseModel, field_validator
+from pydantic import BaseModel, StringConstraints
 
 from .base import PromptPairBase, PromptTemplateBase
 from .structured import StructuredPromptPair
 
 
 class PromptTemplate(PromptTemplateBase):
-    template: str
-
-    @field_validator("template")
-    @classmethod
-    def strip_template(cls, template: str) -> str:
-        # TODO: use StringConstraints in these cases
-        return template.strip()
+    template: Annotated[str, StringConstraints(strip_whitespace=True)]
 
     def get_template(self) -> str:
         return self.template
