@@ -37,7 +37,8 @@ async def main() -> None:
         ExecuteTokenSwap(config),
     ]  # Add your tools here
 
-    agent = AlphaSwarmAgent(tools=tools, model_id="anthropic/claude-3-5-sonnet-20241022")
+    llm_config = config.get_default_llm_config("anthropic")
+    agent = AlphaSwarmAgent(tools=tools, model_id=llm_config.model_id)
     bot_token = config.get("telegram", {}).get("bot_token")
     tg_bot = TelegramBot(bot_token=bot_token, agent=agent)
 

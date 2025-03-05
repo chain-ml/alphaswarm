@@ -104,6 +104,12 @@ class JupiterSettings:
     slippage_bps: int
 
 
+@dataclass
+class LLMConfig:
+    provider: str
+    model_id: str
+
+
 class Config:
     _instance = None
 
@@ -304,6 +310,28 @@ class Config:
     def get_venue_settings_jupiter(self) -> JupiterSettings:
         values = self._config["trading_venues"]["jupiter"]["settings"]
         return JupiterSettings(**values)
+
+    def get_default_llm_config(self, provider: str) -> LLMConfig:
+        """Get LLM configuration for a specific provider.
+
+        Args:
+            provider: The LLM provider to use ("openai" or "anthropic")
+
+        Raises:
+            ValueError: If the API key for the requested provider is not configured
+        """
+        if provider == "openai":
+            if not os.getenv("OPENAI_API_KEY"):
+                raise ValueError("OpenAI API key not found in environment variables")
+            return LLMConfig(provider=provider, model_id=os.getenv("DEFAULT_OPENAI_MODEL", "gpt-4"))
+        elif provider == "anthropic":
+            if not os.getenv("ANTHROPIC_API_KEY"):
+                raise ValueError("Anthropic API key not found in environment variables")
+            return LLMConfig(
+                provider=provider, model_id=os.getenv("DEFAULT_ANTHROPIC_MODEL", "claude-3-5-sonnet-20241022")
+            )
+        else:
+            raise ValueError(f"Unsupported LLM provider: {provider}")
 
 
 def get_wallets_info() -> Sequence[WalletInfo]:

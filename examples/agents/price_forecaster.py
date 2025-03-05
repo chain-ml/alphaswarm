@@ -4,6 +4,7 @@ from typing import List
 import dotenv
 from alphaswarm.agent.agent import AlphaSwarmAgent
 from alphaswarm.agent.clients import TerminalClient
+from alphaswarm.config import Config
 from alphaswarm.core.tool import AlphaSwarmToolBase
 from alphaswarm.tools.alchemy import GetAlchemyPriceHistoryBySymbol
 from alphaswarm.tools.cookie.cookie_metrics import GetCookieMetricsBySymbol, GetCookieMetricsPaged
@@ -21,7 +22,7 @@ class ForecastingAgent(AlphaSwarmAgent):
     > Predict the price of AIXBT over the next hour in 5-minute increments.
     """
 
-    def __init__(self) -> None:
+    def __init__(self, model_id: str) -> None:
         tools: List[AlphaSwarmToolBase] = [
             GetAlchemyPriceHistoryBySymbol(),
             GetCookieMetricsBySymbol(),
@@ -37,13 +38,15 @@ class ForecastingAgent(AlphaSwarmAgent):
         - Please respond with the output of the `ForecastTokenPrice` directly -- we don't need to reformat it.
         """
 
-        super().__init__(tools=tools, model_id="anthropic/claude-3-5-sonnet-20241022", hints=hints)
+        super().__init__(tools=tools, model_id=model_id, hints=hints)
 
 
 async def main() -> None:
     dotenv.load_dotenv()
+    config = Config()
+    llm_config = config.get_default_llm_config("anthropic")
 
-    agent = ForecastingAgent()
+    agent = ForecastingAgent(model_id=llm_config.model_id)
 
     terminal = TerminalClient("AlphaSwarm terminal", agent)
     await asyncio.gather(

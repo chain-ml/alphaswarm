@@ -12,9 +12,10 @@ dotenv.load_dotenv()
 config = Config(network_env="test")  # Use a testnet environment (as defined in config/default.yaml)
 
 # Initialize tools
+llm_config = config.get_default_llm_config("anthropic")
 strategy = Strategy(
     rules="Swap 3 USDC for WETH on Ethereum Sepolia when price below 10_000 USDC per WETH",
-    model_id="anthropic/claude-3-5-sonnet-20241022",
+    model_id=llm_config.model_id,
 )
 
 tools: List[AlphaSwarmToolBase] = [
@@ -25,7 +26,7 @@ tools: List[AlphaSwarmToolBase] = [
 ]
 
 # Create the agent
-agent = AlphaSwarmAgent(tools=tools, model_id="anthropic/claude-3-5-sonnet-20241022")
+agent = AlphaSwarmAgent(tools=tools, model_id=llm_config.model_id)
 
 
 # Interact with the agent

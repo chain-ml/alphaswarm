@@ -16,8 +16,9 @@ tools: List[AlphaSwarmToolBase] = [
     GetTokenPrice(config),  # Get the price of a token pair from available DEXes given addresses
 ]
 
-# Create the agent
-agent = AlphaSwarmAgent(tools=tools, model_id="anthropic/claude-3-5-sonnet-20241022")
+# Get LLM config for Anthropic
+llm_config = config.get_default_llm_config("anthropic")
+agent = AlphaSwarmAgent(tools=tools, model_id=llm_config.model_id)
 
 
 # Interact with the agent
