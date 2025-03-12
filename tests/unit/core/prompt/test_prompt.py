@@ -1,4 +1,6 @@
 import pytest
+from pydantic import ValidationError
+
 from alphaswarm.core.prompt import PromptConfig
 from alphaswarm.core.prompt.prompt import (
     PromptTemplate,
@@ -73,8 +75,8 @@ class TestPromptConfig:
         system_prompt = PromptTemplate(template="You are a helpful assistant.")
         prompt_pair = PromptPair(system=system_prompt)
 
-        with pytest.raises(ValueError, match="Invalid kind: InvalidKind"):
-            PromptConfig(kind="InvalidKind", prompt=prompt_pair)
+        with pytest.raises(ValidationError):
+            PromptConfig(kind="InvalidKind", prompt=prompt_pair)  # type: ignore
 
     def test_from_dict(self) -> None:
         data = {

@@ -16,9 +16,10 @@ prompt:
           - name: Hints
             content: |
               Answer the question in a concise manner.
+    formatter: XML
   user:
     sections:
       - name: Question
         content: |
           What's the capital of France?
-  formatter: XML
+    formatter: XML

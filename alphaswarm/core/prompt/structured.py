@@ -1,16 +1,16 @@
 from __future__ import annotations
 
 import abc
-from typing import Annotated, List, Mapping, Optional, Sequence, Type
+from typing import List, Mapping, Optional, Sequence, Type
 
-from pydantic import BaseModel, StringConstraints, model_validator
+from pydantic import BaseModel, model_validator
 
-from .base import PromptPairBase, PromptTemplateBase
+from .base import PromptPairBase, PromptTemplateBase, StrippedStr
 
 
 class PromptSection(BaseModel):
     name: str
-    content: Optional[Annotated[str, StringConstraints(strip_whitespace=True)]] = None
+    content: Optional[StrippedStr] = None
     sections: List[PromptSection] = []
 
 
@@ -70,25 +70,19 @@ FORMATTER_REGISTRY: Mapping[str, Type[PromptFormatterBase]] = {
 
 class StructuredPromptTemplate(PromptTemplateBase):
     sections: List[PromptSection]
-    _formatter: PromptFormatterBase
-
-    def set_formatter(self, formatter: PromptFormatterBase) -> None:
-        self._formatter = formatter
+    formatter: str = "string"
+    _formatter_obj: PromptFormatterBase
 
     def get_template(self) -> str:
-        return self._formatter.format(self.sections)
+        return self._formatter_obj.format(self.sections)
 
-
-class StructuredPromptPair(PromptPairBase):
-    system: StructuredPromptTemplate
-    user: Optional[StructuredPromptTemplate] = None
-    formatter: str = "string"
-    _formatter: PromptFormatterBase
+    def set_formatter(self, formatter: PromptFormatterBase) -> None:
+        self._formatter_obj = formatter
 
     @model_validator(mode="after")
-    def formatter_validator(self) -> StructuredPromptPair:
-        formatter: PromptFormatterBase = self.formatter_string_to_obj(self.formatter)
-        self.set_formatter(formatter)
+    def formatter_obj_validator(self) -> StructuredPromptTemplate:
+        formatter_obj = self.formatter_string_to_obj(self.formatter)
+        self.set_formatter(formatter_obj)
         return self
 
     @staticmethod
@@ -102,8 +96,7 @@ class StructuredPromptPair(PromptPairBase):
         formatter_cls = FORMATTER_REGISTRY[formatter]
         return formatter_cls()
 
-    def set_formatter(self, formatter: PromptFormatterBase) -> None:
-        self._formatter = formatter
-        self.system.set_formatter(self._formatter)
-        if self.user:
-            self.user.set_formatter(self._formatter)
+
+class StructuredPromptPair(PromptPairBase):
+    system: StructuredPromptTemplate
+    user: Optional[StructuredPromptTemplate] = None
