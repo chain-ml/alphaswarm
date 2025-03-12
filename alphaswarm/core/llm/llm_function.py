@@ -170,6 +170,7 @@ class LLMFunctionTemplated(LLMFunctionBase[T_Response]):
         user_prompt_template: Optional[str] = None,
         system_prompt_params: Optional[Dict[str, Any]] = None,
         max_retries: int = 3,
+        llm_params: Optional[Dict[str, Any]] = None,
     ) -> None:
         """Initialize an LLMFunctionTemplated instance.
 
@@ -180,11 +181,14 @@ class LLMFunctionTemplated(LLMFunctionBase[T_Response]):
             user_prompt_template: Optional template for the user message
             system_prompt_params: Parameters for formatting the system prompt if any
             max_retries: Maximum number of retry attempts
+            llm_params: Additional keyword arguments to pass to the LLM client
         """
         super().__init__(model_id=model_id, response_model=response_model, max_retries=max_retries)
         self.system_prompt_template = system_prompt_template
         self.system_prompt = self._format(system_prompt_template, system_prompt_params)
         self.user_prompt_template = user_prompt_template
+
+        self._llm_params = llm_params or {}
 
     def execute_with_completion(
         self,
@@ -212,7 +216,7 @@ class LLMFunctionTemplated(LLMFunctionBase[T_Response]):
 
         user_prompt = self._format(self.user_prompt_template, user_prompt_params)
         messages.append(Message.user(user_prompt))
-        return self._execute_with_completion(messages=messages, **kwargs)
+        return self._execute_with_completion(messages=messages, **self._llm_params, **kwargs)
 
     @classmethod
     def from_files(
@@ -273,7 +277,6 @@ class LLMFunctionTemplated(LLMFunctionBase[T_Response]):
         if prompt_config.llm is None:
             raise ValueError("LLMConfig in PromptConfig is required to create an LLMFunction but was not set")
         model_id = prompt_config.llm.model
-        # TODO: pass kwargs in the __init__
 
         return cls(
             model_id=model_id,
@@ -282,6 +285,7 @@ class LLMFunctionTemplated(LLMFunctionBase[T_Response]):
             user_prompt_template=user_prompt_template,
             system_prompt_params=system_prompt_params,
             max_retries=max_retries,
+            llm_params=prompt_config.llm.params,
         )
 
     @classmethod
