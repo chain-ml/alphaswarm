@@ -41,33 +41,34 @@ def test_from_prompt_config() -> None:
 
     assert llm_func_v1._model_id == llm_func_v2._model_id == "gpt-4o-mini"
     assert llm_func_v1.system_prompt == llm_func_v2.system_prompt == "You are a helpful assistant."
-    assert (
-        llm_func_v1.user_prompt_template
-        == llm_func_v2.user_prompt_template
-        == "Answer the following questions: {question}"
-    )
+    expected_user_prompt = "Answer the following questions: {question}"
+    assert llm_func_v1.user_prompt_template == llm_func_v2.user_prompt_template == expected_user_prompt
 
 
 def test_from_structured_prompt_config() -> None:
-    # TODO tests prompt
     llm_func = LLMFunctionTemplated.from_prompt_config_file(
         response_model=Response,
         prompt_config_path=PromptPath.structured,
     )
 
     assert llm_func._model_id == "claude-3-5-haiku-20241022"
-    assert (
-        llm_func.system_prompt
-        == """<instructions>
-  You are a helpful assistant.
-  <hints>
-    Answer the question in a concise manner.
-  </hints>
-</instructions>"""
+    expected_system_prompt = "\n".join(
+        [
+            "<instructions>",
+            "  You are a helpful assistant.",
+            "  <hints>",
+            "    Answer the question in a concise manner.",
+            "  </hints>",
+            "</instructions>",
+        ]
     )
-    assert (
-        llm_func.user_prompt_template
-        == """<question>
-  What's the capital of France?
-</question>"""
+    assert llm_func.system_prompt == expected_system_prompt
+
+    expected_user_prompt = "\n".join(
+        [
+            "<question>",
+            "  What's the capital of France?",
+            "</question>",
+        ]
     )
+    assert llm_func.user_prompt_template == expected_user_prompt

@@ -271,7 +271,7 @@ class LLMFunctionTemplated(LLMFunctionBase[T_Response]):
         user_prompt_template = prompt_config.prompt.user.get_template() if prompt_config.prompt.user else None
 
         if prompt_config.llm is None:
-            raise ValueError("LLMConfig not set in PromptConfig")
+            raise ValueError("LLMConfig in PromptConfig is required to create an LLMFunction but was not set")
         model_id = prompt_config.llm.model
         # TODO: pass kwargs in the __init__
 
