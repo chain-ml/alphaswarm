@@ -37,11 +37,11 @@ class StringPromptFormatter(PromptFormatterBase):
 
 class MarkdownPromptFormatter(PromptFormatterBase):
     def _format_section(self, section: PromptSection, indent: int = 1) -> str:
-        parts = [f"{'#' * indent} {section.name}", ""]
+        parts = ["", f"{'#' * indent} {section.name}", ""]
         if section.content:
-            parts.extend([section.content, ""])
+            parts.append(section.content)
         parts.extend([self._format_section(sec, indent + 1) for sec in section.sections])
-        return "\n".join(parts)
+        return "\n".join(parts).strip()
 
 
 class XMLPromptFormatter(PromptFormatterBase):
@@ -71,7 +71,7 @@ FORMATTER_REGISTRY: Mapping[str, Type[PromptFormatterBase]] = {
 class StructuredPromptTemplate(PromptTemplateBase):
     sections: List[PromptSection]
     formatter: str = "string"
-    _formatter_obj: PromptFormatterBase
+    _formatter_obj: PromptFormatterBase = StringPromptFormatter()  # default for mypy, will be overridden
 
     def get_template(self) -> str:
         return self._formatter_obj.format(self.sections)
