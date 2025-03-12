@@ -83,17 +83,14 @@ class TestStructuredPromptTemplate:
             )
         ]
 
-        # Test with string formatter
         prompt = StructuredPromptTemplate(sections=sections, formatter="string")
         expected_string = "\n".join(["Main Section", "Main content", "Subsection", "Subsection content"])
         assert prompt.get_template() == expected_string
 
-        # Test with markdown formatter
         prompt.set_formatter(MarkdownPromptFormatter())
         expected_md = "\n".join(["# Main Section", "", "Main content", "## Subsection", "", "Subsection content"])
         assert prompt.get_template() == expected_md
 
-        # Test with XML formatter
         prompt.set_formatter(XMLPromptFormatter())
         expected_xml = "\n".join(
             [
@@ -115,9 +112,8 @@ class TestStructuredPromptTemplate:
 
     def test_set_formatter_manually(self) -> None:
         sections = [PromptSection(name="Test", content="Test content")]
-        prompt = StructuredPromptTemplate(sections=sections, formatter="string")
+        prompt = StructuredPromptTemplate(sections=sections)
 
-        # Change formatter after initialization
         prompt.set_formatter(XMLPromptFormatter())
         assert isinstance(prompt._formatter_obj, XMLPromptFormatter)
         expected = "\n".join(["<test>", "  Test content", "</test>"])
@@ -161,9 +157,6 @@ class TestPromptFormatters:
         assert formatter.format(sections) == expected
 
     def test_formatter_registry(self) -> None:
-        assert "string" in FORMATTER_REGISTRY
-        assert "markdown" in FORMATTER_REGISTRY
-        assert "xml" in FORMATTER_REGISTRY
         assert FORMATTER_REGISTRY["string"] == StringPromptFormatter
         assert FORMATTER_REGISTRY["markdown"] == MarkdownPromptFormatter
         assert FORMATTER_REGISTRY["xml"] == XMLPromptFormatter
