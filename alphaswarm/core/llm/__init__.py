@@ -7,6 +7,7 @@ from .llm_function import (
     PythonLLMFunction,
 )
 from .message import CacheControl, ContentBlock, ImageContentBlock, ImageURL, Message, TextContentBlock
+from .utils import with_reasoning
 
 __all__ = [
     "LLMFunction",
@@ -21,4 +22,5 @@ __all__ = [
     "Message",
     "TextContentBlock",
     "PythonLLMFunction",
+    "with_reasoning",
 ]
