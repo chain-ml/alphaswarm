@@ -5,7 +5,7 @@ import dotenv
 import requests
 from litellm.types.utils import Usage
 
-from alphaswarm.core.llm import ImageURL, LLMFunction, Message
+from alphaswarm.core.llm import ImageURL, LLMFunction, Message, with_reasoning
 from pydantic import BaseModel, Field
 from tests import get_data_filename
 
@@ -119,3 +119,16 @@ def test_llm_function_with_image() -> None:
     assert isinstance(result, TestResponse)
     assert "eth" in result.content.lower()
     assert "sol" in result.content.lower()
+
+
+def test_llm_function_with_reasoning() -> None:
+    @with_reasoning(description="Reasoning behind the response")
+    class ReasoningResponse(BaseModel):
+        content: str = Field(..., description="The content of the response")
+
+    llm_func = get_llm_function(response_model=ReasoningResponse, system_message="What's the capital of Great Britain?")
+
+    result = llm_func.execute()
+    assert isinstance(result, ReasoningResponse)
+    assert isinstance(result.reasoning, str)  # type: ignore
+    assert "London" in result.content
