@@ -5,8 +5,14 @@ import dotenv
 from pydantic import BaseModel, Field
 
 from alphaswarm.core.llm import LLMFunctionTemplated
+from alphaswarm.core.prompt import PromptConfig
+from tests import PromptPath
 
 dotenv.load_dotenv()
+
+
+class Response(BaseModel):
+    answer: str = Field(..., description="The answer to the question")
 
 
 class SimpleResponse(BaseModel):
@@ -55,3 +61,23 @@ def test_llm_function_from_user_file() -> None:
         result = llm_func.execute(user_prompt_params={"min_value": 3, "max_value": 8})
         assert isinstance(result, SimpleResponse)
         assert 3 <= result.number <= 8
+
+
+def test_llm_function_from_prompt_config() -> None:
+    llm_func = LLMFunctionTemplated.from_prompt_config(
+        response_model=Response,
+        prompt_config=PromptConfig.from_yaml(PromptPath.basic),
+    )
+
+    result = llm_func.execute(user_prompt_params={"question": "What's the capital of France?"})
+    assert "Paris" in result.answer
+
+
+def test_llm_function_from_structured_prompt_config() -> None:
+    llm_func = LLMFunctionTemplated.from_prompt_config_file(
+        response_model=Response,
+        prompt_config_path=PromptPath.structured,
+    )
+
+    result = llm_func.execute()
+    assert "Paris" in result.answer

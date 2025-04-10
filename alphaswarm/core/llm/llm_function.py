@@ -9,6 +9,7 @@ import litellm
 from litellm.types.utils import ModelResponse
 from pydantic import BaseModel
 
+from ..prompt import PromptConfig
 from .message import Message
 
 litellm.modify_params = True  # for calls with system message only for anthropic
@@ -169,6 +170,7 @@ class LLMFunctionTemplated(LLMFunctionBase[T_Response]):
         user_prompt_template: Optional[str] = None,
         system_prompt_params: Optional[Dict[str, Any]] = None,
         max_retries: int = 3,
+        llm_params: Optional[Dict[str, Any]] = None,
     ) -> None:
         """Initialize an LLMFunctionTemplated instance.
 
@@ -179,11 +181,14 @@ class LLMFunctionTemplated(LLMFunctionBase[T_Response]):
             user_prompt_template: Optional template for the user message
             system_prompt_params: Parameters for formatting the system prompt if any
             max_retries: Maximum number of retry attempts
+            llm_params: Additional keyword arguments to pass to the LLM client
         """
         super().__init__(model_id=model_id, response_model=response_model, max_retries=max_retries)
         self.system_prompt_template = system_prompt_template
         self.system_prompt = self._format(system_prompt_template, system_prompt_params)
         self.user_prompt_template = user_prompt_template
+
+        self._llm_params = llm_params or {}
 
     def execute_with_completion(
         self,
@@ -211,7 +216,7 @@ class LLMFunctionTemplated(LLMFunctionBase[T_Response]):
 
         user_prompt = self._format(self.user_prompt_template, user_prompt_params)
         messages.append(Message.user(user_prompt))
-        return self._execute_with_completion(messages=messages, **kwargs)
+        return self._execute_with_completion(messages=messages, **self._llm_params, **kwargs)
 
     @classmethod
     def from_files(
@@ -223,7 +228,7 @@ class LLMFunctionTemplated(LLMFunctionBase[T_Response]):
         system_prompt_params: Optional[Dict[str, Any]] = None,
         max_retries: int = 3,
     ) -> LLMFunctionTemplated[T_Response]:
-        """Create an instance from template files.
+        """Create an instance from template text files.
 
         Args:
             model_id: LiteLLM model ID to use
@@ -246,6 +251,62 @@ class LLMFunctionTemplated(LLMFunctionBase[T_Response]):
             response_model=response_model,
             system_prompt_template=system_prompt_template,
             user_prompt_template=user_prompt_template,
+            system_prompt_params=system_prompt_params,
+            max_retries=max_retries,
+        )
+
+    @classmethod
+    def from_prompt_config(
+        cls,
+        response_model: Type[T_Response],
+        prompt_config: PromptConfig,
+        system_prompt_params: Optional[Dict[str, Any]] = None,
+        max_retries: int = 3,
+    ) -> LLMFunctionTemplated[T_Response]:
+        """Create an instance from prompt config object.
+
+        Args:
+            response_model: Pydantic model class for structuring responses
+            prompt_config: PromptConfig object
+            system_prompt_params: Parameters for formatting the system prompt
+            max_retries: Maximum number of retry attempts
+        """
+        system_prompt_template = prompt_config.prompt.system.get_template()
+        user_prompt_template = prompt_config.prompt.user.get_template() if prompt_config.prompt.user else None
+
+        if prompt_config.llm is None:
+            raise ValueError("LLMConfig in PromptConfig is required to create an LLMFunction but was not set")
+        model_id = prompt_config.llm.model
+
+        return cls(
+            model_id=model_id,
+            response_model=response_model,
+            system_prompt_template=system_prompt_template,
+            user_prompt_template=user_prompt_template,
+            system_prompt_params=system_prompt_params,
+            max_retries=max_retries,
+            llm_params=prompt_config.llm.params,
+        )
+
+    @classmethod
+    def from_prompt_config_file(
+        cls,
+        response_model: Type[T_Response],
+        prompt_config_path: str,
+        system_prompt_params: Optional[Dict[str, Any]] = None,
+        max_retries: int = 3,
+    ) -> LLMFunctionTemplated[T_Response]:
+        """Create an instance from prompt config file.
+
+        Args:
+            response_model: Pydantic model class for structuring responses
+            prompt_config_path: Path to the prompt config yaml file
+            system_prompt_params: Parameters for formatting the system prompt
+            max_retries: Maximum number of retry attempts
+        """
+        return cls.from_prompt_config(
+            response_model=response_model,
+            prompt_config=PromptConfig.from_yaml(prompt_config_path),
             system_prompt_params=system_prompt_params,
             max_retries=max_retries,
         )
