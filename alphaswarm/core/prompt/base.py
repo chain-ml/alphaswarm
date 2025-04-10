@@ -1,5 +1,5 @@
 import abc
-from typing import Annotated, Any, Optional
+from typing import Annotated, Generic, Optional, TypeVar
 
 from pydantic import BaseModel, StringConstraints
 
@@ -13,6 +13,9 @@ class PromptTemplateBase(BaseModel, abc.ABC):
         pass
 
 
-class PromptPairBase(BaseModel):
-    system: Any
-    user: Optional[Any] = None
+T = TypeVar("T", bound="BaseModel")
+
+
+class PromptPairBase(BaseModel, Generic[T]):
+    system: T
+    user: Optional[T] = None

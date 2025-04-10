@@ -24,7 +24,7 @@ class PromptFormatterBase(abc.ABC):
 
 
 class StringPromptFormatter(PromptFormatterBase):
-    def __init__(self, section_prefix: str = ""):
+    def __init__(self, section_prefix: str = "") -> None:
         self.section_prefix = section_prefix
 
     def _format_section(self, section: PromptSection) -> str:
@@ -97,6 +97,6 @@ class StructuredPromptTemplate(PromptTemplateBase):
         return formatter_cls()
 
 
-class StructuredPromptPair(PromptPairBase):
+class StructuredPromptPair(PromptPairBase[StructuredPromptTemplate]):
     system: StructuredPromptTemplate
     user: Optional[StructuredPromptTemplate] = None

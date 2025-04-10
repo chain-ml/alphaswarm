@@ -16,7 +16,7 @@ class PromptTemplate(PromptTemplateBase):
         return self.template
 
 
-class PromptPair(PromptPairBase):
+class PromptPair(PromptPairBase[PromptTemplate]):
     system: PromptTemplate
     user: Optional[PromptTemplate] = None
 
